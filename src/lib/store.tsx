@@ -26,7 +26,7 @@ interface Toast {
 }
 
 function useAppState() {
-  const [authed, setAuthed] = useState(false)
+  const [authed, setAuthed] = useState(true)
   const [trips, setTrips] = useState<Trip[]>(SEED_TRIPS)
   const [tripId, setTripId] = useState('t1')
   const [products, setProducts] = useState<Product[]>(seedProducts)
