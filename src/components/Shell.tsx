@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { Toaster as SonnerToaster } from '@/components/ui/sonner'
-import { BookOpen, Check, ChevronsUpDown, House, Luggage, Map, MapPin, Plus, Smartphone } from 'lucide-react'
+import { Check, Compass, ChevronsUpDown, House, Luggage, Map, MapPin, Plus, Smartphone } from 'lucide-react'
 import { useEffect } from 'react'
 import { useApp, type Tab } from '@/lib/store'
 import { cn, dday, shortRange } from '@/lib/utils'
@@ -20,7 +20,7 @@ import {
 
 export const NAV: { id: Tab; label: string; icon: typeof House }[] = [
   { id: 'home', label: '홈', icon: House },
-  { id: 'magazine', label: '매거진', icon: BookOpen },
+  { id: 'magazine', label: '발견', icon: Compass },
   { id: 'map', label: '지도', icon: Map },
   { id: 'carry', label: '캐리어', icon: Luggage },
 ]

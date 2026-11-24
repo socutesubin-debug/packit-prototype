@@ -51,7 +51,7 @@ export function FindsStrip() {
           <p className="mt-0.5 text-[13px] text-muted-foreground">{trip.city}에 다녀온 여행자들이 찾은 물건</p>
         </div>
         <button onClick={() => setTab('magazine')} className="flex h-9 items-center gap-0.5 rounded-full px-2 text-[13px] font-medium text-ink-2 hover:bg-accent">
-          매거진 <ChevronRight className="size-4" />
+          발견 <ChevronRight className="size-4" />
         </button>
       </div>
       <div className="no-scrollbar -mx-5 mt-3 flex snap-x gap-2.5 overflow-x-auto px-5 pb-1 lg:mx-0 lg:px-0">

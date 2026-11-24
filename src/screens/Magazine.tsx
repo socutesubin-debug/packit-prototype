@@ -50,7 +50,7 @@ export function Magazine() {
   return (
     <div className="mx-auto w-full max-w-[1120px] px-5 pt-[max(20px,env(safe-area-inset-top))] pb-32 lg:px-10 lg:pt-12">
       <header>
-        <p className="text-[12.5px] font-semibold text-muted-foreground">Packit 매거진 · 11월 넷째 주</p>
+        <p className="text-[12.5px] font-semibold text-muted-foreground">Packit 발견 · 11월 넷째 주</p>
         <h1 className="mt-2 text-[30px] leading-[1.12] font-semibold tracking-tight lg:text-[40px]">
           여기서만
           <br />살 수 있는 것들
@@ -167,7 +167,7 @@ export function Magazine() {
         </span>
         <ChevronRight className="size-5 text-white/60" />
       </button>
-      <p className="mt-3 text-center text-[11.5px] text-faint">매거진의 발견과 기사는 예시 콘텐츠예요</p>
+      <p className="mt-3 text-center text-[11.5px] text-faint">발견 탭의 글과 사진은 예시 콘텐츠예요</p>
     </div>
   )
 }
