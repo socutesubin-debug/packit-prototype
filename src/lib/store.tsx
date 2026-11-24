@@ -3,7 +3,7 @@ import { CATALOG, SCAN_POOL, SEED_FINDS, SEED_TRIPS, seedProducts } from './data
 import type { Category, Find, Priority, Product, Trip } from './types'
 import { uid } from './utils'
 
-export type Tab = 'home' | 'priority' | 'map' | 'carry'
+export type Tab = 'home' | 'magazine' | 'map' | 'carry'
 export type Overlay =
   | { type: 'product'; id: string }
   | { type: 'ask'; id: string }
@@ -16,6 +16,9 @@ export type Overlay =
   | { type: 'find'; id: string }
   | { type: 'post' }
   | { type: 'benefits' }
+  | { type: 'plan' }
+  | { type: 'story'; id: string }
+  | { type: 'collection'; id: string }
 
 interface Toast {
   id: string

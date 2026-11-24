@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronDown, House, ListChecks, Luggage, Map, MapPin, Plus, Smartphone } from 'lucide-react'
+import { BookOpen, Check, ChevronDown, House, Luggage, Map, MapPin, Plus, Smartphone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useApp, type Tab } from '@/lib/store'
 import { cn, dday, shortRange } from '@/lib/utils'
@@ -8,7 +8,7 @@ import { Button } from './ui/button'
 
 export const NAV: { id: Tab; label: string; icon: typeof House }[] = [
   { id: 'home', label: '홈', icon: House },
-  { id: 'priority', label: '우선순위', icon: ListChecks },
+  { id: 'magazine', label: '매거진', icon: BookOpen },
   { id: 'map', label: '지도', icon: Map },
   { id: 'carry', label: '캐리어', icon: Luggage },
 ]
@@ -45,8 +45,7 @@ export function BottomNav() {
 }
 
 export function Sidebar() {
-  const { tab, setTab, open, trip, tripProducts, points } = useApp()
-  const must = tripProducts.filter((p) => p.priority === 'must').length
+  const { tab, setTab, open, trip, points } = useApp()
   return (
     <aside className="sticky top-0 hidden h-dvh w-[264px] shrink-0 flex-col border-r border-line bg-surface/60 px-5 py-6 backdrop-blur lg:flex">
       <div className="flex items-center gap-2.5 px-2">
@@ -68,9 +67,6 @@ export function Sidebar() {
             >
               <Icon className="size-[19px]" strokeWidth={2.2} />
               {label}
-              {id === 'priority' && (
-                <span className={cn('ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold', active ? 'bg-white/15' : 'bg-brand-soft text-brand')}>{must}</span>
-              )}
             </button>
           )
         })}

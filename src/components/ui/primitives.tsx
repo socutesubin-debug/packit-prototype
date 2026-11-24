@@ -32,8 +32,8 @@ export function Chip({
 }
 
 export const PRIORITY_META: Record<Priority, { label: string; dot: string; pill: string }> = {
-  must: { label: '꼭 살래', dot: 'bg-must', pill: 'bg-brand-soft text-brand' },
-  maybe: { label: '고민', dot: 'bg-maybe', pill: 'bg-sunken text-ink-2' },
+  must: { label: '꼭 살래', dot: 'bg-must', pill: 'bg-ink text-white' },
+  maybe: { label: '고민', dot: 'bg-maybe', pill: 'bg-[#d9d9d9] text-ink' },
   skip: { label: '안 살래', dot: 'bg-skip', pill: 'bg-sunken text-faint' },
 }
 
@@ -49,10 +49,10 @@ export function PriorityPill({ value, onClick, size = 'md' }: { value: Priority 
       className={cn(
         'inline-flex shrink-0 items-center justify-center rounded-full font-bold transition active:scale-95',
         size === 'sm' ? 'h-6 px-2.5 text-[11.5px]' : 'h-8 px-3 text-[12.5px]',
-        meta ? meta.pill : 'bg-surface text-muted ring-1 ring-dashed ring-line',
+        meta ? meta.pill : 'bg-surface text-muted ring-1 ring-line',
       )}
     >
-      {meta ? meta.label : '미정'}
+      {meta ? meta.label : '+ 정하기'}
     </button>
   )
 }

@@ -123,6 +123,10 @@ export const SEED_FINDS: Find[] = [
   { id: 'f4', city: '도쿄', title: '킷사텐 오리지널 성냥갑', story: '50년 된 킷사텐에서 커피를 마시면 계산할 때 하나씩 줘요. 따로 사려면 ¥100. 디자인이 매년 바뀐대요.', place: '킷사 코하쿠', area: '우다가와초', x: 44, y: 46, price: 100, category: '잡화', art: { shape: 'box', color: '#2F5DA8', accent: '#F2C94C', bg: '#E2EAF7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 5, saves: 19, thanks: 7, sample: true },
   { id: 'f5', city: '도쿄', title: '쪽빛 염색 데누구이', story: '작은 염색 공방에서 손으로 물들인 손수건. 같은 무늬가 하나도 없어요. 사장님이 접는 법도 알려 주셨어요.', place: '아이조메 공방', area: '시부야강 산책로', x: 82, y: 78, price: 1650, category: '잡화', art: { shape: 'towel', color: '#2F4E8C', accent: '#FFFFFF', bg: '#E1E7F3' }, author: '단단', authorTrip: '도쿄 여행 중', daysAgo: 2, saves: 35, thanks: 12, sample: true },
   { id: 'f6', city: '도쿄', title: '동네 빵집 멜론빵 키링', story: '빵집에서 직접 만든 펠트 키링. 빵을 사면 진열대 아래 바구니에 있는 걸 보여 줘요.', place: '베이커리 하루', area: '에비스 방향 주택가', x: 88, y: 46, price: 900, category: '잡화', art: { shape: 'jar', color: '#B7D37A', accent: '#F2C94C', bg: '#EEF6DD' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 6, saves: 22, thanks: 10, sample: true },
+  { id: 'f7', city: '도쿄', title: '목욕탕 한정 유리병 우유', story: '동네 센토(대중목욕탕) 카운터 냉장고에만 있는 병우유. 병은 반납해야 하지만 뚜껑 종이는 기념으로 가져갈 수 있어요.', place: '고마유 센토', area: '시부야 2초메 주택가', x: 74, y: 88, price: 150, category: '식품', art: { shape: 'bottle', color: '#F4F4F4', accent: '#3E6FD8', bg: '#EEF2F7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 0, saves: 8, thanks: 3, sample: true },
+  { id: 'f8', city: '도쿄', title: '헌책방 주인이 만든 책갈피', story: '헌책을 사면 주인 할아버지가 손글씨로 쓴 책갈피를 끼워 줘요. 따로도 3장에 ¥300.', place: '이치노 서점', area: '진구마에 3초메', x: 36, y: 14, price: 300, category: '잡화', art: { shape: 'bar', color: '#D9C7A8', accent: '#141413', bg: '#F3EEE4' }, author: 'JISOO', authorTrip: '도쿄 여행 중', daysAgo: 1, saves: 31, thanks: 14, sample: true },
+  { id: 'f9', city: '도쿄', title: '골목 두부가게 유바 과자', story: '두부가게에서 남은 유바를 튀겨 파는 과자. 오전에만 나오고 봉투에 날짜를 손으로 써 줘요.', place: '마츠다 두부점', area: '우에하라 상점가', x: 12, y: 54, price: 380, category: '식품', art: { shape: 'pouch', color: '#EFE3C8', accent: '#8B5A3C', bg: '#F7F1E4' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 4, saves: 47, thanks: 20, sample: true },
+  { id: 'f10', city: '도쿄', title: '구제 숍의 쇼와 시대 스카프', story: '지하 구제 숍 안쪽 바구니에 1970년대 실크 스카프가 섞여 있어요. 하나하나 무늬가 달라서 오래 골랐어요.', place: '지하 구제 숍 미도리', area: '캣 스트리트 뒤', x: 58, y: 24, price: 1200, category: '옷', art: { shape: 'towel', color: '#8B5A3C', accent: '#F2C94C', bg: '#F3E7DA' }, author: '단단', authorTrip: '2주 전 다녀옴', daysAgo: 12, saves: 56, thanks: 25, sample: true },
   { id: 'm1', city: '오사카', title: '도톤보리 수제 젓가락', story: '오사카 시장 안쪽 젓가락 가게에서 이름을 새겨 줘요. 15분 걸려요.', place: '하시야 젓가락', area: '오사카 · 센니치마에', x: 60, y: 30, price: 1800, category: '잡화', art: { shape: 'bar', color: '#8B5A3C', accent: '#F2C94C', bg: '#F3E7DA' }, author: '수빈', authorTrip: '오사카 여행', daysAgo: 52, saves: 14, thanks: 6, mine: true },
   { id: 'm2', city: '오사카', title: '오사카 한정 타코야키 키캡', story: '전자상가 골목 작은 가게에서만 파는 레진 키캡이에요.', place: '키캡 숍 니폰바시', area: '오사카 · 니폰바시', x: 70, y: 60, price: 1200, category: '잡화', art: { shape: 'jar', color: '#C9824B', accent: '#2A2A2C', bg: '#F7E9DC' }, author: '수빈', authorTrip: '오사카 여행', daysAgo: 51, saves: 9, thanks: 4, mine: true },
 ]
@@ -137,4 +141,30 @@ export const POINT_RULES = [
   { label: '현지 발견 올리기', pt: 50 },
   { label: '다른 여행자가 내 발견을 저장', pt: 10 },
   { label: '고마워요를 받을 때', pt: 5 },
+]
+
+/** Editorial stories for the magazine tab (example content) */
+export const STORIES = [
+  {
+    id: 's-crafts', kicker: '에디터 픽', title: '지도에 없는 도쿄 골목 공방 4곳', sub: '간판이 작아 지나치기 쉬운, 손으로 만든 물건을 파는 곳',
+    intro: '도쿄에 다녀온 여행자들이 직접 찾아 올린 발견 중에서, 주인이 직접 만들어 그 가게에서만 살 수 있는 물건을 모았어요. 대부분 2층이나 골목 안쪽이라 지도 앱으로는 찾기 어려워요.',
+    findIds: ['f1', 'f5', 'f6', 'f8'],
+  },
+  {
+    id: 's-snacks', kicker: '아침에만 있어요', title: '오후엔 다 팔리는 동네 간식', sub: '여행 첫날 아침에 들러야 하는 가게들',
+    intro: '오전에만 굽거나 하루 수량이 정해진 간식이에요. 일정 첫날 아침 동선에 넣어 두면 좋아요.',
+    findIds: ['f3', 'f9', 'f7'],
+  },
+  {
+    id: 's-vintage', kicker: '시간이 쌓인 물건', title: '쇼와 감성 기념품', sub: '오래된 가게가 건네는 작은 물건들',
+    intro: '오래된 킷사텐, 헌책방, 구제 숍에서 찾은 물건이에요. 같은 디자인을 다시 구하기 어려운 것들이라 보이면 바로 사는 걸 추천해요.',
+    findIds: ['f4', 'f10', 'f2'],
+  },
+]
+
+export const COLLECTIONS = [
+  { id: 'c-gift', title: '선물하기 좋은', filter: (f: Find) => f.category === '잡화' && (f.price ?? 0) <= 2000 },
+  { id: 'c-cheap', title: '₩10,000 이하', filter: (f: Find) => (f.price ?? 0) * 8.44 <= 10000 },
+  { id: 'c-food', title: '먹어서 없어지는', filter: (f: Find) => f.category === '식품' },
+  { id: 'c-wear', title: '입고 쓰는', filter: (f: Find) => f.category === '옷' || f.title.includes('손수건') || f.title.includes('데누구이') },
 ]

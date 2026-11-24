@@ -36,7 +36,7 @@ export function FlagMark({ className, active, light }: { className?: string; act
 /* ---------- home strip ---------- */
 
 export function FindsStrip() {
-  const { finds, trip, open, setMapFocus, setTab } = useApp()
+  const { finds, trip, open, setTab } = useApp()
   const list = finds.filter((f) => f.city === trip.city && !f.mine)
   if (!list.length) return null
   return (
@@ -48,14 +48,8 @@ export function FindsStrip() {
           </h2>
           <p className="mt-0.5 text-[13px] text-muted">{trip.city}에 다녀온 여행자들이 찾은 물건</p>
         </div>
-        <button
-          onClick={() => {
-            setMapFocus(`f:${list[0].id}`)
-            setTab('map')
-          }}
-          className="flex h-9 items-center gap-0.5 rounded-full px-2 text-[13px] font-medium text-ink-2 hover:bg-sunken"
-        >
-          지도에서 보기 <ChevronRight className="size-4" />
+        <button onClick={() => setTab('magazine')} className="flex h-9 items-center gap-0.5 rounded-full px-2 text-[13px] font-medium text-ink-2 hover:bg-sunken">
+          매거진 <ChevronRight className="size-4" />
         </button>
       </div>
       <div className="no-scrollbar -mx-5 mt-3 flex snap-x gap-2.5 overflow-x-auto px-5 pb-1 lg:-mx-10 lg:px-10">

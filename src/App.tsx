@@ -6,7 +6,8 @@ import { CreateTrip } from '@/screens/CreateTrip'
 import { Home } from '@/screens/Home'
 import { Login } from '@/screens/Login'
 import { MapScreen, StoreDetail } from '@/screens/MapScreen'
-import { Priority, Swipe } from '@/screens/Priority'
+import { PlanPanel, Swipe } from '@/screens/Priority'
+import { CollectionPanel, Magazine, StoryArticle } from '@/screens/Magazine'
 import { AskCard, ProductDetail } from '@/screens/ProductDetail'
 import { Analyze, SaveSheet } from '@/screens/Save'
 import { Benefits, FindDetail, PostFind } from '@/screens/Finds'
@@ -36,6 +37,12 @@ function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
       return <PostFind />
     case 'benefits':
       return <Benefits z={z} />
+    case 'plan':
+      return <PlanPanel z={z} />
+    case 'story':
+      return <StoryArticle id={o.id} z={z} />
+    case 'collection':
+      return <CollectionPanel id={o.id} z={z} />
   }
 }
 
@@ -55,7 +62,7 @@ function Root() {
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
             {tab === 'home' && <Home />}
-            {tab === 'priority' && <Priority />}
+            {tab === 'magazine' && <Magazine />}
             {tab === 'map' && <MapScreen />}
             {tab === 'carry' && <Carry />}
           </motion.div>

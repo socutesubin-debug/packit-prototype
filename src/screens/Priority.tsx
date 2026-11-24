@@ -1,18 +1,19 @@
 import { AnimatePresence, motion, useMotionValue, useTransform, animate, type PanInfo } from 'motion/react'
-import { Heart, HelpCircle, RotateCcw, Undo2, X } from 'lucide-react'
+import { ArrowLeft, Heart, HelpCircle, RotateCcw, Undo2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
-import { PRIORITY_META, Segmented } from '@/components/ui/primitives'
+import { PRIORITY_META, Panel, Segmented } from '@/components/ui/primitives'
 import { useApp } from '@/lib/store'
 import type { Priority as P, Product } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
 
 const COLS: P[] = ['must', 'maybe', 'skip']
 
-export function Priority() {
-  const { tripProducts, rate, trip, open } = useApp()
+/** 쇼핑 준비 현황 — opened from the home summary card (priority now lives on home) */
+export function PlanPanel({ z }: { z: number }) {
+  const { tripProducts, rate, trip, open, close } = useApp()
   const [tab, setTab] = useState<P>('must')
   const by = (v: P) => tripProducts.filter((p) => p.priority === v)
   const unsorted = tripProducts.filter((p) => !p.priority)
@@ -22,11 +23,15 @@ export function Priority() {
   const ratio = trip.budget ? Math.min(1, mustWon / trip.budget) : 0
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-5 pt-[max(18px,env(safe-area-inset-top))] pb-32 lg:px-10 lg:pt-10">
+    <Panel onClose={close} z={z} wide>
+    <div className="w-full flex-1 overflow-y-auto px-5 pt-[max(12px,env(safe-area-inset-top))] pb-16">
+      <button aria-label="뒤로" onClick={close} className="-ml-2 mb-2 grid size-11 place-items-center rounded-full hover:bg-sunken">
+        <ArrowLeft className="size-[22px]" />
+      </button>
       <header className="flex items-start justify-between">
         <div>
           <p className="text-[13px] font-semibold text-muted">{trip.name}</p>
-          <h1 className="display mt-1 text-[30px] lg:text-[36px]">{unsorted.length ? '쇼핑 준비 중' : '쇼핑 준비 완료'}</h1>
+          <h1 className="mt-1 text-[28px] font-bold tracking-tight">{unsorted.length ? '쇼핑 준비 중' : '쇼핑 준비 완료'}</h1>
           <p className="mt-1 text-[14px] text-muted">총 {tripProducts.length}개</p>
         </div>
         <Button variant="secondary" size="sm" onClick={() => open({ type: 'swipe' })} disabled={!tripProducts.length}>
@@ -83,12 +88,12 @@ export function Priority() {
       </section>
 
       {/* mobile: tabs */}
-      <div className="mt-6 lg:hidden">
+      <div className="mt-6">
         <Segmented value={tab} onChange={setTab} options={COLS.map((c) => ({ value: c, label: `${PRIORITY_META[c].label} ${by(c).length}` }))} />
         <List items={by(tab)} />
       </div>
       {/* desktop: board */}
-      <div className="mt-8 hidden grid-cols-3 gap-5 lg:grid">
+      <div className="mt-8 hidden">
         {COLS.map((c) => (
           <div key={c} className="rounded-[24px] bg-sunken/70 p-3">
             <div className="flex items-center gap-2 px-2 py-1.5">
@@ -101,6 +106,7 @@ export function Priority() {
         ))}
       </div>
     </div>
+    </Panel>
   )
 }
 
@@ -120,7 +126,7 @@ function List({ items }: { items: Product[] }) {
 /* ---------- Swipe deck ---------- */
 
 export function Swipe() {
-  const { tripProducts, setPriority, close, setTab, rate } = useApp()
+  const { tripProducts, setPriority, close, open, rate } = useApp()
   const deck = useMemo(() => {
     const u = tripProducts.filter((p) => !p.priority)
     return (u.length ? u : tripProducts).map((p) => p.id)
@@ -193,7 +199,7 @@ export function Swipe() {
                   size="lg"
                   onClick={() => {
                     close()
-                    setTab('priority')
+                    open({ type: 'plan' })
                   }}
                 >
                   결과 보기

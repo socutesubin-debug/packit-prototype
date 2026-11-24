@@ -6,6 +6,7 @@ import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
 import { TripSwitcher } from '@/components/Shell'
 import { FindsStrip } from './Finds'
 import { Button } from '@/components/ui/button'
+import { Chip } from '@/components/ui/primitives'
 import { CATALOG, CATEGORIES } from '@/lib/data'
 import { useApp } from '@/lib/store'
 import type { Product } from '@/lib/types'
@@ -15,24 +16,36 @@ const SORTS = ['최근 저장순', '가격 낮은 순', '가격 높은 순', '�
 type Sort = (typeof SORTS)[number]
 const CATS = ['전체', '즐겨찾기', ...CATEGORIES] as const
 type Cat = (typeof CATS)[number]
+type PriFilter = 'all' | 'must' | 'maybe' | 'skip' | 'none'
+const PRI_TABS: { v: PriFilter; label: string }[] = [
+  { v: 'all', label: '전체' },
+  { v: 'must', label: '꼭 살래' },
+  { v: 'maybe', label: '고민' },
+  { v: 'skip', label: '안 살래' },
+  { v: 'none', label: '미정' },
+]
 const rank = (p: Product) => (p.priority === 'must' ? 0 : p.priority === 'maybe' ? 1 : p.priority === null ? 2 : 3)
 
 export function Home() {
-  const { tripProducts, trip, rate, open, setTripId, trips, setTab, points } = useApp()
+  const { tripProducts, trip, rate, open, setTripId, trips, points } = useApp()
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [cat, setCat] = useState<Cat>('전체')
   const [sort, setSort] = useState<Sort>('최근 저장순')
   const [q, setQ] = useState('')
+  const [pri, setPri] = useState<PriFilter>('all')
 
   const list = useMemo(() => {
     const l = tripProducts.filter(
-      (p) => (cat === '전체' || (cat === '즐겨찾기' ? p.favorite : p.category === cat)) && (!q || p.name.includes(q) || p.brand.toLowerCase().includes(q.toLowerCase())),
+      (p) =>
+        (cat === '전체' || (cat === '즐겨찾기' ? p.favorite : p.category === cat)) &&
+        (pri === 'all' || (pri === 'none' ? !p.priority : p.priority === pri)) &&
+        (!q || p.name.includes(q) || p.brand.toLowerCase().includes(q.toLowerCase())),
     )
     if (sort === '가격 낮은 순') return [...l].sort((a, b) => a.price - b.price)
     if (sort === '가격 높은 순') return [...l].sort((a, b) => b.price - a.price)
     if (sort === '우선순위 순') return [...l].sort((a, b) => rank(a) - rank(b))
     return l
-  }, [tripProducts, cat, q, sort])
+  }, [tripProducts, cat, q, sort, pri])
 
   const must = tripProducts.filter((p) => p.priority === 'must')
   const mustYen = must.reduce((s, p) => s + p.price, 0)
@@ -64,7 +77,7 @@ export function Home() {
       ) : (
         <>
           <section className="mt-6 grid grid-cols-2 gap-2.5 lg:max-w-[640px]" aria-label="여행 요약">
-            <button onClick={() => setTab('priority')} className="flex flex-col rounded-[var(--radius-card)] bg-ink p-4 text-left text-white">
+            <button onClick={() => open({ type: 'plan' })} className="flex flex-col rounded-[var(--radius-card)] bg-ink p-4 text-left text-white">
               <span className="text-[13px] font-medium text-white/60">꼭 살래 {must.length}개</span>
               <span className="mt-auto pt-6 text-[24px] leading-none font-bold tracking-tight tabular">{yen(mustYen)}</span>
               <span className="mt-1.5 text-[12px] text-white/50 tabular">약 {won(toWon(mustYen, rate))}</span>
@@ -74,7 +87,7 @@ export function Home() {
                 </span>
               )}
             </button>
-            <button onClick={() => (unsorted.length ? open({ type: 'swipe' }) : setTab('priority'))} className="flex flex-col rounded-[var(--radius-card)] bg-surface p-4 text-left">
+            <button onClick={() => (unsorted.length ? open({ type: 'swipe' }) : open({ type: 'plan' }))} className="flex flex-col rounded-[var(--radius-card)] bg-surface p-4 text-left">
               <span className="text-[13px] font-medium text-muted">{unsorted.length ? '아직 미정' : '정리 완료'}</span>
               <div className="relative mt-3 h-14">
                 {(unsorted.length ? unsorted : tripProducts).slice(0, 3).map((p, i) => (
@@ -83,7 +96,7 @@ export function Home() {
                   </div>
                 ))}
               </div>
-              <span className="mt-2 text-[15px] font-semibold">{unsorted.length ? `${unsorted.length}개 골라 보기` : '우선순위 보기'}</span>
+              <span className="mt-2 text-[15px] font-semibold">{unsorted.length ? `${unsorted.length}개 골라 보기` : '쇼핑 준비 현황'}</span>
             </button>
           </section>
 
@@ -99,7 +112,17 @@ export function Home() {
                 </button>
               )}
             </label>
-            <div className="mt-3 flex items-center gap-1">
+            <div className="no-scrollbar -mx-5 mt-3 flex gap-1.5 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="tablist" aria-label="우선순위">
+              {PRI_TABS.map((t) => {
+                const n = t.v === 'all' ? tripProducts.length : tripProducts.filter((p) => (t.v === 'none' ? !p.priority : p.priority === t.v)).length
+                return (
+                  <Chip key={t.v} active={pri === t.v} onClick={() => setPri(t.v)}>
+                    {t.label} <span className={cn('tabular', pri === t.v ? 'text-white/60' : 'text-faint')}>{n}</span>
+                  </Chip>
+                )
+              })}
+            </div>
+            <div className="mt-2 flex items-center gap-1">
               <Dropdown value={cat} options={CATS} onChange={setCat} label={cat === '전체' ? '전체 상품' : cat} />
               <Dropdown value={sort} options={SORTS} onChange={setSort} label={sort} />
               <span className="flex-1" />

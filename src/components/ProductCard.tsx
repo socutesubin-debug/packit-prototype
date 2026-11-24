@@ -4,7 +4,7 @@ import { useApp } from '@/lib/store'
 import type { Product } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
 import { ProductArt } from './art/ProductArt'
-import { PRIORITY_META, PriorityPill, nextPriority } from './ui/primitives'
+import { PriorityPill, nextPriority } from './ui/primitives'
 
 /** tiny deterministic tilt so cutouts feel placed by hand */
 export const tiltOf = (id: string) => {
@@ -14,7 +14,7 @@ export const tiltOf = (id: string) => {
 }
 
 export function ProductTile({ p, index = 0 }: { p: Product; index?: number }) {
-  const { open, rate, update } = useApp()
+  const { open, rate, update, setPriority } = useApp()
   return (
     <motion.article
       layout
@@ -44,10 +44,8 @@ export function ProductTile({ p, index = 0 }: { p: Product; index?: number }) {
         </button>
       </div>
       <ProductArt art={p.art} tone="none" tilt={tiltOf(p.id)} className="mt-1 aspect-square w-full transition duration-300 group-hover:scale-[1.04]" />
-      <div className="flex h-6 items-center gap-1.5">
-        {p.priority && (
-          <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-bold', PRIORITY_META[p.priority].pill)}>{PRIORITY_META[p.priority].label}</span>
-        )}
+      <div className="flex h-7 items-center gap-1.5">
+        <PriorityPill size="sm" value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />
         {p.purchased && (
           <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold text-white">
             <Check className="size-3" strokeWidth={3} /> 샀어요
