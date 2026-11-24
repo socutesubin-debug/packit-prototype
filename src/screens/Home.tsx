@@ -1,9 +1,10 @@
 import { motion } from 'motion/react'
-import { ChevronDown, LayoutGrid, List, Plus, Search, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, LayoutGrid, List, Plus, RotateCcw, Search, ShoppingBag, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
 import { TripSwitcher } from '@/components/Shell'
+import { SwipeDeck } from '@/components/SwipeDeck'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -90,25 +91,25 @@ export function Home() {
         <EmptyHome onSave={() => open({ type: 'save' })} onSample={sample ? () => setTripId(sample.id) : undefined} />
       ) : (
         <>
-          <section className="mt-6 grid grid-cols-2 gap-2.5 lg:max-w-[640px]" aria-label="여행 요약">
-            <button onClick={() => open({ type: 'plan' })} className="flex flex-col rounded-xl bg-primary p-4 text-left text-primary-foreground shadow-sm transition hover:bg-primary/90">
-              <span className="text-[13px] font-medium text-primary-foreground/60">꼭 살래 {must.length}개</span>
-              <span className="mt-auto pt-6 text-[24px] leading-none font-semibold tracking-tight tabular">{yen(mustYen)}</span>
-              <span className="mt-1.5 text-[12px] text-primary-foreground/50 tabular">약 {won(toWon(mustYen, rate))}</span>
-              {trip.budget > 0 && <Progress value={ratio * 100} className="mt-3 h-1 bg-primary-foreground/15 [&>[data-slot=progress-indicator]]:bg-primary-foreground" />}
-            </button>
-            <button onClick={() => (unsorted.length ? open({ type: 'swipe' }) : open({ type: 'plan' }))} className="flex flex-col rounded-xl border bg-card p-4 text-left shadow-xs transition hover:bg-accent/50">
-              <span className="text-[13px] font-medium text-muted-foreground">{unsorted.length ? '아직 미정' : '정리 완료'}</span>
-              <div className="relative mt-3 h-14">
-                {(unsorted.length ? unsorted : tripProducts).slice(0, 3).map((p, i) => (
-                  <div key={p.id} className="absolute top-0" style={{ left: i * 30 }}>
-                    <ProductArt art={p.art} tone="none" tilt={(i - 1) * 10} className="size-14" />
-                  </div>
-                ))}
-              </div>
-              <span className="mt-2 text-[15px] font-medium">{unsorted.length ? `${unsorted.length}개 골라 보기` : '쇼핑 준비 현황'}</span>
-            </button>
-          </section>
+          <SwipeDeck />
+
+          <button
+            onClick={() => open({ type: 'plan' })}
+            className="mt-4 flex w-full items-center gap-4 rounded-xl border bg-card px-4 py-3.5 text-left shadow-xs transition hover:bg-accent/50"
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+              <ShoppingBag className="size-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[12.5px] font-medium text-muted-foreground">꼭 살래 {must.length}개 · 약 {won(toWon(mustYen, rate))}</span>
+              <span className="block text-[20px] leading-tight font-semibold tracking-tight tabular">{yen(mustYen)}</span>
+              {trip.budget > 0 && <Progress value={ratio * 100} className="mt-2 h-1" />}
+            </span>
+            <span className="flex shrink-0 items-center gap-0.5 text-[12.5px] text-muted-foreground">
+              {trip.budget > 0 && <span className="tabular">예산 {Math.round(ratio * 100)}%</span>}
+              <ChevronRight className="size-4" />
+            </span>
+          </button>
 
 
           <div className="mt-7">
@@ -135,7 +136,9 @@ export function Home() {
               <Dropdown title="카테고리" value={cat} options={CATS} onChange={setCat} label={cat === '전체' ? '전체 상품' : cat} />
               <Dropdown title="정렬" value={sort} options={SORTS} onChange={setSort} label={sort} />
               <span className="flex-1" />
-              <span className="mr-1 text-[13px] text-muted-foreground tabular">{list.length}개</span>
+              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => open({ type: 'swipe' })} aria-label="스와이프로 다시 정리">
+                <RotateCcw /> <span className="hidden sm:inline">다시 정리</span>
+              </Button>
               <ToggleGroup type="single" variant="outline" size="sm" value={view} onValueChange={(v) => v && setView(v as 'grid' | 'list')}>
                 <ToggleGroupItem value="grid" aria-label="카드로 보기">
                   <LayoutGrid />

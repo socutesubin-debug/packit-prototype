@@ -232,7 +232,8 @@ export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; i
               addProducts(chosen)
               setTab('home')
               close()
-              notify(`${chosen.length}개 상품을 담았어요`)
+              notify(`${chosen.length}개 담았어요 · 홈에서 바로 골라 보세요`)
+              window.scrollTo({ top: 0 })
             }}
           >
             {finished ? `${chosen.length}개 리스트에 담기` : '정리하는 중…'}

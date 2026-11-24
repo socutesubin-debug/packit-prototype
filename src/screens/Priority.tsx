@@ -1,10 +1,10 @@
 import { AnimatePresence, motion, useMotionValue, useTransform, animate, type PanInfo } from 'motion/react'
-import { ArrowLeft, Heart, HelpCircle, RotateCcw, Undo2, X } from 'lucide-react'
+import { ArrowLeft, Heart, Hourglass, RotateCcw, ShoppingBag, Undo2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
-import { PRIORITY_META, Panel, Segmented } from '@/components/ui/primitives'
+import { PRIORITY_ICON, PRIORITY_META, Panel, Segmented } from '@/components/ui/primitives'
 import { useApp } from '@/lib/store'
 import type { Priority as P, Product } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
@@ -226,14 +226,14 @@ export function Swipe() {
         {!done && (
           <>
             <div className="mt-6 flex items-center justify-center gap-5">
-              <Round label="안 살래" onClick={() => decide('skip')} className="size-16 bg-surface text-ink-2 shadow-xs">
-                <X className="size-7" strokeWidth={2.6} />
+              <Round label="안 살래" onClick={() => decide('skip')} className={cn('size-16 border', PRIORITY_ICON.skip.cls)}>
+                <X className="size-7" strokeWidth={2.2} />
               </Round>
-              <Round label="고민" onClick={() => decide('maybe')} className="size-14 bg-surface text-maybe shadow-xs">
-                <HelpCircle className="size-6" strokeWidth={2.6} />
+              <Round label="고민" onClick={() => decide('maybe')} className={cn('size-13 border', PRIORITY_ICON.maybe.cls)}>
+                <Hourglass className="size-6" strokeWidth={2.2} />
               </Round>
-              <Round label="꼭 살래" onClick={() => decide('must')} className="size-16 bg-ink text-white shadow-lg">
-                <Heart className="size-7 fill-white" />
+              <Round label="꼭 살래" onClick={() => decide('must')} className={cn('size-16 border shadow-lg', PRIORITY_ICON.must.cls)}>
+                <ShoppingBag className="size-7" strokeWidth={2.2} />
               </Round>
             </div>
             <button onClick={undo} disabled={!history.length} className="mx-auto mt-4 inline-flex h-10 items-center gap-1.5 text-[13px] font-semibold text-muted-foreground disabled:text-faint">
