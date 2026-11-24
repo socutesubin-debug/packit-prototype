@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
 import { TripSwitcher } from '@/components/Shell'
-import { SwipeDeck } from '@/components/SwipeDeck'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -91,8 +90,6 @@ export function Home() {
         <EmptyHome onSave={() => open({ type: 'save' })} onSample={sample ? () => setTripId(sample.id) : undefined} />
       ) : (
         <>
-          <SwipeDeck />
-
           <button
             onClick={() => open({ type: 'plan' })}
             className="mt-4 flex w-full items-center gap-4 rounded-xl border bg-card px-4 py-3.5 text-left shadow-xs transition hover:bg-accent/50"

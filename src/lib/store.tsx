@@ -12,7 +12,7 @@ export type Overlay =
   | { type: 'create' }
   | { type: 'save' }
   | { type: 'analyze'; mode: 'shots' | 'link' | 'manual'; images: string[] }
-  | { type: 'swipe' }
+  | { type: 'swipe'; ids?: string[]; fresh?: boolean }
   | { type: 'find'; id: string }
   | { type: 'post' }
   | { type: 'benefits' }

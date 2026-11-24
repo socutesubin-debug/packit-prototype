@@ -125,9 +125,10 @@ function List({ items }: { items: Product[] }) {
 
 /* ---------- Swipe deck ---------- */
 
-export function Swipe() {
+export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
   const { tripProducts, setPriority, close, open, rate } = useApp()
   const deck = useMemo(() => {
+    if (ids?.length) return ids
     const u = tripProducts.filter((p) => !p.priority)
     return (u.length ? u : tripProducts).map((p) => p.id)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -178,7 +179,12 @@ export function Swipe() {
         <div className="mt-1 h-1 overflow-hidden rounded-full bg-line">
           <motion.div className="h-full bg-ink" animate={{ width: `${(Math.min(i, cards.length) / Math.max(1, cards.length)) * 100}%` }} />
         </div>
-        {!done && <h1 className="display mt-5 text-[26px]">살지 말지 골라 볼까요?</h1>}
+        {!done && (
+          <div className="mt-5">
+            {fresh && <p className="text-[13px] font-medium text-muted-foreground">방금 담은 {cards.length}개</p>}
+            <h1 className="display mt-0.5 text-[26px]">살지 말지 골라 볼까요?</h1>
+          </div>
+        )}
 
         <div className="relative mt-5 flex-1">
           {done ? (
@@ -199,10 +205,10 @@ export function Swipe() {
                   size="lg"
                   onClick={() => {
                     close()
-                    open({ type: 'plan' })
+                    if (!fresh) open({ type: 'plan' })
                   }}
                 >
-                  결과 보기
+                  {fresh ? '리스트로 돌아가기' : '결과 보기'}
                 </Button>
                 <Button variant="ghost" onClick={undo} disabled={!history.length}>
                   <Undo2 className="size-4" /> 마지막 선택 취소

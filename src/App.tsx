@@ -30,7 +30,7 @@ function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
     case 'analyze':
       return <Analyze mode={o.mode} images={o.images} />
     case 'swipe':
-      return <Swipe />
+      return <Swipe ids={o.ids} fresh={o.fresh} />
     case 'find':
       return <FindDetail id={o.id} z={z} />
     case 'post':

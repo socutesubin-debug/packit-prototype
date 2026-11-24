@@ -112,9 +112,9 @@ export function SaveSheet() {
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            addManual(name.trim(), Number(price) || 0, cat)
+            const added = addManual(name.trim(), Number(price) || 0, cat)
             close()
-            notify('리스트에 담았어요')
+            open({ type: 'swipe', ids: [added.id], fresh: true })
           }}
           className="flex flex-col gap-3"
         >
@@ -145,7 +145,7 @@ export function SaveSheet() {
 }
 
 export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; images: string[] }) {
-  const { close, scan, addProducts, notify, rate, setTab } = useApp()
+  const { close, open, scan, addProducts, notify, rate, setTab } = useApp()
   const count = mode === 'link' ? 1 : images.length || 3
   const results = useMemo(() => scan(count), []) // eslint-disable-line react-hooks/exhaustive-deps
   const [done, setDone] = useState(0)
@@ -232,8 +232,7 @@ export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; i
               addProducts(chosen)
               setTab('home')
               close()
-              notify(`${chosen.length}개 담았어요 · 홈에서 바로 골라 보세요`)
-              window.scrollTo({ top: 0 })
+              open({ type: 'swipe', ids: chosen.map((c) => c.id), fresh: true })
             }}
           >
             {finished ? `${chosen.length}개 리스트에 담기` : '정리하는 중…'}
