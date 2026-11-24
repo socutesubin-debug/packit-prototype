@@ -75,6 +75,9 @@ export function Login() {
           <button onClick={() => setAuthed(true)} className="mt-2 h-11 text-[14px] font-semibold text-muted underline-offset-4 hover:underline">
             로그인 없이 예시 여행 둘러보기
           </button>
+          <a href="#mobile" className="mt-1 hidden h-10 items-center justify-center text-[13px] font-semibold text-faint hover:text-muted sm:flex">
+            휴대폰 화면으로 보기
+          </a>
         </div>
       </section>
     </div>

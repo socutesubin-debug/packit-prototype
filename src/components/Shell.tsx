@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronDown, House, ListChecks, Luggage, Map, MapPin, Plus } from 'lucide-react'
+import { Check, ChevronDown, House, ListChecks, Luggage, Map, MapPin, Plus, Smartphone } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useApp, type Tab } from '@/lib/store'
 import { cn, dday, shortRange } from '@/lib/utils'
@@ -79,7 +79,10 @@ export function Sidebar() {
       <Button className="mt-6 w-full" size="lg" onClick={() => open({ type: 'save' })}>
         <Plus className="size-5" strokeWidth={2.6} /> 상품 저장하기
       </Button>
-      <div className="mt-auto rounded-[20px] bg-sunken p-4">
+      <a href="#mobile" className="mt-auto mb-3 flex h-11 items-center justify-center gap-2 rounded-2xl text-[13.5px] font-semibold text-ink-2 ring-1 ring-line hover:bg-sunken">
+        <Smartphone className="size-4" /> 휴대폰 화면으로 보기
+      </a>
+      <div className="rounded-[20px] bg-sunken p-4">
         <p className="text-[12px] font-semibold text-muted">{trip.city} 여행까지</p>
         <p className="display mt-1 text-[28px]">{dday(trip.start)}</p>
         <p className="mt-1 text-[12.5px] text-muted">{shortRange(trip.start, trip.end)}</p>
