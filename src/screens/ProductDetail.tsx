@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Check, ChevronLeft, ChevronRight, Frown, Languages, Map, Meh, Pencil, Share2, Smile, Star, Store as StoreIcon, X } from 'lucide-react'
 import { useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
+import { tiltOf } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { IconBtn, Panel } from '@/components/ui/primitives'
 import { PHRASES, STORES } from '@/lib/data'
@@ -10,15 +11,15 @@ import type { Priority, Review } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
 
 export const MOOD: Record<Review['mood'], { label: string; icon: typeof Smile; cls: string }> = {
-  good: { label: '좋아요', icon: Smile, cls: 'text-open bg-[#E3F5EC]' },
-  soso: { label: '보통', icon: Meh, cls: 'text-[#A86A0C] bg-maybe-soft' },
+  good: { label: '좋아요', icon: Smile, cls: 'text-ink bg-sunken' },
+  soso: { label: '보통', icon: Meh, cls: 'text-ink-2 bg-sunken' },
   bad: { label: '별로예요', icon: Frown, cls: 'text-muted bg-sunken' },
 }
 
 const PRI: { v: Priority; label: string; on: string }[] = [
-  { v: 'must', label: '꼭 살래', on: 'bg-brand text-white shadow-[var(--shadow-brand)]' },
-  { v: 'maybe', label: '고민', on: 'bg-maybe text-white' },
-  { v: 'skip', label: '안 살래', on: 'bg-ink-2 text-white' },
+  { v: 'must', label: '꼭 살래', on: 'bg-ink text-white' },
+  { v: 'maybe', label: '고민', on: 'bg-ink text-white' },
+  { v: 'skip', label: '안 살래', on: 'bg-ink text-white' },
 ]
 
 export function ProductDetail({ id, z }: { id: string; z: number }) {
@@ -42,52 +43,56 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
   return (
     <Panel onClose={close} z={z}>
       <div className="relative flex-1 overflow-y-auto pb-32">
-        <div className="relative">
-          <ProductArt art={p.art} className="aspect-square max-h-[460px] w-full" />
-          <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4 pt-[max(16px,env(safe-area-inset-top))]">
-            <IconBtn label="뒤로" onClick={close}>
-              <ChevronLeft className="size-5" />
+        <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))]">
+          <IconBtn label="뒤로" onClick={close} className="shadow-none">
+            <ChevronLeft className="size-5" />
+          </IconBtn>
+          <div className="flex gap-2">
+            <IconBtn label="공유" onClick={share} className="shadow-none">
+              <Share2 className="size-[18px]" />
             </IconBtn>
-            <div className="flex gap-2">
-              <IconBtn label="공유" onClick={share}>
-                <Share2 className="size-[18px]" />
-              </IconBtn>
-              <IconBtn label={p.favorite ? '즐겨찾기 해제' : '즐겨찾기'} onClick={() => update(p.id, { favorite: !p.favorite })}>
-                <Star className={cn('size-[18px]', p.favorite && 'fill-[#F2B63B] text-[#F2B63B]')} />
-              </IconBtn>
-            </div>
+            <IconBtn label={p.favorite ? '즐겨찾기 해제' : '즐겨찾기'} onClick={() => update(p.id, { favorite: !p.favorite })} className="shadow-none">
+              <Star className={cn('size-[18px]', p.favorite && 'fill-ink')} />
+            </IconBtn>
           </div>
         </div>
+        <div className="px-5 pt-5">
+          <h1 className="text-[26px] leading-tight font-bold tracking-tight text-balance">{p.name}</h1>
+          <p className="mt-1 text-[14px] text-muted">
+            {p.brand}
+            {p.ja && <span className="block text-[12.5px] text-faint">{p.ja}</span>}
+          </p>
+        </div>
+        <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }}>
+          <ProductArt art={p.art} tone="none" tilt={tiltOf(p.id)} className="mx-auto aspect-square w-[78%] max-w-[340px]" />
+        </motion.div>
 
-        <div className="relative -mt-6 rounded-t-[28px] bg-ground px-5 pt-6">
-          <p className="text-[12px] font-bold tracking-[0.04em] text-muted">{p.brand}</p>
-          <h1 className="mt-1.5 text-[23px] leading-tight font-extrabold tracking-tight text-balance">{p.name}</h1>
-          {p.ja && <p className="mt-1 text-[13px] text-muted">{p.ja}</p>}
+        <div className="px-5">
           <p className={cn('mt-3 text-[14.5px] leading-relaxed text-ink-2', !more && 'line-clamp-2')}>{p.desc}</p>
           <button onClick={() => setMore(!more)} className="mt-1 text-[13px] font-semibold text-muted">
             {more ? '접기' : '펼쳐보기'}
           </button>
 
           {p.pickRate > 0 && (
-            <div className="mt-4 rounded-2xl bg-surface p-3.5 shadow-[var(--shadow-card)]">
+            <div className="mt-4 rounded-2xl bg-surface p-4">
               <div className="flex items-baseline justify-between text-[13px]">
-                <span className="font-semibold">다른 여행자 <b className="text-brand">{p.pickRate}%</b>가 꼭 살래로 골랐어요</span>
+                <span className="font-semibold">다른 여행자 <b>{p.pickRate}%</b>가 꼭 살래로 골랐어요</span>
                 <span className="text-[11px] text-faint">예시 데이터</span>
               </div>
               <div className="mt-2 h-1.5 rounded-full bg-sunken">
-                <motion.div className="h-full rounded-full bg-brand" initial={{ width: 0 }} animate={{ width: `${p.pickRate}%` }} transition={{ delay: 0.2, duration: 0.6 }} />
+                <motion.div className="h-full rounded-full bg-ink" initial={{ width: 0 }} animate={{ width: `${p.pickRate}%` }} transition={{ delay: 0.2, duration: 0.6 }} />
               </div>
             </div>
           )}
 
           <section className="mt-4 grid grid-cols-2 gap-2.5">
-            <div className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]">
+            <div className="rounded-2xl bg-surface p-4 ">
               <p className="text-[12px] font-semibold text-muted">현지 가격</p>
               <p className="mt-1 text-[24px] font-extrabold tracking-tight tabular">{yen(p.price)}</p>
             </div>
-            <div className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]">
+            <div className="rounded-2xl bg-surface p-4 ">
               <p className="text-[12px] font-semibold text-muted">구매 예상 가격</p>
-              <p className="mt-1 text-[24px] font-extrabold tracking-tight text-brand tabular">약 {won(toWon(p.price, rate))}</p>
+              <p className="mt-1 text-[24px] font-extrabold tracking-tight tabular">약 {won(toWon(p.price, rate))}</p>
             </div>
           </section>
           <div className="mt-2 flex items-center justify-between px-1 text-[12.5px] text-muted">
@@ -198,7 +203,7 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                 {p.reviews.map((r, i) => {
                   const M = MOOD[r.mood]
                   return (
-                    <li key={i} className="rounded-2xl bg-surface p-4 shadow-[var(--shadow-card)]">
+                    <li key={i} className="rounded-2xl bg-surface p-4 ">
                       <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-bold', M.cls)}>
                         <M.icon className="size-3.5" /> {M.label}
                       </span>

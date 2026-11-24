@@ -16,7 +16,7 @@ export function Login() {
   const { setAuthed, open } = useApp()
   return (
     <div className="flex min-h-dvh flex-col lg:flex-row">
-      <section className="relative flex flex-1 items-center justify-center overflow-hidden px-6 pt-16 pb-6 lg:bg-brand lg:p-16">
+      <section className="relative flex flex-1 items-center justify-center overflow-hidden px-6 pt-16 pb-6 lg:bg-surface lg:p-16">
         <div className="relative aspect-square w-full max-w-[360px] lg:max-w-[520px]">
           {FLOAT.map((f) => (
             <motion.div

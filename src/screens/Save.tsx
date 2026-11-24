@@ -64,7 +64,7 @@ export function SaveSheet() {
               close()
               open({ type: 'analyze', mode: 'shots', images: [] })
             }}
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[14px] font-semibold text-brand hover:bg-brand-soft"
+            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-[14px] font-semibold text-ink-2 hover:bg-sunken"
           >
             <Sparkles className="size-4" /> 예시 스크린샷으로 AI 정리 체험하기
           </button>
@@ -153,7 +153,7 @@ export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; i
           </button>
         </header>
         <div className="mt-2">
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1 text-[12.5px] font-bold text-brand">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 text-[12.5px] font-bold text-ink ring-1 ring-line">
             <Sparkles className="size-3.5" /> AI 상품 정리
           </p>
           <h1 className="display mt-3 text-[28px]">
@@ -248,7 +248,7 @@ function Shot({ src, product, state }: { src?: string; product: Product; state: 
         </div>
       )}
       {state === 'done' && (
-        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-brand text-white shadow">
+        <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-2 right-2 grid size-6 place-items-center rounded-full bg-ink text-white shadow">
           <Check className="size-3.5" strokeWidth={3.2} />
         </motion.span>
       )}

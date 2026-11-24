@@ -17,7 +17,7 @@ export function BottomNav() {
   const { tab, setTab, open } = useApp()
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex items-end justify-between gap-3 px-4 pb-[max(14px,env(safe-area-inset-bottom))] lg:hidden">
-      <nav className="pointer-events-auto flex h-16 flex-1 items-center justify-around rounded-full bg-surface/90 px-2 shadow-[var(--shadow-float)] ring-1 ring-black/5 backdrop-blur-xl" aria-label="주요 메뉴">
+      <nav className="pointer-events-auto flex h-[68px] flex-1 items-center justify-around rounded-[28px] bg-surface px-2 shadow-[0_8px_30px_-12px_rgba(20,20,19,0.22)] ring-1 ring-black/[0.04]" aria-label="주요 메뉴">
         {NAV.map(({ id, label, icon: Icon }) => {
           const active = tab === id
           return (
@@ -25,9 +25,8 @@ export function BottomNav() {
               key={id}
               onClick={() => setTab(id)}
               aria-current={active ? 'page' : undefined}
-              className={cn('relative flex h-12 min-w-14 flex-col items-center justify-center gap-0.5 rounded-full px-2 text-[10.5px] font-semibold transition-colors', active ? 'text-ink' : 'text-faint')}
+              className={cn('relative flex h-12 min-w-14 flex-col items-center justify-center gap-1 rounded-full px-2 text-[11px] transition-colors', active ? 'font-bold text-ink' : 'font-medium text-faint')}
             >
-              {active && <motion.span layoutId="nav-pill" className="absolute inset-0 -z-0 rounded-full bg-sunken" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />}
               <Icon className="relative size-[21px]" strokeWidth={active ? 2.4 : 2} />
               <span className="relative">{label}</span>
             </button>
@@ -37,7 +36,7 @@ export function BottomNav() {
       <button
         onClick={() => open({ type: 'save' })}
         aria-label="상품 저장하기"
-        className="pointer-events-auto grid size-16 shrink-0 place-items-center rounded-full bg-brand text-white shadow-[var(--shadow-brand)] transition active:scale-95"
+        className="pointer-events-auto grid size-[68px] shrink-0 place-items-center rounded-full bg-ink text-white shadow-[var(--shadow-float)] transition active:scale-95"
       >
         <Plus className="size-7" strokeWidth={2.6} />
       </button>

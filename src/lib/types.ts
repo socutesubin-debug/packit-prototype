@@ -44,7 +44,7 @@ export interface PlacedSticker {
   y: number
   rot: number
 }
-export type StickerKind = 'tokyo' | 'packit' | 'fuji' | 'sakura' | 'tag' | 'ticket' | 'onigiri' | 'osaka'
+export type StickerKind = 'tokyo' | 'packit' | 'fuji' | 'sakura' | 'tag' | 'ticket' | 'onigiri' | 'osaka' | 'postit' | 'fragile' | 'tower' | 'cat'
 
 export interface Trip {
   id: string

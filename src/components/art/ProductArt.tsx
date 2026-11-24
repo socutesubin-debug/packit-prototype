@@ -1,15 +1,34 @@
 import type { Art } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-/** Placeholder packaging illustration — swap with real product photos later */
-export function ProductArt({ art, className, plain }: { art: Art; className?: string; plain?: boolean }) {
-  const { shape, color, accent } = art
+/**
+ * Product "cutout": placeholder packaging illustration that floats on its surface.
+ * tone: neutral (soft gray square) · none (transparent, for white cards) · color (tinted).
+ * Pass `image` (a background-removed PNG) to show a real product photo instead.
+ */
+export function ProductArt({
+  art,
+  className,
+  tone = 'neutral',
+  image,
+  tilt = 0,
+}: {
+  art: Art
+  className?: string
+  tone?: 'neutral' | 'none' | 'color'
+  image?: string
+  tilt?: number
+}) {
+  const bg = tone === 'neutral' ? '#F4F4F2' : tone === 'color' ? art.bg : undefined
   return (
-    <div className={cn('relative grid place-items-center overflow-hidden', className)} style={plain ? undefined : { background: art.bg }}>
-      <svg viewBox="0 0 200 200" className="h-[86%] w-[86%]" aria-hidden>
-        <ellipse cx="100" cy="176" rx="52" ry="7" fill="#000" opacity="0.07" />
-        <Shape shape={shape} color={color} accent={accent} />
-      </svg>
+    <div className={cn('relative grid place-items-center overflow-hidden', className)} style={{ background: bg }}>
+      {image ? (
+        <img src={image} alt="" className="h-[82%] w-[82%] object-contain drop-shadow-[0_14px_14px_rgba(20,20,19,0.18)]" style={{ rotate: `${tilt}deg` }} />
+      ) : (
+        <svg viewBox="0 0 200 200" className="h-[84%] w-[84%] drop-shadow-[0_14px_12px_rgba(20,20,19,0.16)]" style={{ rotate: `${tilt}deg` }} aria-hidden>
+          <Shape shape={art.shape} color={art.color} accent={art.accent} />
+        </svg>
+      )}
     </div>
   )
 }

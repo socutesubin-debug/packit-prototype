@@ -32,9 +32,9 @@ export function Chip({
 }
 
 export const PRIORITY_META: Record<Priority, { label: string; dot: string; pill: string }> = {
-  must: { label: '꼭 살래', dot: 'bg-must', pill: 'bg-brand text-white' },
-  maybe: { label: '고민', dot: 'bg-maybe', pill: 'bg-maybe-soft text-[#A86A0C]' },
-  skip: { label: '안 살래', dot: 'bg-skip', pill: 'bg-sunken text-muted' },
+  must: { label: '꼭 살래', dot: 'bg-must', pill: 'bg-brand-soft text-brand' },
+  maybe: { label: '고민', dot: 'bg-maybe', pill: 'bg-sunken text-ink-2' },
+  skip: { label: '안 살래', dot: 'bg-skip', pill: 'bg-sunken text-faint' },
 }
 
 export function PriorityPill({ value, onClick, size = 'md' }: { value: Priority | null; onClick?: () => void; size?: 'sm' | 'md' }) {

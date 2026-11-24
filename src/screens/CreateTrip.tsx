@@ -233,11 +233,11 @@ function RangeCalendar({ value, onChange }: { value: { start?: string; end?: str
           const isEnd = s === value.end
           const inRange = value.start && value.end && s > value.start && s < value.end
           return (
-            <div key={i} className={cn('relative h-10', inRange && 'bg-brand-soft', isStart && value.end && 'rounded-l-full bg-brand-soft', isEnd && 'rounded-r-full bg-brand-soft')}>
+            <div key={i} className={cn('relative h-10', inRange && 'bg-sunken', isStart && value.end && 'rounded-l-full bg-sunken', isEnd && 'rounded-r-full bg-sunken')}>
               <button
                 disabled={past}
                 onClick={() => pick(d)}
-                className={cn('mx-auto grid size-10 place-items-center rounded-full font-semibold tabular transition', past ? 'text-faint' : 'hover:bg-sunken', (isStart || isEnd) && 'bg-brand text-white hover:bg-brand', d.getDay() === 0 && !past && !isStart && !isEnd && 'text-brand')}
+                className={cn('mx-auto grid size-10 place-items-center rounded-full font-semibold tabular transition', past ? 'text-faint' : 'hover:bg-sunken', (isStart || isEnd) && 'bg-ink text-white hover:bg-ink', d.getDay() === 0 && !past && !isStart && !isEnd && 'text-brand')}
               >
                 {d.getDate()}
               </button>

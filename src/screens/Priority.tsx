@@ -52,7 +52,7 @@ export function Priority() {
             <p className="text-[17px] font-bold">미정 상품 {unsorted.length}개</p>
             <p className="mt-0.5 text-[13px] text-white/60">한 장씩 넘기며 살지 말지 골라 보세요</p>
           </div>
-          <span className="rounded-full bg-brand px-4 py-2 text-[13.5px] font-bold">고르기</span>
+          <span className="rounded-full bg-white px-4 py-2 text-[13.5px] font-bold text-ink">고르기</span>
         </motion.button>
       )}
 
@@ -177,7 +177,7 @@ export function Swipe() {
         <div className="relative mt-5 flex-1">
           {done ? (
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex h-full flex-col items-center justify-center text-center">
-              <div className="grid size-20 place-items-center rounded-full bg-brand text-white shadow-[var(--shadow-brand)]">
+              <div className="grid size-20 place-items-center rounded-full bg-ink text-white">
                 <Heart className="size-9 fill-white" />
               </div>
               <h2 className="display mt-6 text-[28px]">다 골랐어요!</h2>
@@ -226,8 +226,8 @@ export function Swipe() {
               <Round label="고민" onClick={() => decide('maybe')} className="size-14 bg-surface text-maybe shadow-[var(--shadow-card)]">
                 <HelpCircle className="size-6" strokeWidth={2.6} />
               </Round>
-              <Round label="꼭 살래" onClick={() => decide('must')} className="size-16 bg-brand text-white shadow-[var(--shadow-brand)]">
-                <Heart className="size-7 fill-white" />
+              <Round label="꼭 살래" onClick={() => decide('must')} className="size-16 bg-ink text-white shadow-[var(--shadow-float)]">
+                <Heart className="size-7 fill-brand text-brand" />
               </Round>
             </div>
             <button onClick={undo} disabled={!history.length} className="mx-auto mt-4 inline-flex h-10 items-center gap-1.5 text-[13px] font-semibold text-muted disabled:text-faint">
