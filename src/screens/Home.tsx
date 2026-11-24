@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
 import { TripSwitcher } from '@/components/Shell'
-import { FindsStrip } from './Finds'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -111,7 +110,6 @@ export function Home() {
             </button>
           </section>
 
-          <FindsStrip />
 
           <div className="mt-7">
             <div className="relative">
