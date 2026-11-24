@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { IconBtn, Panel } from '@/components/ui/primitives'
 import { PHRASES, STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
+import { FindPhoto, FlagMark } from './Finds'
 import type { Priority, Review } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
 
@@ -23,13 +24,14 @@ const PRI: { v: Priority; label: string; on: string }[] = [
 ]
 
 export function ProductDetail({ id, z }: { id: string; z: number }) {
-  const { products, close, closeAll, update, rate, setRate, open, notify, setTab, setMapFocus } = useApp()
+  const { products, close, closeAll, update, rate, setRate, open, notify, setTab, setMapFocus, finds } = useApp()
   const p = products.find((x) => x.id === id)
   const [more, setMore] = useState(false)
   const [editRate, setEditRate] = useState(false)
   const [rateDraft, setRateDraft] = useState(String(rate))
   if (!p) return null
   const stores = STORES.filter((s) => p.storeIds.includes(s.id))
+  const find = p.findId ? finds.find((f) => f.id === p.findId) : undefined
 
   const share = async () => {
     try {
@@ -167,6 +169,18 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
             />
           </label>
 
+          {find && (
+            <button onClick={() => open({ type: 'find', id: find.id })} className="mt-6 flex w-full items-center gap-3 rounded-[20px] bg-surface p-3 text-left">
+              <FindPhoto f={find} className="size-14 shrink-0 rounded-xl" />
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-1 text-[12px] font-semibold text-brand">
+                  <FlagMark className="h-[13px] w-[10px]" /> 현지 발견
+                </span>
+                <span className="mt-0.5 block truncate text-[14px] font-semibold">{find.author}님이 {find.place}에서 발견</span>
+              </span>
+              <ChevronRight className="size-4 text-muted" />
+            </button>
+          )}
           {stores.length > 0 && (
             <section className="mt-6">
               <h2 className="text-[16px] font-bold">살 수 있는 곳 {stores.length}</h2>
@@ -228,7 +242,7 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
           size="lg"
           className="flex-1"
           onClick={() => {
-            setMapFocus(stores[0]?.id ?? null)
+            setMapFocus(find ? `f:${find.id}` : (stores[0]?.id ?? null))
             closeAll()
             setTab('map')
           }}

@@ -34,6 +34,7 @@ export interface Product {
   storeIds: string[]
   pickRate: number
   reviews: Review[]
+  findId?: string
 }
 
 export type SuitcaseModel = 'ribbed' | 'classic' | 'soft'
@@ -71,4 +72,27 @@ export interface Store {
   x: number
   y: number
   color: string
+}
+
+/** A "local find": an item you can only get in that place, posted by a traveler */
+export interface Find {
+  id: string
+  city: string
+  title: string
+  story: string
+  place: string
+  area: string
+  x: number
+  y: number
+  price?: number
+  category: Category
+  art: Art
+  photo?: string
+  author: string
+  authorTrip: string
+  daysAgo: number
+  saves: number
+  thanks: number
+  mine?: boolean
+  sample?: boolean
 }

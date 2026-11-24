@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import { CATALOG, SCAN_POOL, SEED_TRIPS, seedProducts } from './data'
-import type { Category, Priority, Product, Trip } from './types'
+import { CATALOG, SCAN_POOL, SEED_FINDS, SEED_TRIPS, seedProducts } from './data'
+import type { Category, Find, Priority, Product, Trip } from './types'
 import { uid } from './utils'
 
 export type Tab = 'home' | 'priority' | 'map' | 'carry'
@@ -13,6 +13,9 @@ export type Overlay =
   | { type: 'save' }
   | { type: 'analyze'; mode: 'shots' | 'link' | 'manual'; images: string[] }
   | { type: 'swipe' }
+  | { type: 'find'; id: string }
+  | { type: 'post' }
+  | { type: 'benefits' }
 
 interface Toast {
   id: string
@@ -29,6 +32,10 @@ function useAppState() {
   const [overlays, setOverlays] = useState<Overlay[]>([])
   const [toast, setToast] = useState<Toast | null>(null)
   const [mapFocus, setMapFocus] = useState<string | null>(null)
+  const [finds, setFinds] = useState<Find[]>(SEED_FINDS)
+  const [points, setPoints] = useState(1240)
+  const [thanked, setThanked] = useState<Set<string>>(() => new Set())
+  const [redeemed, setRedeemed] = useState<string[]>([])
 
   const trip = trips.find((t) => t.id === tripId) ?? trips[0]
   const tripProducts = useMemo(() => products.filter((p) => p.tripId === trip.id), [products, trip.id])
@@ -108,7 +115,53 @@ function useAppState() {
     [trip.id],
   )
 
+  const addFind = useCallback((f: Omit<Find, 'id' | 'city' | 'author' | 'authorTrip' | 'daysAgo' | 'saves' | 'thanks' | 'mine'>) => {
+    const nf: Find = { ...f, city: trip.city, id: `f-${uid()}`, author: '수빈', authorTrip: `${trip.city} 여행 중`, daysAgo: 0, saves: 0, thanks: 0, mine: true }
+    setFinds((fs) => [nf, ...fs])
+    setPoints((p) => p + 50)
+    return nf
+  }, [trip.city])
+
+  const savedFind = useCallback((findId: string) => products.some((p) => p.tripId === trip.id && p.findId === findId), [products, trip.id])
+
+  const toggleSaveFind = useCallback(
+    (f: Find) => {
+      const existing = products.find((p) => p.tripId === trip.id && p.findId === f.id)
+      if (existing) {
+        setProducts((ps) => ps.filter((p) => p.id !== existing.id))
+        setFinds((fs) => fs.map((x) => (x.id === f.id ? { ...x, saves: Math.max(0, x.saves - 1) } : x)))
+        return false
+      }
+      const p: Product = {
+        id: `pf-${uid()}`, tripId: trip.id, name: f.title, ja: '', brand: f.place, category: f.category, price: f.price ?? 0,
+        desc: f.story, art: f.art, priority: 'must', favorite: false, memo: '', purchased: false, storeIds: [], pickRate: 0, reviews: [], findId: f.id,
+      }
+      setProducts((ps) => [p, ...ps])
+      setFinds((fs) => fs.map((x) => (x.id === f.id ? { ...x, saves: x.saves + 1 } : x)))
+      return true
+    },
+    [products, trip.id],
+  )
+
+  const toggleThank = useCallback((id: string) => {
+    setThanked((s) => {
+      const n = new Set(s)
+      const on = !n.has(id)
+      if (on) n.add(id)
+      else n.delete(id)
+      setFinds((fs) => fs.map((x) => (x.id === id ? { ...x, thanks: x.thanks + (on ? 1 : -1) } : x)))
+      return n
+    })
+  }, [])
+
+  /** caller checks the balance first */
+  const redeem = useCallback((id: string, cost: number) => {
+    setPoints((p) => p - cost)
+    setRedeemed((r) => [...r, id])
+  }, [])
+
   return {
+    finds, points, thanked, redeemed, addFind, savedFind, toggleSaveFind, toggleThank, redeem,
     authed, setAuthed, trips, trip, tripId, setTripId, products, tripProducts, rate, setRate,
     tab, setTab, overlays, open, close, closeAll, toast, notify, update, setPriority,
     addTrip, updateTrip, scan, addProducts, addManual, mapFocus, setMapFocus,

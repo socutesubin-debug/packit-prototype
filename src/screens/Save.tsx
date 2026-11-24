@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Chip, Sheet } from '@/components/ui/primitives'
 import { CATEGORIES } from '@/lib/data'
 import { useApp } from '@/lib/store'
+import { FlagMark } from './Finds'
 import type { Category, Product } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
 
@@ -46,6 +47,22 @@ export function SaveSheet() {
           <p className="-mt-2 mb-4 text-[13.5px] text-muted">
             <b className="font-semibold text-ink-2">{trip.name}</b>에 담겨요
           </p>
+          <button
+            onClick={() => {
+              close()
+              open({ type: 'post' })
+            }}
+            className="mb-2.5 flex w-full items-center gap-3 rounded-[20px] bg-ink p-4 text-left text-white transition active:scale-[0.99]"
+          >
+            <span className="grid size-10 place-items-center rounded-2xl bg-white/10">
+              <FlagMark className="h-[22px] w-[17px]" />
+            </span>
+            <span className="flex-1">
+              <span className="block text-[15px] font-semibold">현지 발견 올리기</span>
+              <span className="mt-0.5 block text-[12px] text-white/60">지도에 없는 물건을 알려 주고 포인트 받기</span>
+            </span>
+            <span className="rounded-full bg-white/10 px-2.5 py-1 text-[12px] font-semibold">+50P</span>
+          </button>
           <div className="grid grid-cols-2 gap-2.5">
             {options.map(({ id, label, sub, icon: Icon, run }) => (
               <button key={id} onClick={run} className="flex flex-col items-start gap-3 rounded-[20px] bg-sunken p-4 text-left transition hover:bg-line active:scale-[0.98]">

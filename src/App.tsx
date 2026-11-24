@@ -9,6 +9,7 @@ import { MapScreen, StoreDetail } from '@/screens/MapScreen'
 import { Priority, Swipe } from '@/screens/Priority'
 import { AskCard, ProductDetail } from '@/screens/ProductDetail'
 import { Analyze, SaveSheet } from '@/screens/Save'
+import { Benefits, FindDetail, PostFind } from '@/screens/Finds'
 
 function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
   const z = 50 + depth
@@ -29,6 +30,12 @@ function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
       return <Analyze mode={o.mode} images={o.images} />
     case 'swipe':
       return <Swipe />
+    case 'find':
+      return <FindDetail id={o.id} z={z} />
+    case 'post':
+      return <PostFind />
+    case 'benefits':
+      return <Benefits z={z} />
   }
 }
 

@@ -45,7 +45,7 @@ export function BottomNav() {
 }
 
 export function Sidebar() {
-  const { tab, setTab, open, trip, tripProducts } = useApp()
+  const { tab, setTab, open, trip, tripProducts, points } = useApp()
   const must = tripProducts.filter((p) => p.priority === 'must').length
   return (
     <aside className="sticky top-0 hidden h-dvh w-[264px] shrink-0 flex-col border-r border-line bg-surface/60 px-5 py-6 backdrop-blur lg:flex">
@@ -78,7 +78,12 @@ export function Sidebar() {
       <Button className="mt-6 w-full" size="lg" onClick={() => open({ type: 'save' })}>
         <Plus className="size-5" strokeWidth={2.6} /> 상품 저장하기
       </Button>
-      <a href="#mobile" className="mt-auto mb-3 flex h-11 items-center justify-center gap-2 rounded-2xl text-[13.5px] font-semibold text-ink-2 ring-1 ring-line hover:bg-sunken">
+      <button onClick={() => open({ type: 'benefits' })} className="mt-auto mb-2 flex h-12 items-center gap-2.5 rounded-2xl bg-surface px-3 text-left ring-1 ring-line hover:bg-sunken">
+        <span className="grid size-8 place-items-center rounded-full bg-sunken text-[11px] font-bold">수빈</span>
+        <span className="flex-1 text-[13.5px] font-semibold">내 발견 · 혜택</span>
+        <span className="text-[13px] font-bold tabular">{points.toLocaleString('ko-KR')}P</span>
+      </button>
+      <a href="#mobile" className="mb-3 flex h-11 items-center justify-center gap-2 rounded-2xl text-[13.5px] font-semibold text-ink-2 ring-1 ring-line hover:bg-sunken">
         <Smartphone className="size-4" /> 휴대폰 화면으로 보기
       </a>
       <div className="rounded-[20px] bg-sunken p-4">

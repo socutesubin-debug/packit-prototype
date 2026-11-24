@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
 import { TripSwitcher } from '@/components/Shell'
+import { FindsStrip } from './Finds'
 import { Button } from '@/components/ui/button'
 import { CATALOG, CATEGORIES } from '@/lib/data'
 import { useApp } from '@/lib/store'
@@ -17,7 +18,7 @@ type Cat = (typeof CATS)[number]
 const rank = (p: Product) => (p.priority === 'must' ? 0 : p.priority === 'maybe' ? 1 : p.priority === null ? 2 : 3)
 
 export function Home() {
-  const { tripProducts, trip, rate, open, setTripId, trips, setTab } = useApp()
+  const { tripProducts, trip, rate, open, setTripId, trips, setTab, points } = useApp()
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [cat, setCat] = useState<Cat>('전체')
   const [sort, setSort] = useState<Sort>('최근 저장순')
@@ -49,8 +50,9 @@ export function Home() {
           <br />
           <b className="font-bold">{dd.startsWith('D-') ? `${dd.slice(2)}일 남았어요` : dd === 'D-DAY' ? '오늘 떠나요' : '여행을 마쳤어요'}</b>
         </h1>
-        <button className="grid size-12 shrink-0 place-items-center rounded-full bg-surface text-[13px] font-bold" aria-label="내 프로필">
-          수빈
+        <button onClick={() => open({ type: 'benefits' })} className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface pr-4 pl-1.5" aria-label="내 발견과 혜택">
+          <span className="grid size-9 place-items-center rounded-full bg-sunken text-[12px] font-bold">수빈</span>
+          <span className="text-[13px] font-bold tabular">{points.toLocaleString('ko-KR')}P</span>
         </button>
       </header>
       <div className="mt-4 lg:hidden">
@@ -84,6 +86,8 @@ export function Home() {
               <span className="mt-2 text-[15px] font-semibold">{unsorted.length ? `${unsorted.length}개 골라 보기` : '우선순위 보기'}</span>
             </button>
           </section>
+
+          <FindsStrip />
 
           <div className="mt-7">
             <label className="flex h-11 items-center gap-2 rounded-full bg-sunken px-4 focus-within:ring-2 focus-within:ring-ink">

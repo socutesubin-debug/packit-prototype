@@ -1,4 +1,4 @@
-import type { Category, Product, Store, Trip } from './types'
+import type { Category, Find, Product, Store, Trip } from './types'
 
 export const CATEGORIES: Category[] = ['뷰티', '식품', '옷', '잡화', '면세품']
 
@@ -113,3 +113,28 @@ export function seedProducts(): Product[] {
   }))
   return [...tokyo, ...osaka]
 }
+
+
+/** Sample local finds around Shibuya (all fictional examples) */
+export const SEED_FINDS: Find[] = [
+  { id: 'f1', city: '도쿄', title: '골목 공방의 유리 풍경', story: '도겐자카 뒷골목 2층 작은 공방에서 할아버지가 직접 불어 만든 풍경이에요. 지도에는 안 나오고 간판도 작아요. 소리가 정말 맑아서 하나 사 왔어요.', place: '이름 없는 유리 공방 (2층)', area: '도겐자카 뒷골목', x: 30, y: 70, price: 2200, category: '잡화', art: { shape: 'jar', color: '#9CC9E8', accent: '#E8453C', bg: '#E4F1FA' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 3, saves: 42, thanks: 18, sample: true },
+  { id: 'f2', city: '도쿄', title: '시부야 한정 마스킹테이프', story: '동네 문구점 계산대 옆에만 있는 시부야 거리 그림 마스킹테이프. 온라인 판매를 안 한대요.', place: '골목 끝 문구점', area: '오쿠시부야', x: 18, y: 36, price: 480, category: '잡화', art: { shape: 'can', color: '#F2C94C', accent: '#141413', bg: '#FFF5D6' }, author: '단단', authorTrip: '도쿄 여행 중', daysAgo: 1, saves: 27, thanks: 9, sample: true },
+  { id: 'f3', city: '도쿄', title: '할머니 쌀과자 센베', story: '아침에만 굽는 간장 센베. 오후 2시면 다 팔려요. 포장지가 신문지라 선물용으로도 귀여워요.', place: '마루야마 센베 가게', area: '진구마에 골목', x: 52, y: 12, price: 650, category: '식품', art: { shape: 'pouch', color: '#C9824B', accent: '#FFF4E6', bg: '#F7E9DC' }, author: 'JISOO', authorTrip: '2주 전 다녀옴', daysAgo: 14, saves: 63, thanks: 31, sample: true },
+  { id: 'f4', city: '도쿄', title: '킷사텐 오리지널 성냥갑', story: '50년 된 킷사텐에서 커피를 마시면 계산할 때 하나씩 줘요. 따로 사려면 ¥100. 디자인이 매년 바뀐대요.', place: '킷사 코하쿠', area: '우다가와초', x: 44, y: 46, price: 100, category: '잡화', art: { shape: 'box', color: '#2F5DA8', accent: '#F2C94C', bg: '#E2EAF7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 5, saves: 19, thanks: 7, sample: true },
+  { id: 'f5', city: '도쿄', title: '쪽빛 염색 데누구이', story: '작은 염색 공방에서 손으로 물들인 손수건. 같은 무늬가 하나도 없어요. 사장님이 접는 법도 알려 주셨어요.', place: '아이조메 공방', area: '시부야강 산책로', x: 82, y: 78, price: 1650, category: '잡화', art: { shape: 'towel', color: '#2F4E8C', accent: '#FFFFFF', bg: '#E1E7F3' }, author: '단단', authorTrip: '도쿄 여행 중', daysAgo: 2, saves: 35, thanks: 12, sample: true },
+  { id: 'f6', city: '도쿄', title: '동네 빵집 멜론빵 키링', story: '빵집에서 직접 만든 펠트 키링. 빵을 사면 진열대 아래 바구니에 있는 걸 보여 줘요.', place: '베이커리 하루', area: '에비스 방향 주택가', x: 88, y: 46, price: 900, category: '잡화', art: { shape: 'jar', color: '#B7D37A', accent: '#F2C94C', bg: '#EEF6DD' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 6, saves: 22, thanks: 10, sample: true },
+  { id: 'm1', city: '오사카', title: '도톤보리 수제 젓가락', story: '오사카 시장 안쪽 젓가락 가게에서 이름을 새겨 줘요. 15분 걸려요.', place: '하시야 젓가락', area: '오사카 · 센니치마에', x: 60, y: 30, price: 1800, category: '잡화', art: { shape: 'bar', color: '#8B5A3C', accent: '#F2C94C', bg: '#F3E7DA' }, author: '수빈', authorTrip: '오사카 여행', daysAgo: 52, saves: 14, thanks: 6, mine: true },
+  { id: 'm2', city: '오사카', title: '오사카 한정 타코야키 키캡', story: '전자상가 골목 작은 가게에서만 파는 레진 키캡이에요.', place: '키캡 숍 니폰바시', area: '오사카 · 니폰바시', x: 70, y: 60, price: 1200, category: '잡화', art: { shape: 'jar', color: '#C9824B', accent: '#2A2A2C', bg: '#F7E9DC' }, author: '수빈', authorTrip: '오사카 여행', daysAgo: 51, saves: 9, thanks: 4, mine: true },
+]
+
+export const REWARDS = [
+  { id: 'r1', title: '제휴 소품샵 10% 할인 쿠폰', sub: '도쿄 제휴 매장 12곳', cost: 500 },
+  { id: 'r2', title: 'Packit 한정 스티커 팩', sub: '캐리어 꾸미기 스티커 6종', cost: 300 },
+  { id: 'r3', title: '공항 라운지 할인권', sub: '인천공항 제휴 라운지', cost: 2000 },
+]
+
+export const POINT_RULES = [
+  { label: '현지 발견 올리기', pt: 50 },
+  { label: '다른 여행자가 내 발견을 저장', pt: 10 },
+  { label: '고마워요를 받을 때', pt: 5 },
+]
