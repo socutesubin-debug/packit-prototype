@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 export function StoreArt({ color, name, className }: { color: string; name: string; className?: string }) {
   const sign = name.split(' ')[0]
   return (
-    <div className={cn('relative overflow-hidden', className)} style={{ background: '#2B2D33' }}>
+    <div className={cn('relative overflow-hidden grayscale', className)} style={{ background: '#2B2B2B' }}>
       <svg viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" aria-hidden>
         <rect width="400" height="260" fill="#30333B" />
         <rect x="0" y="0" width="400" height="60" fill={color} />
@@ -30,7 +30,7 @@ export function StoreArt({ color, name, className }: { color: string; name: stri
 /** Small skyline badge for city cards */
 export function CityArt({ hue, sky, className }: { hue: string; sky: string; className?: string }) {
   return (
-    <svg viewBox="0 0 120 90" className={cn('rounded-2xl', className)} aria-hidden>
+    <svg viewBox="0 0 120 90" className={cn('rounded-2xl grayscale', className)} aria-hidden>
       <rect width="120" height="90" fill={sky} />
       <circle cx="88" cy="28" r="12" fill="#fff" opacity="0.8" />
       <rect x="10" y="48" width="16" height="42" fill={hue} opacity="0.55" />

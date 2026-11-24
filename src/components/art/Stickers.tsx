@@ -22,7 +22,7 @@ const CUT = { stroke: '#fff', strokeWidth: 7, strokeLinejoin: 'round' as const, 
 /** Die-cut vinyl stickers: thick white border + soft shadow */
 export function Sticker({ kind, className }: { kind: StickerKind; className?: string }) {
   return (
-    <svg viewBox="0 0 120 120" className={cn('overflow-visible drop-shadow-[0_1px_1px_rgba(20,20,19,0.18)] [filter:drop-shadow(0_1px_1px_rgba(20,20,19,.16))_drop-shadow(0_6px_8px_rgba(20,20,19,.14))]', className)} aria-hidden>
+    <svg viewBox="0 0 120 120" className={cn('overflow-visible grayscale drop-shadow-[0_4px_6px_rgba(0,0,0,0.16)]', className)} aria-hidden>
       {render(kind)}
     </svg>
   )
@@ -161,14 +161,14 @@ export function PackitMark() {
   return (
     <g>
       <circle cx="60" cy="60" r="52" fill="#fff" />
-      <circle cx="60" cy="60" r="46" fill="#E8453C" />
+      <circle cx="60" cy="60" r="46" fill="#111111" />
       <path d="M18 46 Q60 30 102 46" stroke="#fff" strokeWidth="2.5" fill="none" opacity="0.7" />
       <path d="M16 74 Q60 90 104 74" stroke="#fff" strokeWidth="2.5" fill="none" opacity="0.7" />
       <path d="M60 14 Q40 60 60 106" stroke="#fff" strokeWidth="2.5" fill="none" opacity="0.55" />
       <path d="M60 14 Q80 60 60 106" stroke="#fff" strokeWidth="2.5" fill="none" opacity="0.55" />
       <g transform="rotate(-10 60 60)">
         <rect x="8" y="46" width="104" height="28" rx="6" fill="#fff" stroke="#141413" strokeWidth="2.5" />
-        <text x="60" y="67" textAnchor="middle" fontSize="21" fontWeight="900" fill="#E8453C" fontFamily={F} letterSpacing="1">PACKIT</text>
+        <text x="60" y="67" textAnchor="middle" fontSize="21" fontWeight="900" fill="#111111" fontFamily={F} letterSpacing="1">PACKIT</text>
       </g>
     </g>
   )

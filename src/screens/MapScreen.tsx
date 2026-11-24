@@ -100,12 +100,12 @@ export function MapScreen() {
 
   return (
     <div className="relative h-dvh overflow-hidden">
-      <div ref={vp} className="absolute inset-0 overflow-hidden bg-[#ECEAE4]">
+      <div ref={vp} className="absolute inset-0 overflow-hidden bg-[#EDEDED]">
         <motion.div drag dragConstraints={bounds} dragElastic={0.08} style={{ x: mx, y: my, width: CW, height: CH }} className="absolute top-0 left-0 cursor-grab active:cursor-grabbing">
           <ShibuyaMap />
           <div className="absolute" style={{ left: `${ME.x}%`, top: `${ME.y}%` }} aria-label="내 위치">
-            <span className="absolute -inset-5 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-[#3E6FD8]/25" />
-            <span className="block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3E6FD8] shadow ring-4 ring-white" />
+            <span className="absolute -inset-5 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-black/15" />
+            <span className="block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink shadow ring-4 ring-white" />
           </div>
           {items.map((it) => {
             const on = it.id === sel
@@ -135,7 +135,7 @@ export function MapScreen() {
               <button key={it.id} onClick={() => select(it.id)} className="absolute -translate-x-1/2 -translate-y-full" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 5 : 1 }} aria-label={`${st.name}, 저장한 상품 ${st.mine.length}개`}>
                 <motion.span animate={{ scale: on ? 1.12 : 1 }} className={cn('flex items-center gap-1.5 rounded-full py-1 pr-3 pl-1 shadow-[var(--shadow-float)]', on ? 'bg-ink text-white' : 'bg-surface text-ink')}>
                   <span className="grid size-7 place-items-center rounded-full" style={{ background: st.color }}>
-                    <StoreIcon className={cn('size-4', st.color === '#2A2A2C' ? 'text-white' : 'text-ink')} />
+                    <StoreIcon className={cn('size-4', st.color === '#1E1E1E' || st.color === '#4A4A4A' ? 'text-white' : 'text-ink')} />
                   </span>
                   <span className="text-[12.5px] font-bold whitespace-nowrap">{st.name.split(' ')[0]}</span>
                   {st.mine.length > 0 && <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-white">{st.mine.length}</span>}
@@ -163,7 +163,7 @@ export function MapScreen() {
         </div>
         <div className="no-scrollbar pointer-events-auto -mx-4 mt-2.5 flex gap-1.5 overflow-x-auto px-4">
           <Chip active={showFinds} onClick={() => setShowFinds((v) => !v)}>
-            <FlagMark className="h-[15px] w-[12px]" /> 현지 발견
+            <FlagMark light={showFinds} className="h-[15px] w-[12px]" /> 현지 발견
           </Chip>
           <Chip active={showStores} onClick={() => setShowStores((v) => !v)}>
             <StoreIcon className="size-3.5" /> 매장
@@ -271,16 +271,16 @@ export function ShibuyaMap() {
     [740, 120, 200, 160], [980, 120, 180, 220], [740, 320, 140, 200], [920, 380, 240, 160], [780, 600, 160, 120], [990, 580, 170, 160],
     [460, 820, 250, 140], [780, 790, 380, 170], [300, 120, 330, 150],
   ]
-  const label = 'fill-[#9b998f] text-[15px] font-semibold'
+  const label = 'fill-[#9a9a9a] text-[15px] font-semibold'
   return (
     <svg viewBox={`0 0 ${CW} ${CH}`} className="absolute inset-0 h-full w-full" aria-hidden>
-      <rect width={CW} height={CH} fill="#ECEAE4" />
-      <rect x="20" y="20" width="250" height="300" rx="40" fill="#D6E7CC" />
-      <text x="70" y="170" className="fill-[#6f8f62] text-[16px] font-bold">요요기 공원</text>
-      <rect x="660" y="300" width="60" height="230" rx="20" fill="#D6E7CC" />
-      <text x="690" y="420" className="fill-[#6f8f62] text-[13px] font-bold" transform="rotate(90 690 420)" textAnchor="middle">미야시타 파크</text>
+      <rect width={CW} height={CH} fill="#EDEDED" />
+      <rect x="20" y="20" width="250" height="300" rx="40" fill="#E2E2E2" />
+      <text x="70" y="170" className="fill-[#8a8a8a] text-[16px] font-bold">요요기 공원</text>
+      <rect x="660" y="300" width="60" height="230" rx="20" fill="#E2E2E2" />
+      <text x="690" y="420" className="fill-[#8a8a8a] text-[13px] font-bold" transform="rotate(90 690 420)" textAnchor="middle">미야시타 파크</text>
       {blocks.map(([x, y, w, h], i) => (
-        <rect key={i} x={x} y={y} width={w} height={h} rx="14" fill="#F6F5F1" />
+        <rect key={i} x={x} y={y} width={w} height={h} rx="14" fill="#F8F8F8" />
       ))}
       {/* roads */}
       <path d="M700 0 C 700 260, 690 480, 700 1000" stroke="#fff" strokeWidth="34" fill="none" />
@@ -291,10 +291,10 @@ export function ShibuyaMap() {
       <path d="M700 300 L 1200 300" stroke="#fff" strokeWidth="20" fill="none" />
       <path d="M700 560 L 1200 560" stroke="#fff" strokeWidth="18" fill="none" />
       {/* rail */}
-      <path d="M640 0 L 640 1000" stroke="#C9C6BD" strokeWidth="10" fill="none" />
-      <path d="M640 0 L 640 1000" stroke="#ECEAE4" strokeWidth="4" strokeDasharray="14 14" fill="none" />
+      <path d="M640 0 L 640 1000" stroke="#CFCFCF" strokeWidth="10" fill="none" />
+      <path d="M640 0 L 640 1000" stroke="#EDEDED" strokeWidth="4" strokeDasharray="14 14" fill="none" />
       {/* station + scramble */}
-      <rect x="600" y="560" width="96" height="110" rx="16" fill="#3E6FD8" />
+      <rect x="600" y="560" width="96" height="110" rx="16" fill="#111111" />
       <text x="648" y="622" textAnchor="middle" className="fill-white text-[15px] font-bold">시부야역</text>
       <g opacity="0.55">
         {Array.from({ length: 8 }).map((_, i) => (
@@ -306,7 +306,7 @@ export function ShibuyaMap() {
       <text x="380" y="458" className={label}>센터 거리</text>
       <text x="712" y="200" className={label}>메이지 거리</text>
       <text x="960" y="788" className={label}>국도 246</text>
-      <path d="M760 1000 C 760 900, 820 860, 880 830 S 1000 780, 1200 790" stroke="#C7DDF0" strokeWidth="14" fill="none" opacity="0.8" />
+      <path d="M760 1000 C 760 900, 820 860, 880 830 S 1000 780, 1200 790" stroke="#DCDCDC" strokeWidth="14" fill="none" opacity="0.8" />
     </svg>
   )
 }

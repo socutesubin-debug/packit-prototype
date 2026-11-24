@@ -189,7 +189,7 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                   <li key={s.id}>
                     <button onClick={() => open({ type: 'store', id: s.id })} className="flex w-full items-center gap-3 rounded-2xl bg-surface p-3 text-left ring-1 ring-line hover:bg-sunken">
                       <span className="grid size-10 place-items-center rounded-xl" style={{ background: s.color }}>
-                        <StoreIcon className={cn('size-5', s.color === '#2A2A2C' ? 'text-white' : 'text-ink')} />
+                        <StoreIcon className={cn('size-5', s.color === '#1E1E1E' || s.color === '#4A4A4A' ? 'text-white' : 'text-ink')} />
                       </span>
                       <span className="flex-1">
                         <span className="block text-[14px] font-semibold">{s.name}</span>

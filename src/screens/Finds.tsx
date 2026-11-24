@@ -17,17 +17,18 @@ const when = (d: number) => (d === 0 ? '방금' : d === 1 ? '어제' : d < 7 ? `
 
 /** User photo, or a soft "snapshot" placeholder built from the item art */
 export function FindPhoto({ f, className }: { f: Find; className?: string }) {
-  if (f.photo) return <img src={f.photo} alt={f.title} className={cn('object-cover', className)} />
-  return <ProductArt art={f.art} tone="color" tilt={tiltOf(f.id)} className={className} />
+  if (f.photo) return <img src={f.photo} alt={f.title} className={cn('object-cover grayscale', className)} />
+  return <ProductArt art={f.art} tone="neutral" tilt={tiltOf(f.id)} className={className} />
 }
 
-export function FlagMark({ className, active }: { className?: string; active?: boolean }) {
+export function FlagMark({ className, active, light }: { className?: string; active?: boolean; light?: boolean }) {
+  const ink = light ? '#ffffff' : '#111111'
   return (
     <svg viewBox="0 0 32 42" className={className} aria-hidden>
-      <ellipse cx="5" cy="39.5" rx="5" ry="2" fill="#000" opacity="0.18" />
-      <rect x="3.5" y="2" width="3" height="37" rx="1.5" fill="#141413" />
-      <path d="M6.5 3 H29 L23.5 10.5 L29 18 H6.5 Z" fill={active ? '#141413' : '#E8453C'} />
-      <path d="M6.5 3 H29 L27.5 5 H6.5 Z" fill="#fff" opacity="0.25" />
+      <ellipse cx="5" cy="39.5" rx="5" ry="2" fill="#000" opacity={light ? 0 : 0.18} />
+      <rect x="3.5" y="2" width="3" height="37" rx="1.5" fill={ink} />
+      <path d="M6.5 3 H29 L23.5 10.5 L29 18 H6.5 Z" fill={ink} stroke={light ? 'none' : '#fff'} strokeWidth={active ? 2 : 0} />
+      {!light && <path d="M9 7 H22" stroke="#fff" strokeWidth="1.5" opacity="0.5" />}
     </svg>
   )
 }
@@ -226,7 +227,7 @@ export function PostFind() {
         <div className="mt-6">
           {hasPhoto ? (
             <div className="relative overflow-hidden rounded-[22px] bg-surface p-2.5">
-              {photo ? <img src={photo} alt="올린 사진" className="aspect-[4/3] w-full rounded-[16px] object-cover" /> : <ProductArt art={SAMPLE_ART} tone="color" className="aspect-[4/3] w-full rounded-[16px]" />}
+              {photo ? <img src={photo} alt="올린 사진" className="aspect-[4/3] w-full rounded-[16px] object-cover grayscale" /> : <ProductArt art={SAMPLE_ART} tone="neutral" className="aspect-[4/3] w-full rounded-[16px]" />}
               <button
                 onClick={() => {
                   setPhoto(null)
@@ -263,7 +264,7 @@ export function PostFind() {
           <textarea value={story} onChange={(e) => setStory(e.target.value)} rows={4} placeholder="간판이 작아서 지나치기 쉬워요. 2층으로 올라가면…" className="w-full resize-none rounded-2xl bg-surface p-4 leading-relaxed outline-none placeholder:text-faint focus:ring-2 focus:ring-ink" />
         </Field>
         <Field label="위치" hint="지도를 눌러 깃발을 꽂아 주세요" error={tried && (!pin || !place.trim())}>
-          <div ref={map} className="relative overflow-hidden rounded-[20px] bg-[#ECEAE4]">
+          <div ref={map} className="relative overflow-hidden rounded-[20px] bg-[#EDEDED]">
             <div
               className="relative aspect-[1200/1000] w-full cursor-crosshair"
               onClick={(e) => {
@@ -272,7 +273,7 @@ export function PostFind() {
               }}
             >
               <ShibuyaMap />
-              <span className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#3E6FD8] ring-[3px] ring-white" style={{ left: `${ME.x}%`, top: `${ME.y}%` }} />
+              <span className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink ring-[3px] ring-white" style={{ left: `${ME.x}%`, top: `${ME.y}%` }} />
               <AnimatePresence>
                 {pin && (
                   <motion.span key={`${pin.x}${pin.y}`} initial={{ y: -24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 18 }} className="absolute" style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>

@@ -445,7 +445,7 @@ function Inside({ trip, items }: { trip: Trip; items: Product[] }) {
   return (
     <motion.div ref={area} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
       <div className="absolute inset-x-[9%] top-[6%] bottom-[6%] rounded-[36px] p-3" style={{ background: shell }}>
-        <div className="h-full w-full rounded-[26px] bg-[#F7F6F3] shadow-[inset_0_8px_22px_rgba(0,0,0,0.12)]" />
+        <div className="h-full w-full rounded-[26px] bg-[#F5F5F5] shadow-[inset_0_8px_22px_rgba(0,0,0,0.12)]" />
         <span className="absolute top-1/2 left-1/2 h-[70%] w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/5" />
       </div>
       <AnimatePresence>

@@ -55,7 +55,7 @@ export function SaveSheet() {
             className="mb-2.5 flex w-full items-center gap-3 rounded-[20px] bg-ink p-4 text-left text-white transition active:scale-[0.99]"
           >
             <span className="grid size-10 place-items-center rounded-2xl bg-white/10">
-              <FlagMark className="h-[22px] w-[17px]" />
+              <FlagMark light className="h-[22px] w-[17px]" />
             </span>
             <span className="flex-1">
               <span className="block text-[15px] font-semibold">현지 발견 올리기</span>
@@ -250,7 +250,7 @@ function Shot({ src, product, state }: { src?: string; product: Product; state: 
       ) : (
         <div className="flex h-full flex-col bg-[#fafafa] p-2">
           <div className="flex items-center gap-1.5">
-            <span className="size-4 rounded-full bg-gradient-to-br from-[#F2C94C] to-brand" />
+            <span className="size-4 rounded-full bg-line" />
             <span className="h-1.5 w-10 rounded bg-line" />
           </div>
           <ProductArt art={product.art} className="mt-2 aspect-square w-full rounded-lg" />

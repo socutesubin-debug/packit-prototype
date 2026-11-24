@@ -12,7 +12,7 @@ export const buttonVariants = cva(
         secondary: 'bg-surface text-ink ring-1 ring-line hover:bg-sunken disabled:text-faint',
         soft: 'bg-sunken text-ink hover:bg-line',
         ghost: 'text-ink-2 hover:bg-sunken',
-        kakao: 'bg-[#FEE500] text-[#191600] hover:brightness-95',
+        kakao: 'bg-surface text-ink ring-1 ring-line hover:bg-sunken',
       },
       size: {
         lg: 'h-14 rounded-full px-6 text-[16px]',

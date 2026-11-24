@@ -21,7 +21,7 @@ export function ProductArt({
 }) {
   const bg = tone === 'neutral' ? '#F4F4F2' : tone === 'color' ? art.bg : undefined
   return (
-    <div className={cn('relative grid place-items-center overflow-hidden', className)} style={{ background: bg }}>
+    <div className={cn('relative grid place-items-center overflow-hidden grayscale', className)} style={{ background: bg }}>
       {image ? (
         <img src={image} alt="" className="h-[82%] w-[82%] object-contain drop-shadow-[0_14px_14px_rgba(20,20,19,0.18)]" style={{ rotate: `${tilt}deg` }} />
       ) : (

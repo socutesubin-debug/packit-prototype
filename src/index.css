@@ -2,7 +2,7 @@
 @import 'tailwindcss';
 
 /*
-  Packit design tokens
+  Packit design tokens — monochrome: white · grays · black only
   - Ground: warm light gray, white cards, ink near-black
   - One primary: stamp red. Priority colors: must = red, maybe = amber, skip = gray
   - Type: Pretendard Variable, tight display headings
@@ -10,31 +10,31 @@
 @theme {
   --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 
-  --color-ground: #f2f2f0;
+  --color-ground: #f2f2f2;
   --color-surface: #ffffff;
-  --color-sunken: #ebebe8;
-  --color-line: #e4e4e0;
-  --color-ink: #141413;
-  --color-ink-2: #3d3c39;
-  --color-muted: #8b8a85;
-  --color-faint: #b9b7b1;
+  --color-sunken: #ebebeb;
+  --color-line: #e3e3e3;
+  --color-ink: #111111;
+  --color-ink-2: #3b3b3b;
+  --color-muted: #8a8a8a;
+  --color-faint: #b5b5b5;
 
-  --color-brand: #e8453c;
-  --color-brand-deep: #c9342c;
-  --color-brand-soft: #fdeceb;
+  --color-brand: #111111;
+  --color-brand-deep: #000000;
+  --color-brand-soft: #e6e6e6;
 
-  --color-must: #e8453c;
-  --color-maybe: #f0a52f;
-  --color-maybe-soft: #fdf3e1;
-  --color-skip: #9b9a95;
-  --color-open: #27a567;
+  --color-must: #111111;
+  --color-maybe: #8a8a8a;
+  --color-maybe-soft: #ebebeb;
+  --color-skip: #c4c4c4;
+  --color-open: #111111;
 
   --radius-card: 24px;
   --radius-sheet: 28px;
 
   --shadow-card: 0 1px 2px rgb(20 20 19 / 0.03);
   --shadow-float: 0 10px 30px -10px rgb(20 20 19 / 0.25), 0 2px 6px rgb(20 20 19 / 0.06);
-  --shadow-brand: 0 10px 24px -8px rgb(232 69 60 / 0.55);
+  --shadow-brand: 0 10px 24px -10px rgb(0 0 0 / 0.35);
 }
 
 @layer base {

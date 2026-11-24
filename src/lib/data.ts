@@ -15,10 +15,10 @@ export const REGIONS = ['전체', '일본', '동남아시아', '중국', '유럽
 
 export const SUITCASE_COLORS = [
   { id: 'silver', value: '#C9CBCF', name: '실버' },
-  { id: 'black', value: '#2A2A2C', name: '블랙' },
-  { id: 'butter', value: '#F2C94C', name: '버터' },
-  { id: 'sky', value: '#86A8F0', name: '스카이' },
-  { id: 'pink', value: '#F4A7C0', name: '핑크' },
+  { id: 'white', value: '#F4F4F4', name: '화이트' },
+  { id: 'gray', value: '#9A9A9A', name: '그레이' },
+  { id: 'charcoal', value: '#4A4A4A', name: '차콜' },
+  { id: 'black', value: '#1E1E1E', name: '블랙' },
 ]
 
 export const PHRASES = [
@@ -29,11 +29,11 @@ export const PHRASES = [
 ]
 
 export const STORES: Store[] = [
-  { id: 's1', name: '마츠모토키요시 시부야점', ja: '薬 マツモトキヨシ', kind: '드럭스토어', area: '시부야 · 우다가와초', address: '도쿄도 시부야구 우다가와초 일대', hours: '10:00 - 22:30', open: true, distance: 350, x: 38, y: 40, color: '#F2C94C' },
-  { id: 's2', name: '돈키호테 시부야 본점', ja: 'ドン・キホーテ', kind: '잡화점', area: '시부야 · 도겐자카', address: '도쿄도 시부야구 도겐자카 일대', hours: '24시간', open: true, distance: 600, x: 24, y: 58, color: '#E8453C' },
-  { id: 's3', name: '로프트 시부야', ja: 'ロフト', kind: '생활 잡화', area: '시부야 · 진난', address: '도쿄도 시부야구 진난 일대', hours: '11:00 - 21:00', open: true, distance: 450, x: 46, y: 22, color: '#F4A7C0' },
-  { id: 's4', name: '스크램블 스퀘어 기념품관', ja: 'スクランブルスクエア', kind: '기념품', area: '시부야역', address: '도쿄도 시부야구 시부야역 직결', hours: '10:00 - 21:00', open: true, distance: 300, x: 64, y: 56, color: '#86A8F0' },
-  { id: 's5', name: '빅카메라 시부야 동구점', ja: 'ビックカメラ', kind: '전자 · 생활', area: '시부야 · 동쪽 출구', address: '도쿄도 시부야구 시부야 일대', hours: '10:00 - 21:00', open: false, distance: 520, x: 74, y: 34, color: '#2A2A2C' },
+  { id: 's1', name: '마츠모토키요시 시부야점', ja: '薬 マツモトキヨシ', kind: '드럭스토어', area: '시부야 · 우다가와초', address: '도쿄도 시부야구 우다가와초 일대', hours: '10:00 - 22:30', open: true, distance: 350, x: 38, y: 40, color: '#E6E6E6' },
+  { id: 's2', name: '돈키호테 시부야 본점', ja: 'ドン・キホーテ', kind: '잡화점', area: '시부야 · 도겐자카', address: '도쿄도 시부야구 도겐자카 일대', hours: '24시간', open: true, distance: 600, x: 24, y: 58, color: '#1E1E1E' },
+  { id: 's3', name: '로프트 시부야', ja: 'ロフト', kind: '생활 잡화', area: '시부야 · 진난', address: '도쿄도 시부야구 진난 일대', hours: '11:00 - 21:00', open: true, distance: 450, x: 46, y: 22, color: '#F4F4F4' },
+  { id: 's4', name: '스크램블 스퀘어 기념품관', ja: 'スクランブルスクエア', kind: '기념품', area: '시부야역', address: '도쿄도 시부야구 시부야역 직결', hours: '10:00 - 21:00', open: true, distance: 300, x: 64, y: 56, color: '#BDBDBD' },
+  { id: 's5', name: '빅카메라 시부야 동구점', ja: 'ビックカメラ', kind: '전자 · 생활', area: '시부야 · 동쪽 출구', address: '도쿄도 시부야구 시부야 일대', hours: '10:00 - 21:00', open: false, distance: 520, x: 74, y: 34, color: '#4A4A4A' },
 ]
 
 const R = {
@@ -83,7 +83,7 @@ export const SEED_TRIPS: Trip[] = [
   },
   {
     id: 't2', name: '식도락 오사카 여행', city: '오사카', start: '2025-10-01', end: '2025-10-04', budget: 400000,
-    suitcase: { model: 'classic', color: '#F4A7C0' }, sample: true,
+    suitcase: { model: 'classic', color: '#1E1E1E' }, sample: true,
     stickers: [
       { id: 'st4', kind: 'osaka', x: 30, y: 30, rot: -6 },
       { id: 'st5', kind: 'sakura', x: 66, y: 64, rot: 10 },

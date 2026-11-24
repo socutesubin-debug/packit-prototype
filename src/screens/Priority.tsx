@@ -227,7 +227,7 @@ export function Swipe() {
                 <HelpCircle className="size-6" strokeWidth={2.6} />
               </Round>
               <Round label="꼭 살래" onClick={() => decide('must')} className="size-16 bg-ink text-white shadow-[var(--shadow-float)]">
-                <Heart className="size-7 fill-brand text-brand" />
+                <Heart className="size-7 fill-white" />
               </Round>
             </div>
             <button onClick={undo} disabled={!history.length} className="mx-auto mt-4 inline-flex h-10 items-center gap-1.5 text-[13px] font-semibold text-muted disabled:text-faint">
