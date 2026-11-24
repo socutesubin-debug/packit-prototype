@@ -30,14 +30,14 @@ export function PhonePreview() {
           <span className="display text-[24px]">Packit</span>
         </div>
         <h1 className="display mt-8 text-[34px] text-balance">휴대폰 화면으로 보는 중이에요</h1>
-        <p className="mt-3 text-[15px] leading-relaxed text-muted">프레임 안에서 실제 앱처럼 눌러 보세요. 스와이프, 스티커 드래그, 지도 이동도 마우스로 할 수 있어요.</p>
+        <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">프레임 안에서 실제 앱처럼 눌러 보세요. 스와이프, 스티커 드래그, 지도 이동도 마우스로 할 수 있어요.</p>
         <div className="mt-8 flex items-center gap-4 rounded-[24px] bg-surface p-4 shadow-[var(--shadow-card)]">
           <div className="size-28 shrink-0 rounded-xl bg-white p-2 ring-1 ring-line" dangerouslySetInnerHTML={{ __html: qr }} aria-label="휴대폰으로 열기 QR 코드" />
           <div>
             <p className="flex items-center gap-1.5 text-[14px] font-bold">
               <Smartphone className="size-4 text-brand" /> 내 휴대폰에서 열기
             </p>
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted">카메라로 스캔하면 바로 열려요. Claude에 로그인된 상태여야 해요.</p>
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">카메라로 스캔하면 바로 열려요. Claude에 로그인된 상태여야 해요.</p>
           </div>
         </div>
         <a href="#" className="mt-4 inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-[14px] font-semibold ring-1 ring-line hover:bg-sunken">

@@ -22,7 +22,7 @@ export function Carry() {
       <h1 className="text-[28px] leading-[1.15] tracking-tight lg:text-[34px]">
         <span className="font-normal text-ink-2">여행마다 쌓이는</span>
         <br />
-        <b className="font-bold">나의 캐리어</b>
+        <b className="font-semibold">나의 캐리어</b>
       </h1>
       <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-3">
         {trips.map((t, i) => {
@@ -34,18 +34,18 @@ export function Carry() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
               onClick={() => open({ type: 'carry', tripId: t.id })}
-              className="group flex flex-col rounded-[var(--radius-card)] bg-surface p-4 text-left"
+              className="group flex flex-col rounded-xl border bg-card shadow-xs p-4 text-left"
             >
               <p className="truncate text-[15px] font-semibold">{t.name}</p>
-              <p className="mt-0.5 text-[12.5px] text-muted tabular">{shortRange(t.start, t.end)}</p>
+              <p className="mt-0.5 text-[12.5px] text-muted-foreground tabular">{shortRange(t.start, t.end)}</p>
               <div className="mx-auto mt-3 w-[58%] transition duration-300 group-hover:-translate-y-1 group-hover:rotate-[-2deg]">
                 <DecoratedSuitcase trip={t} />
               </div>
-              <span className="mt-3 text-[12.5px] font-medium text-muted">구매 {bought.length}개</span>
+              <span className="mt-3 text-[12.5px] font-medium text-muted-foreground">구매 {bought.length}개</span>
             </motion.button>
           )
         })}
-        <button onClick={() => open({ type: 'create' })} className="flex min-h-[250px] flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border-2 border-dashed border-line text-[14px] font-medium text-muted hover:bg-surface/60">
+        <button onClick={() => open({ type: 'create' })} className="flex min-h-[250px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line text-[14px] font-medium text-muted-foreground hover:bg-surface/60">
           <span className="grid size-11 place-items-center rounded-full bg-surface">
             <Plus className="size-5" />
           </span>
@@ -100,17 +100,17 @@ export function CarryDetail({ tripId, z }: { tripId: string; z: number }) {
     <motion.div className="fixed inset-0 flex flex-col bg-white" style={{ zIndex: z }} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ type: 'spring', stiffness: 320, damping: 32 }}>
       <div className="mx-auto flex h-full w-full max-w-[560px] flex-col">
         <header className="grid grid-cols-[48px_1fr_auto] items-center px-3 pt-[max(8px,env(safe-area-inset-top))]">
-          <button aria-label="뒤로" onClick={close} className="grid size-11 place-items-center rounded-full hover:bg-sunken">
+          <button aria-label="뒤로" onClick={close} className="grid size-11 place-items-center rounded-full hover:bg-accent">
             <ArrowLeft className="size-[22px]" />
           </button>
           <div className="text-center">
             <h1 className="text-[16px] font-semibold">{mode === 'outside' ? '캐리어 꾸미기' : '캐리어 속 쇼핑'}</h1>
-            <p className="text-[12px] text-muted tabular">
+            <p className="text-[12px] text-muted-foreground tabular">
               {trip.name} · {shortRange(trip.start, trip.end)}
             </p>
           </div>
           <div className="flex items-center">
-            <button aria-label="이미지로 저장" onClick={capture} disabled={busy} className="grid size-11 place-items-center rounded-full text-ink-2 hover:bg-sunken disabled:text-faint">
+            <button aria-label="이미지로 저장" onClick={capture} disabled={busy} className="grid size-11 place-items-center rounded-full text-ink-2 hover:bg-accent disabled:text-faint">
               <Camera className="size-[20px]" />
             </button>
             <button
@@ -119,7 +119,7 @@ export function CarryDetail({ tripId, z }: { tripId: string; z: number }) {
                 notify('캐리어를 저장했어요')
                 close()
               }}
-              className="grid size-11 place-items-center rounded-full hover:bg-sunken"
+              className="grid size-11 place-items-center rounded-full hover:bg-accent"
             >
               <Check className="size-[22px]" strokeWidth={2.4} />
             </button>
@@ -127,10 +127,10 @@ export function CarryDetail({ tripId, z }: { tripId: string; z: number }) {
         </header>
 
         <div className="mt-2 flex justify-center">
-          <div className="flex rounded-full bg-sunken p-1" role="tablist">
+          <div className="flex h-9 items-center rounded-lg bg-muted p-[3px]" role="tablist">
             {(['outside', 'inside'] as const).map((m) => (
-              <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn('relative h-8 rounded-full px-4 text-[13px] font-semibold transition-colors', mode === m ? 'text-ink' : 'text-muted')}>
-                {mode === m && <motion.span layoutId="carry-mode" className="absolute inset-0 rounded-full bg-white shadow-sm" />}
+              <button key={m} role="tab" aria-selected={mode === m} onClick={() => setMode(m)} className={cn('relative h-full rounded-md px-4 text-[13px] font-medium transition-colors', mode === m ? 'text-ink' : 'text-muted-foreground')}>
+                {mode === m && <motion.span layoutId="carry-mode" className="absolute inset-0 rounded-md bg-background shadow-sm" />}
                 <span className="relative">{m === 'outside' ? '겉면' : `안쪽 ${bought.length}`}</span>
               </button>
             ))}
@@ -144,9 +144,9 @@ export function CarryDetail({ tripId, z }: { tripId: string; z: number }) {
         {mode === 'inside' && (
           <div className="flex items-center justify-between px-6 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]">
             <div>
-              <p className="text-[13px] text-muted">구매 {bought.length}개</p>
-              <p className="text-[20px] font-bold tracking-tight tabular">
-                {yen(total)} <span className="text-[13px] font-normal text-muted">약 {won(toWon(total, rate))}</span>
+              <p className="text-[13px] text-muted-foreground">구매 {bought.length}개</p>
+              <p className="text-[20px] font-semibold tracking-tight tabular">
+                {yen(total)} <span className="text-[13px] font-normal text-muted-foreground">약 {won(toWon(total, rate))}</span>
               </p>
             </div>
             <PurchaseList items={bought} />
@@ -157,11 +157,11 @@ export function CarryDetail({ tripId, z }: { tripId: string; z: number }) {
       <Sheet open={!!shot} onClose={() => setShot(null)} title="캐리어 이미지">
         {shot && (
           <>
-            <img src={shot} alt={`${trip.name} 캐리어`} className="max-h-[52dvh] w-full rounded-[20px] object-contain ring-1 ring-line" />
-            <p className="mt-3 text-center text-[12.5px] text-muted">이미지를 길게 누르거나 우클릭해서 저장할 수도 있어요</p>
+            <img src={shot} alt={`${trip.name} 캐리어`} className="max-h-[52dvh] w-full rounded-xl object-contain border" />
+            <p className="mt-3 text-center text-[12.5px] text-muted-foreground">이미지를 길게 누르거나 우클릭해서 저장할 수도 있어요</p>
             <div className="mt-4 flex gap-2">
               <Button
-                variant="secondary"
+                variant="outline"
                 size="lg"
                 className="flex-1"
                 onClick={() => {
@@ -252,7 +252,7 @@ function Customise({ trip }: { trip: Trip }) {
             ))}
           </AnimatePresence>
         </motion.div>
-        {trip.stickers.length === 0 && !sheet && <p className="absolute bottom-6 text-[13px] text-muted">아래 스티커를 끌어와 붙여 보세요</p>}
+        {trip.stickers.length === 0 && !sheet && <p className="absolute bottom-6 text-[13px] text-muted-foreground">아래 스티커를 끌어와 붙여 보세요</p>}
       </div>
 
       {/* bottom bar */}
@@ -445,20 +445,20 @@ function Inside({ trip, items }: { trip: Trip; items: Product[] }) {
   return (
     <motion.div ref={area} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0">
       <div className="absolute inset-x-[9%] top-[6%] bottom-[6%] rounded-[36px] p-3" style={{ background: shell }}>
-        <div className="h-full w-full rounded-[26px] bg-[#F5F5F5] shadow-[inset_0_8px_22px_rgba(0,0,0,0.12)]" />
+        <div className="h-full w-full rounded-2xl bg-[#F5F5F5] shadow-[inset_0_8px_22px_rgba(0,0,0,0.12)]" />
         <span className="absolute top-1/2 left-1/2 h-[70%] w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/5" />
       </div>
       <AnimatePresence>
         {!opened && (
           <motion.div className="absolute inset-x-[9%] top-[6%] bottom-[6%] origin-top" style={{ perspective: 800 }} exit={{ rotateX: -95, opacity: 0, transition: { duration: 0.55, ease: [0.4, 0, 0.2, 1] } }}>
-            <div className="h-full w-full rounded-[36px] shadow-[var(--shadow-float)]" style={{ background: shell }} />
+            <div className="h-full w-full rounded-[36px] shadow-lg" style={{ background: shell }} />
           </motion.div>
         )}
       </AnimatePresence>
 
       {items.length === 0 && opened && (
         <div className="absolute inset-0 grid place-items-center px-10 text-center">
-          <p className="text-[14px] leading-relaxed text-muted">
+          <p className="text-[14px] leading-relaxed text-muted-foreground">
             상품 상세에서 <b className="text-ink">샀어요</b>를 체크하면
             <br />
             여기에 담겨요
@@ -509,7 +509,7 @@ function ItemSheet({ id, onClose }: { id: string | null; onClose: () => void }) 
               <p className="text-[11.5px] font-semibold tracking-wide text-faint">{p.brand}</p>
               <h3 className="mt-0.5 line-clamp-2 text-[16px] font-semibold">{p.name}</h3>
               <p className="mt-1 text-[14px] tabular">
-                <b className="font-bold">{yen(p.price)}</b> <span className="text-muted">약 {won(toWon(p.price, rate))}</span>
+                <b className="font-semibold">{yen(p.price)}</b> <span className="text-muted-foreground">약 {won(toWon(p.price, rate))}</span>
               </p>
             </div>
             <button aria-label="닫기" onClick={onClose} className="grid size-9 place-items-center self-start rounded-full bg-sunken">
@@ -555,7 +555,7 @@ function PurchaseList({ items }: { items: Product[] }) {
                 <ProductArt art={p.art} className="size-14 shrink-0 rounded-xl" />
                 <div className="min-w-0 flex-1">
                   <p className="line-clamp-1 text-[14px] font-semibold">{p.name}</p>
-                  <p className="text-[12.5px] text-muted tabular">
+                  <p className="text-[12.5px] text-muted-foreground tabular">
                     {yen(p.price)} · 약 {won(toWon(p.price, rate))}
                   </p>
                 </div>
@@ -567,7 +567,7 @@ function PurchaseList({ items }: { items: Product[] }) {
               </li>
             )
           })}
-          {!items.length && <li className="py-8 text-center text-[14px] text-muted">아직 구매한 상품이 없어요</li>}
+          {!items.length && <li className="py-8 text-center text-[14px] text-muted-foreground">아직 구매한 상품이 없어요</li>}
         </ul>
       </Sheet>
     </>

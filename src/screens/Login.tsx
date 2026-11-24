@@ -43,11 +43,11 @@ export function Login() {
         <div className="mb-10 text-center lg:text-left">
           <h1 className="display text-[40px] lg:text-[52px]">Packit</h1>
           <p className="mt-2 text-[16px] font-medium text-ink-2">여행을 캐리어에 담아</p>
-          <p className="mt-1 text-[14px] text-muted">사고 싶은 건 저장하고, 현지에서 바로 찾아요</p>
+          <p className="mt-1 text-[14px] text-muted-foreground">사고 싶은 건 저장하고, 현지에서 바로 찾아요</p>
         </div>
         <div className="flex flex-col gap-2.5">
           <Button
-            variant="dark"
+            variant="default"
             size="lg"
             onClick={() => {
               setAuthed(true)
@@ -60,7 +60,7 @@ export function Login() {
             애플로 시작하기
           </Button>
           <Button
-            variant="kakao"
+            variant="outline"
             size="lg"
             onClick={() => {
               setAuthed(true)
@@ -72,10 +72,10 @@ export function Login() {
             </svg>
             카카오로 시작하기
           </Button>
-          <button onClick={() => setAuthed(true)} className="mt-2 h-11 text-[14px] font-semibold text-muted underline-offset-4 hover:underline">
+          <button onClick={() => setAuthed(true)} className="mt-2 h-11 text-[14px] font-semibold text-muted-foreground underline-offset-4 hover:underline">
             로그인 없이 예시 여행 둘러보기
           </button>
-          <a href="#mobile" className="mt-1 hidden h-10 items-center justify-center text-[13px] font-semibold text-faint hover:text-muted sm:flex">
+          <a href="#mobile" className="mt-1 hidden h-10 items-center justify-center text-[13px] font-semibold text-faint hover:text-muted-foreground sm:flex">
             휴대폰 화면으로 보기
           </a>
         </div>

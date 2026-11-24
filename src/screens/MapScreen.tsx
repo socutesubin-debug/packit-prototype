@@ -118,7 +118,7 @@ export function MapScreen() {
                         initial={{ opacity: 0, y: 6, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 6, scale: 0.9 }}
-                        className="absolute bottom-[50px] left-[-8px] flex w-max max-w-[220px] items-center gap-2 rounded-2xl bg-ink py-1.5 pr-3 pl-1.5 text-left text-white shadow-[var(--shadow-float)]"
+                        className="absolute bottom-[50px] left-[-8px] flex w-max max-w-[220px] items-center gap-2 rounded-2xl bg-ink py-1.5 pr-3 pl-1.5 text-left text-white shadow-lg"
                       >
                         <FindPhoto f={it.f} className="size-9 shrink-0 rounded-xl" />
                         <span className="truncate text-[12.5px] font-semibold">{it.f.title}</span>
@@ -133,12 +133,12 @@ export function MapScreen() {
             const st = it.s
             return (
               <button key={it.id} onClick={() => select(it.id)} className="absolute -translate-x-1/2 -translate-y-full" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 5 : 1 }} aria-label={`${st.name}, 저장한 상품 ${st.mine.length}개`}>
-                <motion.span animate={{ scale: on ? 1.12 : 1 }} className={cn('flex items-center gap-1.5 rounded-full py-1 pr-3 pl-1 shadow-[var(--shadow-float)]', on ? 'bg-ink text-white' : 'bg-surface text-ink')}>
+                <motion.span animate={{ scale: on ? 1.12 : 1 }} className={cn('flex items-center gap-1.5 rounded-full py-1 pr-3 pl-1 shadow-lg', on ? 'bg-ink text-white' : 'bg-surface text-ink')}>
                   <span className="grid size-7 place-items-center rounded-full" style={{ background: st.color }}>
                     <StoreIcon className={cn('size-4', st.color === '#1E1E1E' || st.color === '#4A4A4A' ? 'text-white' : 'text-ink')} />
                   </span>
-                  <span className="text-[12.5px] font-bold whitespace-nowrap">{st.name.split(' ')[0]}</span>
-                  {st.mine.length > 0 && <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-bold text-white">{st.mine.length}</span>}
+                  <span className="text-[12.5px] font-semibold whitespace-nowrap">{st.name.split(' ')[0]}</span>
+                  {st.mine.length > 0 && <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-semibold text-white">{st.mine.length}</span>}
                 </motion.span>
                 <span className={cn('mx-auto block h-2.5 w-2.5 -translate-y-1 rotate-45', on ? 'bg-ink' : 'bg-surface')} />
               </button>
@@ -150,11 +150,11 @@ export function MapScreen() {
       {/* top controls */}
       <div className="pointer-events-none absolute inset-x-0 top-0 px-4 pt-[max(14px,env(safe-area-inset-top))] lg:px-8 lg:pt-8 lg:pl-[436px]">
         <div className="pointer-events-auto flex items-center gap-2">
-          <span className="flex h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-[14px] font-bold shadow-[var(--shadow-card)]">
+          <span className="flex h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-[14px] font-semibold shadow-xs">
             <MapPin className="size-4" /> {trip.city} · 시부야
           </span>
           <span className="flex-1" />
-          <button onClick={() => open({ type: 'post' })} className="flex h-11 items-center gap-1.5 rounded-full bg-ink pr-4 pl-3 text-[13.5px] font-semibold text-white shadow-[var(--shadow-float)] active:scale-95">
+          <button onClick={() => open({ type: 'post' })} className="flex h-11 items-center gap-1.5 rounded-full bg-ink pr-4 pl-3 text-[13.5px] font-semibold text-white shadow-lg active:scale-95">
             <Flag className="size-4" /> 발견 올리기
           </button>
           <IconBtn label="검색">
@@ -192,7 +192,7 @@ export function MapScreen() {
       >
         {items.map((it) => {
           const on = it.id === sel
-          const base = cn('w-[86%] max-w-[360px] shrink-0 snap-center rounded-[24px] bg-surface p-3.5 shadow-[0_10px_30px_-14px_rgba(20,20,19,0.3)] transition lg:w-full lg:max-w-none', on ? 'ring-2 ring-ink' : 'ring-1 ring-black/[0.04]')
+          const base = cn('w-[86%] max-w-[360px] shrink-0 snap-center rounded-xl border bg-card shadow-xs p-3.5 shadow-[0_10px_30px_-14px_rgba(20,20,19,0.3)] transition lg:w-full lg:max-w-none', on ? 'ring-2 ring-ink' : 'ring-1 ring-black/[0.04]')
           if (it.kind === 'find') {
             const f = it.f
             const saved = savedFind(f.id)
@@ -205,13 +205,13 @@ export function MapScreen() {
                       <FlagMark className="h-[13px] w-[10px]" /> 여기서만 살 수 있어요
                     </p>
                     <h3 className="mt-0.5 truncate text-[15.5px] font-semibold">{f.title}</h3>
-                    <p className="mt-0.5 truncate text-[12.5px] text-muted">
+                    <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
                       {f.place} · {f.saves}명 저장
                     </p>
                   </div>
                 </div>
                 <div className="mt-3 flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); open({ type: 'find', id: f.id }) }} className={cn(buttonVariants({ variant: 'soft', size: 'md' }), 'flex-1')}>
+                  <button onClick={(e) => { e.stopPropagation(); open({ type: 'find', id: f.id }) }} className={cn(buttonVariants({ variant: 'secondary', size: 'default' }), 'flex-1')}>
                     사진·이야기 보기
                   </button>
                   <button
@@ -220,7 +220,7 @@ export function MapScreen() {
                       const ok = toggleSaveFind(f)
                       notify(ok ? '내 여행에 저장했어요' : '저장을 취소했어요')
                     }}
-                    className={cn(buttonVariants({ variant: saved ? 'secondary' : 'primary', size: 'md' }), 'flex-1')}
+                    className={cn(buttonVariants({ variant: saved ? 'outline' : 'default', size: 'default' }), 'flex-1')}
                   >
                     {saved ? <BookmarkCheck className="size-4" /> : <Bookmark className="size-4" />} {saved ? '저장됨' : '저장'}
                   </button>
@@ -235,8 +235,8 @@ export function MapScreen() {
                 <StoreArt color={st.color} name={st.name} className="size-[72px] shrink-0 rounded-2xl" />
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-[15.5px] font-semibold">{st.name}</h3>
-                  <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted tabular">
-                    <span className={cn('font-semibold', st.open ? 'text-open' : 'text-muted')}>{st.open ? '영업 중' : '영업 종료'}</span>· {st.distance}m · {st.hours}
+                  <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted-foreground tabular">
+                    <span className={cn('font-semibold', st.open ? 'text-open' : 'text-muted-foreground')}>{st.open ? '영업 중' : '영업 종료'}</span>· {st.distance}m · {st.hours}
                   </p>
                   <div className="mt-2 flex items-center gap-1.5">
                     <div className="flex -space-x-2">
@@ -249,17 +249,17 @@ export function MapScreen() {
                 </div>
               </div>
               <div className="mt-3 flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); open({ type: 'store', id: st.id }) }} className={cn(buttonVariants({ variant: 'soft', size: 'md' }), 'flex-1')}>
+                <button onClick={(e) => { e.stopPropagation(); open({ type: 'store', id: st.id }) }} className={cn(buttonVariants({ variant: 'secondary', size: 'default' }), 'flex-1')}>
                   상세보기
                 </button>
-                <a href={mapsUrl(st)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className={cn(buttonVariants({ variant: 'primary', size: 'md' }), 'flex-1')}>
+                <a href={mapsUrl(st)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className={cn(buttonVariants({ variant: 'default', size: 'default' }), 'flex-1')}>
                   <Navigation className="size-4" /> 길찾기
                 </a>
               </div>
             </article>
           )
         })}
-        {!items.length && <p className="w-full rounded-[24px] bg-surface p-6 text-center text-[14px] text-muted">조건에 맞는 장소가 없어요</p>}
+        {!items.length && <p className="w-full rounded-xl border bg-card shadow-xs p-6 text-center text-[14px] text-muted-foreground">조건에 맞는 장소가 없어요</p>}
       </div>
     </div>
   )
@@ -276,9 +276,9 @@ export function ShibuyaMap() {
     <svg viewBox={`0 0 ${CW} ${CH}`} className="absolute inset-0 h-full w-full" aria-hidden>
       <rect width={CW} height={CH} fill="#EDEDED" />
       <rect x="20" y="20" width="250" height="300" rx="40" fill="#E2E2E2" />
-      <text x="70" y="170" className="fill-[#8a8a8a] text-[16px] font-bold">요요기 공원</text>
+      <text x="70" y="170" className="fill-[#8a8a8a] text-[16px] font-semibold">요요기 공원</text>
       <rect x="660" y="300" width="60" height="230" rx="20" fill="#E2E2E2" />
-      <text x="690" y="420" className="fill-[#8a8a8a] text-[13px] font-bold" transform="rotate(90 690 420)" textAnchor="middle">미야시타 파크</text>
+      <text x="690" y="420" className="fill-[#8a8a8a] text-[13px] font-semibold" transform="rotate(90 690 420)" textAnchor="middle">미야시타 파크</text>
       {blocks.map(([x, y, w, h], i) => (
         <rect key={i} x={x} y={y} width={w} height={h} rx="14" fill="#F8F8F8" />
       ))}
@@ -295,7 +295,7 @@ export function ShibuyaMap() {
       <path d="M640 0 L 640 1000" stroke="#EDEDED" strokeWidth="4" strokeDasharray="14 14" fill="none" />
       {/* station + scramble */}
       <rect x="600" y="560" width="96" height="110" rx="16" fill="#111111" />
-      <text x="648" y="622" textAnchor="middle" className="fill-white text-[15px] font-bold">시부야역</text>
+      <text x="648" y="622" textAnchor="middle" className="fill-white text-[15px] font-semibold">시부야역</text>
       <g opacity="0.55">
         {Array.from({ length: 8 }).map((_, i) => (
           <rect key={i} x={548 + i * 7} y="574" width="3.5" height="44" fill="#fff" transform="rotate(35 576 596)" />
@@ -341,23 +341,23 @@ export function StoreDetail({ id, z }: { id: string; z: number }) {
           </div>
         </div>
         <div className="relative -mt-6 rounded-t-[28px] bg-ground px-5 pt-6">
-          <p className="text-[12.5px] font-semibold text-muted">{s.kind}</p>
+          <p className="text-[12.5px] font-semibold text-muted-foreground">{s.kind}</p>
           <h1 className="mt-1 text-[24px] font-extrabold tracking-tight">{s.name}</h1>
-          <p lang="ja" className="mt-0.5 text-[13px] text-muted">{s.ja}</p>
-          <ul className="mt-5 flex flex-col gap-3 rounded-[20px] bg-surface p-4 text-[14px] shadow-[var(--shadow-card)]">
+          <p lang="ja" className="mt-0.5 text-[13px] text-muted-foreground">{s.ja}</p>
+          <ul className="mt-5 flex flex-col gap-3 rounded-xl border bg-card shadow-xs p-4 text-[14px] shadow-xs">
             <li className="flex items-start gap-2.5">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-muted" /> {s.address}
+              <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" /> {s.address}
             </li>
             <li className="flex items-center gap-2.5 tabular">
-              <Clock className="size-4 shrink-0 text-muted" />
-              <span className={cn('font-bold', s.open ? 'text-open' : 'text-muted')}>{s.open ? '영업 중' : '영업 종료'}</span> {s.hours}
+              <Clock className="size-4 shrink-0 text-muted-foreground" />
+              <span className={cn('font-semibold', s.open ? 'text-open' : 'text-muted-foreground')}>{s.open ? '영업 중' : '영업 종료'}</span> {s.hours}
             </li>
             <li className="flex items-center gap-2.5 tabular">
-              <Footprints className="size-4 shrink-0 text-muted" /> 내 위치에서 {s.distance}m · 도보 {Math.max(1, Math.round(s.distance / 70))}분
+              <Footprints className="size-4 shrink-0 text-muted-foreground" /> 내 위치에서 {s.distance}m · 도보 {Math.max(1, Math.round(s.distance / 70))}분
             </li>
           </ul>
           <p className="mt-2 px-1 text-[11.5px] text-faint">매장 정보는 예시예요. 방문 전 영업시간을 확인해 주세요.</p>
-          <h2 className="mt-7 text-[16px] font-bold">이곳에서 찾을 상품 {mine.length}</h2>
+          <h2 className="mt-7 text-[16px] font-semibold">이곳에서 찾을 상품 {mine.length}</h2>
           {mine.length ? (
             <ul className="mt-3 flex flex-col gap-2.5">
               {mine.map((p, i) => (
@@ -365,7 +365,7 @@ export function StoreDetail({ id, z }: { id: string; z: number }) {
               ))}
             </ul>
           ) : (
-            <p className="mt-3 rounded-2xl bg-surface p-5 text-center text-[13.5px] text-muted ring-1 ring-line">이 매장에서 파는 저장 상품이 없어요</p>
+            <p className="mt-3 rounded-2xl bg-surface p-5 text-center text-[13.5px] text-muted-foreground border">이 매장에서 파는 저장 상품이 없어요</p>
           )}
         </div>
       </div>

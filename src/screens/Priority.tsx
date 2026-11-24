@@ -25,16 +25,16 @@ export function PlanPanel({ z }: { z: number }) {
   return (
     <Panel onClose={close} z={z} wide>
     <div className="w-full flex-1 overflow-y-auto px-5 pt-[max(12px,env(safe-area-inset-top))] pb-16">
-      <button aria-label="뒤로" onClick={close} className="-ml-2 mb-2 grid size-11 place-items-center rounded-full hover:bg-sunken">
+      <button aria-label="뒤로" onClick={close} className="-ml-2 mb-2 grid size-11 place-items-center rounded-full hover:bg-accent">
         <ArrowLeft className="size-[22px]" />
       </button>
       <header className="flex items-start justify-between">
         <div>
-          <p className="text-[13px] font-semibold text-muted">{trip.name}</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-tight">{unsorted.length ? '쇼핑 준비 중' : '쇼핑 준비 완료'}</h1>
-          <p className="mt-1 text-[14px] text-muted">총 {tripProducts.length}개</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">{trip.name}</p>
+          <h1 className="mt-1 text-[28px] font-semibold tracking-tight">{unsorted.length ? '쇼핑 준비 중' : '쇼핑 준비 완료'}</h1>
+          <p className="mt-1 text-[14px] text-muted-foreground">총 {tripProducts.length}개</p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => open({ type: 'swipe' })} disabled={!tripProducts.length}>
+        <Button variant="outline" size="sm" onClick={() => open({ type: 'swipe' })} disabled={!tripProducts.length}>
           <RotateCcw className="size-4" /> 다시 고르기
         </Button>
       </header>
@@ -44,7 +44,7 @@ export function PlanPanel({ z }: { z: number }) {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => open({ type: 'swipe' })}
-          className="mt-5 flex w-full items-center gap-4 overflow-hidden rounded-[24px] bg-ink p-4 text-left text-white lg:max-w-[560px]"
+          className="mt-5 flex w-full items-center gap-4 overflow-hidden rounded-xl bg-ink p-4 text-left text-white lg:max-w-[560px]"
         >
           <div className="relative h-20 w-24 shrink-0">
             {unsorted.slice(0, 3).map((p, i) => (
@@ -54,24 +54,24 @@ export function PlanPanel({ z }: { z: number }) {
             ))}
           </div>
           <div className="flex-1">
-            <p className="text-[17px] font-bold">미정 상품 {unsorted.length}개</p>
+            <p className="text-[17px] font-semibold">미정 상품 {unsorted.length}개</p>
             <p className="mt-0.5 text-[13px] text-white/60">한 장씩 넘기며 살지 말지 골라 보세요</p>
           </div>
-          <span className="rounded-full bg-white px-4 py-2 text-[13.5px] font-bold text-ink">고르기</span>
+          <span className="rounded-full bg-white px-4 py-2 text-[13.5px] font-semibold text-ink">고르기</span>
         </motion.button>
       )}
 
-      <section className="mt-5 rounded-[24px] bg-surface p-5 shadow-[var(--shadow-card)] lg:max-w-[560px]">
+      <section className="mt-5 rounded-xl border bg-card shadow-xs p-5 shadow-xs lg:max-w-[560px]">
         <div className="flex items-end justify-between gap-3">
           <div>
-            <p className="text-[13px] font-semibold text-muted">꼭 살래 예상 합계</p>
+            <p className="text-[13px] font-semibold text-muted-foreground">꼭 살래 예상 합계</p>
             <p className="mt-1 text-[28px] font-extrabold tracking-tight tabular">{yen(mustYen)}</p>
-            <p className="text-[13px] text-muted tabular">약 {won(mustWon)}</p>
+            <p className="text-[13px] text-muted-foreground tabular">약 {won(mustWon)}</p>
           </div>
           {trip.budget > 0 && (
             <div className="text-right">
-              <p className="text-[12px] font-semibold text-muted">예산</p>
-              <p className="text-[15px] font-bold tabular">{won(trip.budget)}</p>
+              <p className="text-[12px] font-semibold text-muted-foreground">예산</p>
+              <p className="text-[15px] font-semibold tabular">{won(trip.budget)}</p>
             </div>
           )}
         </div>
@@ -80,7 +80,7 @@ export function PlanPanel({ z }: { z: number }) {
             <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-sunken">
               <motion.div className={cn('h-full rounded-full', ratio >= 1 ? 'bg-brand' : 'bg-ink')} initial={{ width: 0 }} animate={{ width: `${ratio * 100}%` }} transition={{ duration: 0.6 }} />
             </div>
-            <p className="mt-2 text-[12.5px] text-muted tabular">
+            <p className="mt-2 text-[12.5px] text-muted-foreground tabular">
               {mustWon <= trip.budget ? `예산까지 ${won(trip.budget - mustWon)} 남았어요` : `예산보다 ${won(mustWon - trip.budget)} 많아요`}
             </p>
           </>
@@ -95,11 +95,11 @@ export function PlanPanel({ z }: { z: number }) {
       {/* desktop: board */}
       <div className="mt-8 hidden">
         {COLS.map((c) => (
-          <div key={c} className="rounded-[24px] bg-sunken/70 p-3">
+          <div key={c} className="rounded-xl bg-sunken/70 p-3">
             <div className="flex items-center gap-2 px-2 py-1.5">
               <span className={cn('size-2.5 rounded-full', PRIORITY_META[c].dot)} />
-              <h2 className="text-[15px] font-bold">{PRIORITY_META[c].label}</h2>
-              <span className="text-[13px] font-semibold text-muted">{by(c).length}</span>
+              <h2 className="text-[15px] font-semibold">{PRIORITY_META[c].label}</h2>
+              <span className="text-[13px] font-semibold text-muted-foreground">{by(c).length}</span>
             </div>
             <List items={by(c)} />
           </div>
@@ -111,7 +111,7 @@ export function PlanPanel({ z }: { z: number }) {
 }
 
 function List({ items }: { items: Product[] }) {
-  if (!items.length) return <p className="py-12 text-center text-[13.5px] text-muted">아직 없어요</p>
+  if (!items.length) return <p className="py-12 text-center text-[13.5px] text-muted-foreground">아직 없어요</p>
   return (
     <ul className="mt-3 flex flex-col gap-2.5">
       <AnimatePresence initial={false}>
@@ -170,10 +170,10 @@ export function Swipe() {
     >
       <div className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-5 pt-[max(12px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))]">
         <header className="flex h-12 items-center justify-between">
-          <button aria-label="닫기" onClick={close} className="-ml-2 grid size-11 place-items-center rounded-full hover:bg-sunken">
+          <button aria-label="닫기" onClick={close} className="-ml-2 grid size-11 place-items-center rounded-full hover:bg-accent">
             <X className="size-6" />
           </button>
-          <span className="text-[14px] font-bold tabular">{done ? '완료' : `${i + 1} / ${cards.length}`}</span>
+          <span className="text-[14px] font-semibold tabular">{done ? '완료' : `${i + 1} / ${cards.length}`}</span>
         </header>
         <div className="mt-1 h-1 overflow-hidden rounded-full bg-line">
           <motion.div className="h-full bg-ink" animate={{ width: `${(Math.min(i, cards.length) / Math.max(1, cards.length)) * 100}%` }} />
@@ -189,7 +189,7 @@ export function Swipe() {
               <h2 className="display mt-6 text-[28px]">다 골랐어요!</h2>
               <div className="mt-5 flex gap-2">
                 {(['must', 'maybe', 'skip'] as P[]).map((v) => (
-                  <span key={v} className={cn('rounded-full px-3.5 py-1.5 text-[13.5px] font-bold', PRIORITY_META[v].pill)}>
+                  <span key={v} className={cn('rounded-full px-3.5 py-1.5 text-[13.5px] font-semibold', PRIORITY_META[v].pill)}>
                     {PRIORITY_META[v].label} {count(v)}
                   </span>
                 ))}
@@ -226,17 +226,17 @@ export function Swipe() {
         {!done && (
           <>
             <div className="mt-6 flex items-center justify-center gap-5">
-              <Round label="안 살래" onClick={() => decide('skip')} className="size-16 bg-surface text-ink-2 shadow-[var(--shadow-card)]">
+              <Round label="안 살래" onClick={() => decide('skip')} className="size-16 bg-surface text-ink-2 shadow-xs">
                 <X className="size-7" strokeWidth={2.6} />
               </Round>
-              <Round label="고민" onClick={() => decide('maybe')} className="size-14 bg-surface text-maybe shadow-[var(--shadow-card)]">
+              <Round label="고민" onClick={() => decide('maybe')} className="size-14 bg-surface text-maybe shadow-xs">
                 <HelpCircle className="size-6" strokeWidth={2.6} />
               </Round>
-              <Round label="꼭 살래" onClick={() => decide('must')} className="size-16 bg-ink text-white shadow-[var(--shadow-float)]">
+              <Round label="꼭 살래" onClick={() => decide('must')} className="size-16 bg-ink text-white shadow-lg">
                 <Heart className="size-7 fill-white" />
               </Round>
             </div>
-            <button onClick={undo} disabled={!history.length} className="mx-auto mt-4 inline-flex h-10 items-center gap-1.5 text-[13px] font-semibold text-muted disabled:text-faint">
+            <button onClick={undo} disabled={!history.length} className="mx-auto mt-4 inline-flex h-10 items-center gap-1.5 text-[13px] font-semibold text-muted-foreground disabled:text-faint">
               <Undo2 className="size-4" /> 이전 선택 취소
             </button>
           </>
@@ -252,23 +252,23 @@ function Round({ label, children, onClick, className }: { label: string; childre
       <button aria-label={label} onClick={onClick} className={cn('grid place-items-center rounded-full transition active:scale-90', className)}>
         {children}
       </button>
-      <span className="text-[12px] font-semibold text-muted">{label}</span>
+      <span className="text-[12px] font-semibold text-muted-foreground">{label}</span>
     </div>
   )
 }
 
 function Card({ p, rate, children }: { p: Product; rate: number; children?: React.ReactNode }) {
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-[32px] bg-surface shadow-[var(--shadow-float)]">
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-xs shadow-lg">
       <ProductArt art={p.art} className="min-h-0 flex-1" />
       <div className="p-5">
-        <p className="text-[11.5px] font-bold tracking-wide text-muted">
+        <p className="text-[11.5px] font-semibold tracking-wide text-muted-foreground">
           {p.brand} · {p.category}
         </p>
         <h2 className="mt-1 line-clamp-2 text-[20px] leading-tight font-extrabold tracking-tight">{p.name}</h2>
         <p className="mt-2 flex items-baseline gap-2">
           <span className="text-[22px] font-extrabold tabular">{yen(p.price)}</span>
-          <span className="text-[13px] text-muted tabular">약 {won(toWon(p.price, rate))}</span>
+          <span className="text-[13px] text-muted-foreground tabular">약 {won(toWon(p.price, rate))}</span>
         </p>
       </div>
       {children}

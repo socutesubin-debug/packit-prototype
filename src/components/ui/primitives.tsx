@@ -1,6 +1,7 @@
-import { AnimatePresence, motion } from 'motion/react'
-import { useEffect, type ReactNode } from 'react'
-import { X } from 'lucide-react'
+import { motion } from 'motion/react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import type { Priority } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -20,9 +21,12 @@ export function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      data-state={active ? 'on' : 'off'}
       className={cn(
-        'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13.5px] font-semibold transition-colors',
-        active ? 'bg-ink text-white' : 'bg-surface text-ink-2 ring-1 ring-line hover:bg-sunken',
+        'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border px-3 text-[13px] font-medium whitespace-nowrap shadow-xs transition-[color,background-color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+        active
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground',
         className,
       )}
     >
@@ -32,9 +36,9 @@ export function Chip({
 }
 
 export const PRIORITY_META: Record<Priority, { label: string; dot: string; pill: string }> = {
-  must: { label: '꼭 살래', dot: 'bg-must', pill: 'bg-ink text-white' },
-  maybe: { label: '고민', dot: 'bg-maybe', pill: 'bg-[#d9d9d9] text-ink' },
-  skip: { label: '안 살래', dot: 'bg-skip', pill: 'bg-sunken text-faint' },
+  must: { label: '꼭 살래', dot: 'bg-must', pill: 'border-transparent bg-primary text-primary-foreground' },
+  maybe: { label: '고민', dot: 'bg-maybe', pill: 'border-border bg-secondary text-secondary-foreground' },
+  skip: { label: '안 살래', dot: 'bg-skip', pill: 'border-border bg-background text-muted-foreground line-through decoration-muted-foreground/50' },
 }
 
 export function PriorityPill({ value, onClick, size = 'md' }: { value: Priority | null; onClick?: () => void; size?: 'sm' | 'md' }) {
@@ -47,9 +51,9 @@ export function PriorityPill({ value, onClick, size = 'md' }: { value: Priority 
         onClick?.()
       }}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full font-bold transition active:scale-95',
-        size === 'sm' ? 'h-6 px-2.5 text-[11.5px]' : 'h-8 px-3 text-[12.5px]',
-        meta ? meta.pill : 'bg-surface text-muted ring-1 ring-line',
+        'inline-flex shrink-0 items-center justify-center rounded-md border font-medium whitespace-nowrap transition-[color,background-color,transform] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-95',
+        size === 'sm' ? 'h-6 px-2 text-[11.5px]' : 'h-7 px-2.5 text-[12.5px]',
+        meta ? meta.pill : 'border-dashed border-border bg-background text-muted-foreground hover:bg-accent',
       )}
     >
       {meta ? meta.label : '+ 정하기'}
@@ -60,7 +64,19 @@ export function PriorityPill({ value, onClick, size = 'md' }: { value: Priority 
 export const nextPriority = (p: Priority | null): Priority | null =>
   p === null ? 'must' : p === 'must' ? 'maybe' : p === 'maybe' ? 'skip' : null
 
-/** Bottom sheet on mobile, centered dialog on desktop */
+function useIsDesktop() {
+  const q = '(min-width: 768px)'
+  const [desktop, setDesktop] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
+  useEffect(() => {
+    const m = window.matchMedia(q)
+    const on = () => setDesktop(m.matches)
+    m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [])
+  return desktop
+}
+
+/** shadcn responsive dialog: Dialog on desktop, vaul Drawer on mobile */
 export function Sheet({
   open,
   onClose,
@@ -74,52 +90,33 @@ export function Sheet({
   title?: string
   className?: string
 }) {
-  useEffect(() => {
-    if (!open) return
-    // capture phase so an Escape closes only this sheet, not the page underneath
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      e.stopImmediatePropagation()
-      onClose()
-    }
-    window.addEventListener('keydown', onKey, true)
-    return () => window.removeEventListener('keydown', onKey, true)
-  }, [open, onClose])
+  const desktop = useIsDesktop()
+  // keep Escape from also closing the page underneath
+  const onEsc = (e: KeyboardEvent) => e.stopPropagation()
+  const change = (v: boolean) => !v && onClose()
+  if (desktop) {
+    return (
+      <Dialog open={open} onOpenChange={change}>
+        <DialogContent onEscapeKeyDown={onEsc} showCloseButton={!!title} className={cn('max-h-[88vh] overflow-y-auto sm:max-w-[480px]', className)}>
+          <DialogHeader className={title ? '' : 'sr-only'}>
+            <DialogTitle>{title ?? '상세'}</DialogTitle>
+            <DialogDescription className="sr-only">{title ?? '상세 정보'}</DialogDescription>
+          </DialogHeader>
+          <div>{children}</div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label={title}>
-          <motion.div
-            className="absolute inset-0 bg-ink/35 backdrop-blur-[2px]"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 40, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-            className={cn(
-              'relative w-full max-w-[520px] rounded-t-[var(--radius-sheet)] bg-surface px-5 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] shadow-[var(--shadow-float)] md:rounded-[var(--radius-sheet)] md:p-6',
-              className,
-            )}
-          >
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line md:hidden" />
-            {title && (
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[19px] font-bold tracking-tight">{title}</h2>
-                <button onClick={onClose} aria-label="닫기" className="grid size-9 place-items-center rounded-full text-muted hover:bg-sunken">
-                  <X className="size-5" />
-                </button>
-              </div>
-            )}
-            {children}
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+    <Drawer open={open} onOpenChange={change}>
+      <DrawerContent onEscapeKeyDown={onEsc} className={cn('max-h-[92dvh]', className)}>
+        <DrawerHeader className={title ? 'px-5 pt-3 pb-2 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left' : 'sr-only'}>
+          <DrawerTitle>{title ?? '상세'}</DrawerTitle>
+          <DrawerDescription className="sr-only">{title ?? '상세 정보'}</DrawerDescription>
+        </DrawerHeader>
+        <div className="overflow-y-auto px-5 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]">{children}</div>
+      </DrawerContent>
+    </Drawer>
   )
 }
 
@@ -133,7 +130,7 @@ export function Panel({ children, onClose, wide, z = 50 }: { children: ReactNode
   return (
     <div className="fixed inset-0 flex justify-end" style={{ zIndex: z }}>
       <motion.div
-        className="absolute inset-0 hidden bg-ink/30 backdrop-blur-[2px] lg:block"
+        className="absolute inset-0 hidden bg-black/50 lg:block"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -145,7 +142,7 @@ export function Panel({ children, onClose, wide, z = 50 }: { children: ReactNode
         exit={{ x: '100%' }}
         transition={{ type: 'spring', stiffness: 380, damping: 40 }}
         className={cn(
-          'relative flex h-full w-full flex-col overflow-hidden bg-ground lg:shadow-[var(--shadow-float)]',
+          'relative flex h-full w-full flex-col overflow-hidden bg-background lg:border-l lg:shadow-lg',
           wide ? 'lg:w-[720px]' : 'lg:w-[480px]',
         )}
       >
@@ -161,7 +158,7 @@ export function IconBtn({ label, children, onClick, className }: { label: string
       type="button"
       aria-label={label}
       onClick={onClick}
-      className={cn('grid size-10 place-items-center rounded-full bg-surface/90 text-ink shadow-[var(--shadow-card)] backdrop-blur transition active:scale-95', className)}
+      className={cn('grid size-9 place-items-center rounded-md border bg-background/90 text-foreground shadow-xs backdrop-blur transition-[background-color,transform] hover:bg-accent active:scale-95 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50', className)}
     >
       {children}
     </button>
@@ -180,7 +177,7 @@ export function Segmented<T extends string>({
   className?: string
 }) {
   return (
-    <div className={cn('relative flex rounded-full bg-sunken p-1', className)} role="tablist">
+    <div className={cn('relative flex h-9 items-center rounded-lg bg-muted p-[3px] text-muted-foreground', className)} role="tablist">
       {options.map((o) => {
         const active = o.value === value
         return (
@@ -189,9 +186,9 @@ export function Segmented<T extends string>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(o.value)}
-            className={cn('relative z-10 h-9 flex-1 rounded-full px-3 text-[13.5px] font-semibold transition-colors', active ? 'text-ink' : 'text-muted')}
+            className={cn('relative z-10 h-full flex-1 rounded-md px-3 text-[13px] font-medium whitespace-nowrap transition-colors', active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}
           >
-            {active && <motion.span layoutId={`seg-${options.map((x) => x.value).join('')}`} className="absolute inset-0 -z-10 rounded-full bg-surface shadow-[var(--shadow-card)]" />}
+            {active && <motion.span layoutId={`seg-${options.map((x) => x.value).join('')}`} className="absolute inset-0 -z-10 rounded-md border border-transparent bg-background shadow-sm" />}
             {o.label}
           </button>
         )

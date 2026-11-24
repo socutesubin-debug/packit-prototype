@@ -1,11 +1,24 @@
-import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronDown, LayoutGrid, List, Plus, Search, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { motion } from 'motion/react'
+import { ChevronDown, LayoutGrid, List, Plus, Search, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
 import { TripSwitcher } from '@/components/Shell'
 import { FindsStrip } from './Finds'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Chip } from '@/components/ui/primitives'
 import { CATALOG, CATEGORIES } from '@/lib/data'
 import { useApp } from '@/lib/store'
@@ -59,13 +72,15 @@ export function Home() {
     <div className="mx-auto w-full max-w-[1120px] px-5 pt-[max(20px,env(safe-area-inset-top))] pb-32 lg:px-10 lg:pt-12 lg:pb-16">
       <header className="flex items-start justify-between">
         <h1 className="text-[28px] leading-[1.15] tracking-tight lg:text-[34px]">
-          <span className="font-normal text-ink-2">{trip.city} 여행까지</span>
+          <span className="font-normal text-muted-foreground">{trip.city} 여행까지</span>
           <br />
-          <b className="font-bold">{dd.startsWith('D-') ? `${dd.slice(2)}일 남았어요` : dd === 'D-DAY' ? '오늘 떠나요' : '여행을 마쳤어요'}</b>
+          <b className="font-semibold">{dd.startsWith('D-') ? `${dd.slice(2)}일 남았어요` : dd === 'D-DAY' ? '오늘 떠나요' : '여행을 마쳤어요'}</b>
         </h1>
-        <button onClick={() => open({ type: 'benefits' })} className="flex h-12 shrink-0 items-center gap-2 rounded-full bg-surface pr-4 pl-1.5" aria-label="내 발견과 혜택">
-          <span className="grid size-9 place-items-center rounded-full bg-sunken text-[12px] font-bold">수빈</span>
-          <span className="text-[13px] font-bold tabular">{points.toLocaleString('ko-KR')}P</span>
+        <button onClick={() => open({ type: 'benefits' })} className="flex h-10 shrink-0 items-center gap-2 rounded-full border bg-background pr-3.5 pl-1 shadow-xs hover:bg-accent" aria-label="내 발견과 혜택">
+          <Avatar className="size-8">
+            <AvatarFallback className="text-[11px] font-semibold">수빈</AvatarFallback>
+          </Avatar>
+          <span className="text-[13px] font-semibold tabular">{points.toLocaleString('ko-KR')}P</span>
         </button>
       </header>
       <div className="mt-4 lg:hidden">
@@ -77,18 +92,14 @@ export function Home() {
       ) : (
         <>
           <section className="mt-6 grid grid-cols-2 gap-2.5 lg:max-w-[640px]" aria-label="여행 요약">
-            <button onClick={() => open({ type: 'plan' })} className="flex flex-col rounded-[var(--radius-card)] bg-ink p-4 text-left text-white">
-              <span className="text-[13px] font-medium text-white/60">꼭 살래 {must.length}개</span>
-              <span className="mt-auto pt-6 text-[24px] leading-none font-bold tracking-tight tabular">{yen(mustYen)}</span>
-              <span className="mt-1.5 text-[12px] text-white/50 tabular">약 {won(toWon(mustYen, rate))}</span>
-              {trip.budget > 0 && (
-                <span className="mt-3 h-1 overflow-hidden rounded-full bg-white/15">
-                  <motion.span className="block h-full rounded-full bg-white" initial={{ width: 0 }} animate={{ width: `${ratio * 100}%` }} />
-                </span>
-              )}
+            <button onClick={() => open({ type: 'plan' })} className="flex flex-col rounded-xl bg-primary p-4 text-left text-primary-foreground shadow-sm transition hover:bg-primary/90">
+              <span className="text-[13px] font-medium text-primary-foreground/60">꼭 살래 {must.length}개</span>
+              <span className="mt-auto pt-6 text-[24px] leading-none font-semibold tracking-tight tabular">{yen(mustYen)}</span>
+              <span className="mt-1.5 text-[12px] text-primary-foreground/50 tabular">약 {won(toWon(mustYen, rate))}</span>
+              {trip.budget > 0 && <Progress value={ratio * 100} className="mt-3 h-1 bg-primary-foreground/15 [&>[data-slot=progress-indicator]]:bg-primary-foreground" />}
             </button>
-            <button onClick={() => (unsorted.length ? open({ type: 'swipe' }) : open({ type: 'plan' }))} className="flex flex-col rounded-[var(--radius-card)] bg-surface p-4 text-left">
-              <span className="text-[13px] font-medium text-muted">{unsorted.length ? '아직 미정' : '정리 완료'}</span>
+            <button onClick={() => (unsorted.length ? open({ type: 'swipe' }) : open({ type: 'plan' }))} className="flex flex-col rounded-xl border bg-card p-4 text-left shadow-xs transition hover:bg-accent/50">
+              <span className="text-[13px] font-medium text-muted-foreground">{unsorted.length ? '아직 미정' : '정리 완료'}</span>
               <div className="relative mt-3 h-14">
                 {(unsorted.length ? unsorted : tripProducts).slice(0, 3).map((p, i) => (
                   <div key={p.id} className="absolute top-0" style={{ left: i * 30 }}>
@@ -96,48 +107,50 @@ export function Home() {
                   </div>
                 ))}
               </div>
-              <span className="mt-2 text-[15px] font-semibold">{unsorted.length ? `${unsorted.length}개 골라 보기` : '쇼핑 준비 현황'}</span>
+              <span className="mt-2 text-[15px] font-medium">{unsorted.length ? `${unsorted.length}개 골라 보기` : '쇼핑 준비 현황'}</span>
             </button>
           </section>
 
           <FindsStrip />
 
           <div className="mt-7">
-            <label className="flex h-11 items-center gap-2 rounded-full bg-sunken px-4 focus-within:ring-2 focus-within:ring-ink">
-              <Search className="size-[18px] text-muted" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="저장한 상품 검색" className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-faint" />
+            <div className="relative">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="저장한 상품 검색" aria-label="저장한 상품 검색" className="h-10 bg-background pr-9 pl-9" />
               {q && (
-                <button aria-label="검색어 지우기" onClick={() => setQ('')}>
-                  <X className="size-4 text-muted" />
+                <button aria-label="검색어 지우기" onClick={() => setQ('')} className="absolute top-1/2 right-2.5 grid size-6 -translate-y-1/2 place-items-center rounded-sm text-muted-foreground hover:text-foreground">
+                  <X className="size-4" />
                 </button>
               )}
-            </label>
+            </div>
             <div className="no-scrollbar -mx-5 mt-3 flex gap-1.5 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="tablist" aria-label="우선순위">
               {PRI_TABS.map((t) => {
                 const n = t.v === 'all' ? tripProducts.length : tripProducts.filter((p) => (t.v === 'none' ? !p.priority : p.priority === t.v)).length
                 return (
                   <Chip key={t.v} active={pri === t.v} onClick={() => setPri(t.v)}>
-                    {t.label} <span className={cn('tabular', pri === t.v ? 'text-white/60' : 'text-faint')}>{n}</span>
+                    {t.label} <span className={cn('tabular text-[12px]', pri === t.v ? 'text-primary-foreground/60' : 'text-muted-foreground')}>{n}</span>
                   </Chip>
                 )
               })}
             </div>
-            <div className="mt-2 flex items-center gap-1">
-              <Dropdown value={cat} options={CATS} onChange={setCat} label={cat === '전체' ? '전체 상품' : cat} />
-              <Dropdown value={sort} options={SORTS} onChange={setSort} label={sort} />
+            <div className="mt-3 flex items-center gap-1.5">
+              <Dropdown title="카테고리" value={cat} options={CATS} onChange={setCat} label={cat === '전체' ? '전체 상품' : cat} />
+              <Dropdown title="정렬" value={sort} options={SORTS} onChange={setSort} label={sort} />
               <span className="flex-1" />
-              <span className="mr-1 text-[13px] text-muted tabular">{list.length}개</span>
-              <ViewBtn on={view === 'grid'} onClick={() => setView('grid')} label="카드로 보기">
-                <LayoutGrid className="size-[18px]" />
-              </ViewBtn>
-              <ViewBtn on={view === 'list'} onClick={() => setView('list')} label="리스트로 보기">
-                <List className="size-[18px]" />
-              </ViewBtn>
+              <span className="mr-1 text-[13px] text-muted-foreground tabular">{list.length}개</span>
+              <ToggleGroup type="single" variant="outline" size="sm" value={view} onValueChange={(v) => v && setView(v as 'grid' | 'list')}>
+                <ToggleGroupItem value="grid" aria-label="카드로 보기">
+                  <LayoutGrid />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="리스트로 보기">
+                  <List />
+                </ToggleGroupItem>
+              </ToggleGroup>
             </div>
           </div>
 
           {list.length === 0 ? (
-            <p className="py-20 text-center text-[14px] text-muted">조건에 맞는 상품이 없어요</p>
+            <p className="py-20 text-center text-[14px] text-muted-foreground">조건에 맞는 상품이 없어요</p>
           ) : view === 'grid' ? (
             <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-3">
               {list.map((p, i) => (
@@ -157,63 +170,34 @@ export function Home() {
   )
 }
 
-function ViewBtn({ on, onClick, label, children }: { on: boolean; onClick: () => void; label: string; children: React.ReactNode }) {
+function Dropdown<T extends string>({ title, value, options, onChange, label }: { title: string; value: T; options: readonly T[]; onChange: (v: T) => void; label: string }) {
   return (
-    <button aria-label={label} aria-pressed={on} onClick={onClick} className={cn('grid size-9 place-items-center rounded-xl transition', on ? 'bg-surface text-ink' : 'text-faint hover:text-muted')}>
-      {children}
-    </button>
-  )
-}
-
-function Dropdown<T extends string>({ value, options, onChange, label }: { value: T; options: readonly T[]; onChange: (v: T) => void; label: string }) {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!open) return
-    const h = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false)
-    window.addEventListener('mousedown', h)
-    return () => window.removeEventListener('mousedown', h)
-  }, [open])
-  return (
-    <div ref={ref} className="relative">
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex h-9 items-center gap-1 rounded-full px-2.5 text-[14px] font-medium text-ink-2 hover:bg-sunken">
-        {label}
-        <ChevronDown className={cn('size-4 text-muted transition', open && 'rotate-180')} />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.ul
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.14 }}
-            className="absolute top-[calc(100%+6px)] left-0 z-30 min-w-[160px] rounded-2xl bg-surface p-1.5 shadow-[var(--shadow-float)] ring-1 ring-black/5"
-          >
-            {options.map((o) => (
-              <li key={o}>
-                <button
-                  onClick={() => {
-                    onChange(o)
-                    setOpen(false)
-                  }}
-                  className="flex h-10 w-full items-center justify-between gap-4 rounded-xl px-3 text-left text-[14px] hover:bg-sunken"
-                >
-                  {o}
-                  {o === value && <Check className="size-4" strokeWidth={2.6} />}
-                </button>
-              </li>
-            ))}
-          </motion.ul>
-        )}
-      </AnimatePresence>
-    </div>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="font-normal">
+          {label}
+          <ChevronDown className="text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-[168px]">
+        <DropdownMenuLabel className="text-[12px] font-medium text-muted-foreground">{title}</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuRadioGroup value={value} onValueChange={(v) => onChange(v as T)}>
+          {options.map((o) => (
+            <DropdownMenuRadioItem key={o} value={o} className="text-[13.5px]">
+              {o}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
 function EmptyHome({ onSave, onSample }: { onSave: () => void; onSample?: () => void }) {
   const peek = CATALOG.slice(0, 3)
   return (
-    <div className="mt-6 flex flex-col items-center rounded-[28px] bg-surface px-6 pt-12 pb-10 text-center">
+    <div className="mt-6 flex flex-col items-center rounded-xl border bg-card px-6 pt-12 pb-10 text-center shadow-xs">
       <div className="relative h-32 w-56">
         {peek.map((p, i) => (
           <motion.div
@@ -228,15 +212,15 @@ function EmptyHome({ onSave, onSample }: { onSave: () => void; onSample?: () => 
           </motion.div>
         ))}
       </div>
-      <h2 className="mt-6 text-[22px] font-bold tracking-tight">사고 싶은 물건을 모아 볼까요?</h2>
-      <p className="mt-2 max-w-[280px] text-[14.5px] text-muted">스크린샷을 올리면 상품 이름과 가격을 자동으로 정리해 드려요</p>
+      <h2 className="mt-6 text-[22px] font-semibold tracking-tight">사고 싶은 물건을 모아 볼까요?</h2>
+      <p className="mt-2 max-w-[280px] text-[14.5px] text-muted-foreground">스크린샷을 올리면 상품 이름과 가격을 자동으로 정리해 드려요</p>
       <Button size="lg" className="mt-7 px-7" onClick={onSave}>
         <Plus className="size-5" strokeWidth={2.4} /> 첫 상품 저장하기
       </Button>
       {onSample && (
-        <button onClick={onSample} className="mt-2 h-11 text-[14px] font-medium text-muted underline-offset-4 hover:underline">
+        <Button variant="link" onClick={onSample} className="mt-2 text-muted-foreground">
           예시 여행 둘러보기
-        </button>
+        </Button>
       )}
     </div>
   )

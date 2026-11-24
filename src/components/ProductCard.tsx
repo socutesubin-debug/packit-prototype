@@ -22,14 +22,14 @@ export function ProductTile({ p, index = 0 }: { p: Product; index?: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3) }}
       onClick={() => open({ type: 'product', id: p.id })}
-      className="group flex cursor-pointer flex-col rounded-[var(--radius-card)] bg-surface p-3.5 pb-3 transition hover:shadow-[0_12px_30px_-16px_rgba(20,20,19,0.25)]"
+      className="group flex cursor-pointer flex-col rounded-xl border bg-card shadow-xs p-3.5 pb-3 transition hover:shadow-[0_12px_30px_-16px_rgba(20,20,19,0.25)]"
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <h3 className="line-clamp-2 min-h-[2.6em] text-[14px] leading-[1.3] font-semibold">{p.name}</h3>
           <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 tabular">
-            <span className="text-[14px] font-bold">{yen(p.price)}</span>
-            <span className="text-[11.5px] whitespace-nowrap text-muted">약 {won(toWon(p.price, rate))}</span>
+            <span className="text-[14px] font-semibold">{yen(p.price)}</span>
+            <span className="text-[11.5px] whitespace-nowrap text-muted-foreground">약 {won(toWon(p.price, rate))}</span>
           </p>
         </div>
         <button
@@ -38,7 +38,7 @@ export function ProductTile({ p, index = 0 }: { p: Product; index?: number }) {
             e.stopPropagation()
             update(p.id, { favorite: !p.favorite })
           }}
-          className="-mt-1 -mr-1 grid size-8 shrink-0 place-items-center rounded-full text-faint hover:bg-sunken"
+          className="-mt-1 -mr-1 grid size-8 shrink-0 place-items-center rounded-full text-faint hover:bg-accent"
         >
           <Star className={cn('size-[17px]', p.favorite && 'fill-ink text-ink')} strokeWidth={2} />
         </button>
@@ -47,7 +47,7 @@ export function ProductTile({ p, index = 0 }: { p: Product; index?: number }) {
       <div className="flex h-7 items-center gap-1.5">
         <PriorityPill size="sm" value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />
         {p.purchased && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold text-white">
             <Check className="size-3" strokeWidth={3} /> 샀어요
           </span>
         )}
@@ -65,15 +65,15 @@ export function ProductRow({ p, index = 0, trailing }: { p: Product; index?: num
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: Math.min(index * 0.03, 0.3) }}
       onClick={() => open({ type: 'product', id: p.id })}
-      className="flex cursor-pointer items-center gap-3.5 rounded-[20px] bg-surface p-2.5 pr-4 transition hover:bg-white/70"
+      className="flex cursor-pointer items-center gap-3.5 rounded-xl border bg-card shadow-xs p-2.5 pr-4 transition hover:bg-white/70"
     >
       <ProductArt art={p.art} className="size-[72px] shrink-0 rounded-2xl" tilt={tiltOf(p.id)} />
       <div className="min-w-0 flex-1">
         <p className="text-[11px] font-semibold tracking-wide text-faint">{p.brand}</p>
         <h3 className="mt-0.5 line-clamp-2 text-[14.5px] leading-snug font-semibold">{p.name}</h3>
         <p className="mt-1 flex items-baseline gap-1.5">
-          <span className="text-[14.5px] font-bold tabular">{yen(p.price)}</span>
-          <span className="text-[12px] text-muted tabular">약 {won(toWon(p.price, rate))}</span>
+          <span className="text-[14.5px] font-semibold tabular">{yen(p.price)}</span>
+          <span className="text-[12px] text-muted-foreground tabular">약 {won(toWon(p.price, rate))}</span>
         </p>
       </div>
       {trailing ?? <PriorityPill value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />}
