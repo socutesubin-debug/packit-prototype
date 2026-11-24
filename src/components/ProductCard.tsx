@@ -4,7 +4,7 @@ import { useApp } from '@/lib/store'
 import type { Product } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
 import { ProductArt } from './art/ProductArt'
-import { PriorityPill, nextPriority } from './ui/primitives'
+import { PriorityIcon, nextPriority } from './ui/primitives'
 
 /** tiny deterministic tilt so cutouts feel placed by hand */
 export const tiltOf = (id: string) => {
@@ -44,8 +44,9 @@ export function ProductTile({ p, index = 0 }: { p: Product; index?: number }) {
         </button>
       </div>
       <ProductArt art={p.art} tone="none" tilt={tiltOf(p.id)} className="mt-1 aspect-square w-full transition duration-300 group-hover:scale-[1.04]" />
-      <div className="flex h-7 items-center gap-1.5">
-        <PriorityPill size="sm" value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />
+      <div className="flex h-8 items-center gap-1.5">
+        <PriorityIcon size="sm" showLabel value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />
+        <span className="flex-1" />
         {p.purchased && (
           <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold text-white">
             <Check className="size-3" strokeWidth={3} /> 샀어요
@@ -76,7 +77,7 @@ export function ProductRow({ p, index = 0, trailing }: { p: Product; index?: num
           <span className="text-[12px] text-muted-foreground tabular">약 {won(toWon(p.price, rate))}</span>
         </p>
       </div>
-      {trailing ?? <PriorityPill value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />}
+      {trailing ?? <PriorityIcon value={p.priority} onClick={() => setPriority(p.id, nextPriority(p.priority))} />}
     </motion.li>
   )
 }

@@ -1,4 +1,5 @@
 import { motion } from 'motion/react'
+import { Hourglass, Plus, ShoppingBag, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
@@ -57,6 +58,46 @@ export function PriorityPill({ value, onClick, size = 'md' }: { value: Priority 
       )}
     >
       {meta ? meta.label : '+ 정하기'}
+    </button>
+  )
+}
+
+/** Option A: one round icon per priority — tap cycles, label for screen readers */
+export const PRIORITY_ICON: Record<Priority, { icon: typeof X; cls: string }> = {
+  must: { icon: ShoppingBag, cls: 'border-primary bg-primary text-primary-foreground' },
+  maybe: { icon: Hourglass, cls: 'border-foreground/70 bg-background text-foreground' },
+  skip: { icon: X, cls: 'border-dashed border-muted-foreground/60 bg-background text-muted-foreground' },
+}
+
+export function PriorityIcon({ value, onClick, size = 'md', showLabel }: { value: Priority | null; onClick?: () => void; size?: 'sm' | 'md'; showLabel?: boolean }) {
+  const meta = value ? PRIORITY_ICON[value] : null
+  const Icon = meta ? meta.icon : Plus
+  const label = value ? PRIORITY_META[value].label : '미정'
+  return (
+    <button
+      type="button"
+      title={`${label} · 눌러서 바꾸기`}
+      aria-label={`우선순위 ${label}, 눌러서 바꾸기`}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.()
+      }}
+      className="inline-flex shrink-0 items-center gap-1.5 outline-none focus-visible:[&>span:first-child]:ring-[3px] focus-visible:[&>span:first-child]:ring-ring/50"
+    >
+      <motion.span
+        key={value ?? 'none'}
+        initial={{ scale: 0.6, rotate: -20 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+        className={cn(
+          'grid place-items-center rounded-full border transition-colors',
+          size === 'sm' ? 'size-7' : 'size-8',
+          meta ? meta.cls : 'border-dashed border-border bg-background text-muted-foreground',
+        )}
+      >
+        <Icon className={size === 'sm' ? 'size-3.5' : 'size-4'} strokeWidth={2.2} />
+      </motion.span>
+      {showLabel && <span className={cn('text-[12px] font-medium', value ? 'text-foreground' : 'text-muted-foreground')}>{label}</span>}
     </button>
   )
 }
