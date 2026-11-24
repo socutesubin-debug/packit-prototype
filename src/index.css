@@ -1,0 +1,100 @@
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+@import 'tailwindcss';
+
+/*
+  Packit design tokens
+  - Ground: warm light gray, white cards, ink near-black
+  - One primary: stamp red. Priority colors: must = red, maybe = amber, skip = gray
+  - Type: Pretendard Variable, tight display headings
+*/
+@theme {
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  --color-ground: #f4f3f0;
+  --color-surface: #ffffff;
+  --color-sunken: #eeede9;
+  --color-line: #e6e4df;
+  --color-ink: #141413;
+  --color-ink-2: #3d3c39;
+  --color-muted: #8b8a85;
+  --color-faint: #b9b7b1;
+
+  --color-brand: #e8453c;
+  --color-brand-deep: #c9342c;
+  --color-brand-soft: #fdeceb;
+
+  --color-must: #e8453c;
+  --color-maybe: #f0a52f;
+  --color-maybe-soft: #fdf3e1;
+  --color-skip: #9b9a95;
+  --color-open: #27a567;
+
+  --radius-card: 22px;
+  --radius-sheet: 28px;
+
+  --shadow-card: 0 1px 2px rgb(20 20 19 / 0.04), 0 8px 24px -12px rgb(20 20 19 / 0.12);
+  --shadow-float: 0 10px 30px -10px rgb(20 20 19 / 0.25), 0 2px 6px rgb(20 20 19 / 0.06);
+  --shadow-brand: 0 10px 24px -8px rgb(232 69 60 / 0.55);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-ground text-ink font-sans antialiased;
+    font-feature-settings: 'ss06', 'tnum' 0;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: -0.01em;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  svg.lucide {
+    flex-shrink: 0;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+  input,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+@utility display {
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-10%); }
+  100% { transform: translateY(110%); }
+}
+.scan-line {
+  animation: scan 1.4s ease-in-out infinite alternate;
+}
