@@ -62,7 +62,6 @@ export const KIND_ICON: Record<PostKind, typeof Compass> = { find: Compass, tip:
 
 const TABS = [
   { id: 'all', label: 'ALL' },
-  { id: 'series', label: '연재' },
   { id: 'find', label: '발견' },
   { id: 'tip', label: '팁' },
   { id: 'course', label: '코스' },
@@ -71,20 +70,19 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id']
 
 export function Magazine() {
-  const { finds, open, following, justPosted, tSeries } = useApp()
+  const { finds, open, following, justPosted } = useApp()
   const [tab, setTabId] = useState<TabId>('all')
   const [feed, setFeed] = useState<'rec' | 'sub'>('rec')
   const byId = (id: string) => finds.find((f) => f.id === id)
   const stories = STORIES.map((s) => ({ ...s, finds: s.findIds.map(byId).filter(Boolean) as Find[] }))
   const [cover, ...week] = stories
-  const coverSeries = SERIES.find((x) => x.id === cover.series)
   const pool = finds
     .filter((f) => f.city === '도쿄' && (!f.mine || f.id === justPosted))
     .filter((f) => feed === 'rec' || following.has(f.author) || f.id === justPosted)
     .sort((a, b) => (a.id === justPosted ? -1 : b.id === justPosted ? 1 : feed === 'rec' ? b.saves / (1 + b.daysAgo) - a.saves / (1 + a.daysAgo) : a.daysAgo - b.daysAgo))
   const tips = pool.filter((f) => f.kind === 'tip')
   const grid = tab === 'all' ? pool.filter((f) => f.kind !== 'tip') : pool.filter((f) => (f.kind ?? 'find') === tab)
-  const kindTab = tab !== 'all' && tab !== 'series'
+  const kindTab = tab !== 'all'
 
   const feedToggle = (
     <span className="flex gap-3 text-[13px]">
@@ -125,7 +123,7 @@ export function Magazine() {
             <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink lg:aspect-[16/8]">
               <Collage finds={cover.finds} dark />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-5 pt-24 pb-6 text-white lg:px-8">
-                <p className="text-[11px] font-semibold tracking-[0.18em] text-white/70">COVER STORY · {coverSeries?.title} EP.{cover.ep}</p>
+                <p className="text-[11px] font-semibold tracking-[0.18em] text-white/70">COVER STORY</p>
                 <h2 className="mt-2 text-[28px] leading-[1.18] font-bold tracking-[-0.03em] text-balance lg:text-[40px]">{cover.title}</h2>
               </div>
             </div>
@@ -151,50 +149,22 @@ export function Magazine() {
         </>
       )}
 
-      {(tab === 'all' || tab === 'series') && (
-        <>
-          <Head en="SERIES" ko="에디터 연재" className={tab === 'all' ? 'mt-12' : 'mt-6'} />
-          <Rail>
-            {SERIES.map((se) => {
-              const st = stories.find((x) => x.id === se.eps[0].storyId)
-              return (
-                <PortraitCard key={se.id} onClick={() => open({ type: 'series', id: se.id })} kicker={`EP.${String(se.eps[0].ep).padStart(2, '0')}`} title={se.title} meta={se.by}>
-                  {st ? <Collage finds={st.finds} /> : <ReceiptArt />}
-                </PortraitCard>
-              )
-            })}
-          </Rail>
-
-          <Head en="TRAVELER SERIES" ko="여행자 연재" className="mt-12" />
-          <Rail>
-            {tSeries.map((ts) => (
-              <PortraitCard key={ts.id} onClick={() => open({ type: 'tseries', id: ts.id })} kicker={`${ts.eps.length}화${ts.ongoing ? ' · 연재 중' : ''}`} title={ts.title} meta={ts.author} avatar={ts.author}>
-                <SeriesCover ts={ts} />
-              </PortraitCard>
+      <Head en={kindTab ? kindLabel(tab as PostKind).toUpperCase() : "TRAVELERS' FINDS"} ko={kindTab ? undefined : '여행자 발견'} right={feedToggle} className={tab === 'all' ? 'mt-12' : 'mt-6'} />
+        {tab === 'tip' ? (
+          <div>{tips.map((f) => <TipQuote key={f.id} f={f} />)}</div>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-7 lg:grid-cols-4 lg:gap-x-5">
+            {grid.map((f, i) => (
+              <FragmentWithTip key={f.id} show={tab === 'all' && i === 3 && !!tips[0]} tip={tips[0]}>
+                <FindTile f={f} highlight={f.id === justPosted} />
+              </FragmentWithTip>
             ))}
-          </Rail>
-        </>
-      )}
+          </div>
+        )}
+        {!(tab === 'tip' ? tips : grid).length && (
+          <p className="py-14 text-center text-[14px] text-muted-foreground">{feed === 'sub' ? '구독한 여행자의 글이 아직 없어요' : '이 종류의 글이 아직 없어요'}</p>
+        )}
 
-      {tab !== 'series' && (
-        <>
-          <Head en={kindTab ? kindLabel(tab as PostKind).toUpperCase() : "TRAVELERS' FINDS"} ko={kindTab ? undefined : '여행자 발견'} right={feedToggle} className={tab === 'all' ? 'mt-12' : 'mt-6'} />
-          {tab === 'tip' ? (
-            <div>{tips.map((f) => <TipQuote key={f.id} f={f} />)}</div>
-          ) : (
-            <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-7 lg:grid-cols-4 lg:gap-x-5">
-              {grid.map((f, i) => (
-                <FragmentWithTip key={f.id} show={tab === 'all' && i === 3 && !!tips[0]} tip={tips[0]}>
-                  <FindTile f={f} highlight={f.id === justPosted} />
-                </FragmentWithTip>
-              ))}
-            </div>
-          )}
-          {!(tab === 'tip' ? tips : grid).length && (
-            <p className="py-14 text-center text-[14px] text-muted-foreground">{feed === 'sub' ? '구독한 여행자의 글이 아직 없어요' : '이 종류의 글이 아직 없어요'}</p>
-          )}
-        </>
-      )}
       <p className="mt-12 text-center text-[11.5px] text-faint">발견 탭의 글과 사진은 예시 콘텐츠예요</p>
     </div>
   )
@@ -210,24 +180,6 @@ function FragmentWithTip({ children, show, tip }: { children: React.ReactNode; s
         </div>
       )}
     </>
-  )
-}
-
-function Rail({ children }: { children: React.ReactNode }) {
-  return <div className="no-scrollbar -mx-5 mt-4 flex snap-x scroll-px-5 gap-3 overflow-x-auto px-5 pb-1 lg:mx-0 lg:grid lg:grid-cols-4 lg:px-0">{children}</div>
-}
-
-function PortraitCard({ children, onClick, kicker, title, meta, avatar }: { children: React.ReactNode; onClick: () => void; kicker: string; title: string; meta: string; avatar?: string }) {
-  return (
-    <button onClick={onClick} className="group w-[150px] shrink-0 snap-start text-left lg:w-auto">
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-sunken">
-        {children}
-        {avatar && <Avatar name={avatar} className="absolute top-2 left-2 size-7 bg-white text-[11px] text-ink shadow-xs" />}
-      </div>
-      <p className="mt-2.5 text-[11px] font-semibold tracking-[0.12em] text-muted-foreground">{kicker}</p>
-      <p className="mt-0.5 text-[15px] leading-snug font-semibold tracking-tight">{title}</p>
-      <p className="mt-0.5 text-[12.5px] text-muted-foreground">{meta}</p>
-    </button>
   )
 }
 
