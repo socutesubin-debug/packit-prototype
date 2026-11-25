@@ -279,11 +279,11 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                     </div>
                   </>
                 )}
-                <div className="no-scrollbar -mx-5 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-1">
+                <ReviewRail count={Math.min(6, rv.list.length)}>
                   {rv.list.slice(0, 6).map((r, i) => (
                     <ReviewCard key={i} r={r} onMore={() => setAllReviews('전체')} className="w-[82%] shrink-0 snap-start" />
                   ))}
-                </div>
+                </ReviewRail>
                 <Button variant="outline" size="lg" className="mt-4 w-full" onClick={() => setAllReviews('전체')}>
                   후기 {rv.list.length}개 모두 보기
                 </Button>
@@ -363,6 +363,80 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
         </div>
       </Sheet>
     </Panel>
+  )
+}
+
+/** horizontal card rail: swipe on touch, drag with a mouse, or use the arrows */
+function ReviewRail({ count, children }: { count: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [idx, setIdx] = useState(0)
+  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
+  const step = () => {
+    const el = ref.current
+    const first = el?.firstElementChild as HTMLElement | null
+    return first ? first.offsetWidth + 12 : 300
+  }
+  const dragged = useRef(false)
+  const end = (el: HTMLDivElement, clientX: number) => {
+    const d = drag.current
+    drag.current = null
+    if (!d) return
+    dragged.current = d.moved
+    const dx = clientX - d.x
+    goTo(Math.round(d.left / step()) + (dx < -40 ? 1 : dx > 40 ? -1 : 0))
+    window.setTimeout(() => (el.style.scrollSnapType = ''), 400)
+  }
+  const goTo = (i: number) => {
+    const n = Math.max(0, Math.min(count - 1, i))
+    ref.current?.scrollTo({ left: n * step(), behavior: 'smooth' })
+  }
+  return (
+    <div className="mt-4">
+      <div
+        ref={ref}
+        onScroll={(e) => setIdx(Math.round(e.currentTarget.scrollLeft / step()))}
+        onPointerDown={(e) => {
+          if (e.pointerType !== 'mouse') return
+          drag.current = { x: e.clientX, left: e.currentTarget.scrollLeft, moved: false }
+          e.currentTarget.style.scrollSnapType = 'none'
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current
+          if (!d) return
+          const dx = e.clientX - d.x
+          if (Math.abs(dx) > 4) d.moved = true
+          e.currentTarget.scrollLeft = d.left - dx
+        }}
+        onPointerUp={(e) => end(e.currentTarget, e.clientX)}
+        onPointerLeave={(e) => end(e.currentTarget, e.clientX)}
+        onClickCapture={(e) => {
+          if (dragged.current) {
+            e.stopPropagation()
+            dragged.current = false
+          }
+        }}
+        className="no-scrollbar -mx-5 flex cursor-grab snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-1 select-none active:cursor-grabbing"
+      >
+        {children}
+      </div>
+      {count > 1 && (
+        <div className="mt-3 flex items-center justify-between">
+          <div className="flex gap-1.5" aria-hidden>
+            {Array.from({ length: count }).map((_, i) => (
+              <span key={i} className={cn('h-1.5 rounded-full transition-all', i === idx ? 'w-4 bg-foreground' : 'w-1.5 bg-foreground/20')} />
+            ))}
+          </div>
+          <div className="flex gap-1.5">
+            <button aria-label="이전 후기" onClick={() => goTo(idx - 1)} disabled={idx <= 0} className="grid size-8 place-items-center rounded-full border bg-card shadow-xs disabled:opacity-30">
+              <ChevronLeft className="size-4" />
+            </button>
+            <button aria-label="다음 후기" onClick={() => goTo(idx + 1)} disabled={idx >= count - 1} className="grid size-8 place-items-center rounded-full border bg-card shadow-xs disabled:opacity-30">
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
