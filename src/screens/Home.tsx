@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { ChevronDown, ChevronRight, LayoutGrid, List, Plus, RotateCcw, Search, ShoppingBag, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, CircleDashed, LayoutGrid, List, Plus, RotateCcw, Search, ShoppingBag, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow, ProductTile, tiltOf } from '@/components/ProductCard'
@@ -18,13 +18,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Chip } from '@/components/ui/primitives'
+import { PRIORITY_ICON, Chip } from '@/components/ui/primitives'
 import { CATALOG, CATEGORIES } from '@/lib/data'
 import { useApp } from '@/lib/store'
 import type { Product } from '@/lib/types'
 import { cn, dday, toWon, won, yen } from '@/lib/utils'
 
-const SORTS = ['최근 저장순', '가격 낮은 순', '가격 높은 순', '우선순위 순'] as const
+const SORTS = ['최근 담은 순', '가격 높은 순', '가격 낮은 순', '여행자 인기순', '우선순위 순'] as const
 type Sort = (typeof SORTS)[number]
 const CATS = ['전체', '즐겨찾기', ...CATEGORIES] as const
 type Cat = (typeof CATS)[number]
@@ -42,7 +42,8 @@ export function Home() {
   const { tripProducts, trip, rate, open, setTripId, trips, points } = useApp()
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [cat, setCat] = useState<Cat>('전체')
-  const [sort, setSort] = useState<Sort>('최근 저장순')
+  const [sort, setSort] = useState<Sort>('최근 담은 순')
+  const [searching, setSearching] = useState(false)
   const [q, setQ] = useState('')
   const [pri, setPri] = useState<PriFilter>('all')
 
@@ -56,6 +57,7 @@ export function Home() {
     if (sort === '가격 낮은 순') return [...l].sort((a, b) => a.price - b.price)
     if (sort === '가격 높은 순') return [...l].sort((a, b) => b.price - a.price)
     if (sort === '우선순위 순') return [...l].sort((a, b) => rank(a) - rank(b))
+    if (sort === '여행자 인기순') return [...l].sort((a, b) => b.pickRate - a.pickRate)
     return l
   }, [tripProducts, cat, q, sort, pri])
 
@@ -110,32 +112,86 @@ export function Home() {
 
 
           <div className="mt-7">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="저장한 상품 검색" aria-label="저장한 상품 검색" className="h-10 bg-background pr-9 pl-9" />
-              {q && (
-                <button aria-label="검색어 지우기" onClick={() => setQ('')} className="absolute top-1/2 right-2.5 grid size-6 -translate-y-1/2 place-items-center rounded-sm text-muted-foreground hover:text-foreground">
-                  <X className="size-4" />
-                </button>
+            {/* row 1: search + re-sort */}
+            <div className="flex h-10 items-center gap-2">
+              {searching ? (
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="저장한 상품 검색" aria-label="저장한 상품 검색" className="h-10 rounded-full bg-background pr-9 pl-9" />
+                  <button aria-label="검색 닫기" onClick={() => { setQ(''); setSearching(false) }} className="absolute top-1/2 right-2.5 grid size-6 -translate-y-1/2 place-items-center rounded-full text-muted-foreground hover:text-foreground">
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <button aria-label="검색" onClick={() => setSearching(true)} className="grid size-10 place-items-center rounded-full border bg-background shadow-xs hover:bg-accent">
+                    <Search className="size-[18px]" />
+                  </button>
+                  <span className="flex-1" />
+                  <button onClick={() => open({ type: 'swipe' })} className="text-[13.5px] font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground">
+                    우선순위 다시 고르기
+                  </button>
+                </>
               )}
             </div>
-            <div className="no-scrollbar -mx-5 mt-3 flex gap-1.5 overflow-x-auto px-5 lg:mx-0 lg:px-0" role="tablist" aria-label="우선순위">
-              {PRI_TABS.map((t) => {
-                const n = t.v === 'all' ? tripProducts.length : tripProducts.filter((p) => (t.v === 'none' ? !p.priority : p.priority === t.v)).length
+
+            {/* row 2: priority dropdown + category chips */}
+            <div className="no-scrollbar -mx-5 mt-3 flex gap-1.5 overflow-x-auto px-5 lg:mx-0 lg:px-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className={cn('inline-flex h-9 shrink-0 items-center gap-1 rounded-full border pr-3 pl-4 text-[13.5px] font-medium shadow-xs transition outline-none data-[state=open]:ring-[3px] data-[state=open]:ring-ring/30', pri !== 'all' ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-accent')}>
+                    {PRI_TABS.find((t) => t.v === pri)?.label === '전체' ? '우선순위' : PRI_TABS.find((t) => t.v === pri)?.label}
+                    <ChevronDown className="size-4 opacity-70" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" sideOffset={6} className="min-w-[200px] rounded-xl p-1.5">
+                  <DropdownMenuRadioGroup value={pri} onValueChange={(v) => setPri(v as PriFilter)}>
+                    {PRI_TABS.map((t) => {
+                      const n = t.v === 'all' ? tripProducts.length : tripProducts.filter((p) => (t.v === 'none' ? !p.priority : p.priority === t.v)).length
+                      const I = t.v === 'must' || t.v === 'maybe' || t.v === 'skip' ? PRIORITY_ICON[t.v].icon : null
+                      return (
+                        <DropdownMenuRadioItem key={t.v} value={t.v} className="h-10 gap-2.5 rounded-lg text-[14px]">
+                          <span className="grid size-5 place-items-center text-muted-foreground">{I ? <I className="size-4" /> : t.v === 'all' ? <LayoutGrid className="size-4" /> : <CircleDashed className="size-4" />}</span>
+                          <span className="flex-1">{t.label}</span>
+                          <span className="text-[12.5px] text-muted-foreground tabular">{n}</span>
+                        </DropdownMenuRadioItem>
+                      )
+                    })}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {CATEGORIES.map((c) => {
+                const on = cat === c
                 return (
-                  <Chip key={t.v} active={pri === t.v} onClick={() => setPri(t.v)}>
-                    {t.label} <span className={cn('tabular text-[12px]', pri === t.v ? 'text-primary-foreground/60' : 'text-muted-foreground')}>{n}</span>
-                  </Chip>
+                  <button key={c} onClick={() => setCat(on ? '전체' : c)} aria-pressed={on} className={cn('inline-flex h-9 shrink-0 items-center rounded-full border px-4 text-[13.5px] font-medium shadow-xs transition', on ? 'border-primary bg-primary text-primary-foreground' : 'bg-background text-foreground/80 hover:bg-accent')}>
+                    {c}
+                  </button>
                 )
               })}
             </div>
-            <div className="mt-3 flex items-center gap-1.5">
-              <Dropdown title="카테고리" value={cat} options={CATS} onChange={setCat} label={cat === '전체' ? '전체 상품' : cat} />
-              <Dropdown title="정렬" value={sort} options={SORTS} onChange={setSort} label={sort} />
+
+            {/* row 3: result count + sort dropdown + view */}
+            <div className="mt-4 flex items-center gap-2">
+              <p className="text-[13px] text-muted-foreground tabular">
+                <b className="font-semibold text-foreground">{list.length}개</b> · {yen(list.reduce((sum, p) => sum + p.price, 0))}
+              </p>
               <span className="flex-1" />
-              <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => open({ type: 'swipe' })} aria-label="스와이프로 다시 정리">
-                <RotateCcw /> <span className="hidden sm:inline">다시 정리</span>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="inline-flex h-8 items-center gap-1 rounded-md px-2 text-[13px] font-medium outline-none hover:bg-accent data-[state=open]:bg-accent">
+                    {sort} <ChevronDown className="size-3.5 text-muted-foreground" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={4} className="min-w-[168px] rounded-xl p-1.5">
+                  <DropdownMenuRadioGroup value={sort} onValueChange={(v) => setSort(v as Sort)}>
+                    {SORTS.map((o) => (
+                      <DropdownMenuRadioItem key={o} value={o} className="h-10 rounded-lg text-[14px]">
+                        {o}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <ToggleGroup type="single" variant="outline" size="sm" value={view} onValueChange={(v) => v && setView(v as 'grid' | 'list')}>
                 <ToggleGroupItem value="grid" aria-label="카드로 보기">
                   <LayoutGrid />
