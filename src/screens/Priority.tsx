@@ -1,6 +1,6 @@
-import { AnimatePresence, motion, useMotionValue, useTransform, animate, type MotionValue, type PanInfo } from 'motion/react'
+import { AnimatePresence, motion, useIsPresent, useMotionValue, useMotionValueEvent, useTransform, animate, type MotionValue, type PanInfo } from 'motion/react'
 import { ArrowLeft, Heart, Hourglass, RotateCcw, ShoppingBag, Undo2, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { ProductRow } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
@@ -141,6 +141,17 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
 
   // buttons / keys: stamp the icon onto the image first, then let the card fly
   const [stamp, setStamp] = useState<P | null>(null)
+  // live drag offset of the top card → drives the option orbs and the stack behind
+  const px = useMotionValue(0)
+  const py = useMotionValue(0)
+  const dist = useTransform([px, py], ([x, y]: number[]) => Math.max(Math.abs(x), -y, 0))
+  const show = useTransform(dist, [6, 36], [0, 1])
+  const btnFade = useTransform(show, [0, 1], [1, 0.25])
+  const nextScale = useTransform(dist, [0, 140], [0.95, 1])
+  const nextY = useTransform(dist, [0, 140], [12, 0])
+  const pMust = useTransform(px, [20, 110], [0, 1])
+  const pSkip = useTransform(px, [-110, -20], [1, 0])
+  const pMaybe = useTransform(py, [-110, -20], [1, 0])
   const press = (v: P) => {
     if (!current || stamp) return
     setStamp(v)
@@ -180,23 +191,26 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
       }}
     >
       <div className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-5 pt-[max(12px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))]">
-        <header className="flex h-12 items-center justify-between">
-          <button aria-label="닫기" onClick={close} className="-ml-2 grid size-11 place-items-center rounded-full hover:bg-accent">
-            <X className="size-6" />
+        <header className="flex h-12 items-center gap-3">
+          <button aria-label="닫기" onClick={close} className="-ml-2 grid size-10 place-items-center rounded-full hover:bg-accent">
+            <X className="size-5" />
           </button>
-          <span className="text-[14px] font-semibold tabular">{done ? '완료' : `${i + 1} / ${cards.length}`}</span>
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+            <motion.div className="h-full bg-primary" animate={{ width: `${(Math.min(i, cards.length) / Math.max(1, cards.length)) * 100}%` }} />
+          </div>
+          <span className="min-w-9 text-right text-[13px] font-medium text-muted-foreground tabular">{done ? '완료' : `${i + 1}/${cards.length}`}</span>
+          <button aria-label="이전 선택 취소" onClick={undo} disabled={!history.length} className="-mr-2 grid size-10 place-items-center rounded-full text-foreground hover:bg-accent disabled:text-muted-foreground/40">
+            <Undo2 className="size-[18px]" />
+          </button>
         </header>
-        <div className="mt-1 h-1 overflow-hidden rounded-full bg-line">
-          <motion.div className="h-full bg-ink" animate={{ width: `${(Math.min(i, cards.length) / Math.max(1, cards.length)) * 100}%` }} />
-        </div>
         {!done && (
-          <div className="mt-5">
-            {fresh && <p className="text-[13px] font-medium text-muted-foreground">방금 담은 {cards.length}개</p>}
-            <h1 className="display mt-0.5 text-[26px]">살지 말지 골라 볼까요?</h1>
+          <div className="mt-4">
+            <p className="text-[13px] font-medium text-muted-foreground">{fresh ? `방금 담은 ${cards.length}개` : '카드를 밀어서 골라요'}</p>
+            <h1 className="mt-0.5 text-[22px] font-semibold tracking-tight">살지 말지 골라 볼까요?</h1>
           </div>
         )}
 
-        <div className="relative mt-5 flex-1">
+        <div className="relative mx-4 mt-6 mb-2 flex-1">
           {done ? (
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex h-full flex-col items-center justify-center text-center">
               <div className="grid size-20 place-items-center rounded-full bg-ink text-white">
@@ -227,35 +241,39 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
             </motion.div>
           ) : (
             <>
-              {cards[i + 1] && (
-                <div className="absolute inset-0 origin-bottom scale-[0.94] opacity-70">
-                  <Card p={cards[i + 1]} rate={rate} />
+              {cards[i + 2] && (
+                <div className="absolute inset-0 origin-bottom translate-y-6 scale-[0.9] opacity-40">
+                  <Card p={cards[i + 2]} rate={rate} />
                 </div>
               )}
+              {cards[i + 1] && (
+                <motion.div key={cards[i + 1].id} style={{ scale: nextScale, y: nextY }} className="absolute inset-0 origin-bottom">
+                  <Card p={cards[i + 1]} rate={rate} />
+                </motion.div>
+              )}
               <AnimatePresence custom={exit}>
-                <Draggable key={current.id} p={current} rate={rate} exit={exit} onDecide={decide} stamp={stamp} />
+                <Draggable key={current.id} p={current} rate={rate} exit={exit} onDecide={press} stamp={stamp} px={px} py={py} />
               </AnimatePresence>
+              {/* sub-level options: float in around the card while dragging */}
+              <Orb v="skip" prog={pSkip} show={show} stamp={stamp} className="top-[42%] -left-5" />
+              <Orb v="maybe" prog={pMaybe} show={show} stamp={stamp} className="-top-5 left-1/2 -ml-7" />
+              <Orb v="must" prog={pMust} show={show} stamp={stamp} className="top-[42%] -right-5" />
             </>
           )}
         </div>
 
         {!done && (
-          <>
-            <div className="mt-6 flex items-center justify-center gap-5">
-              <Round label="안 살래" onClick={() => press('skip')} className={cn('size-16 border', PRIORITY_ICON.skip.cls)}>
-                <X className="size-7" strokeWidth={2.2} />
-              </Round>
-              <Round label="고민" onClick={() => press('maybe')} className={cn('size-13 border', PRIORITY_ICON.maybe.cls)}>
-                <Hourglass className="size-6" strokeWidth={2.2} />
-              </Round>
-              <Round label="꼭 살래" onClick={() => press('must')} className={cn('size-16 border shadow-lg', PRIORITY_ICON.must.cls)}>
-                <ShoppingBag className="size-7" strokeWidth={2.2} />
-              </Round>
-            </div>
-            <button onClick={undo} disabled={!history.length} className="mx-auto mt-4 inline-flex h-10 items-center gap-1.5 text-[13px] font-semibold text-muted-foreground disabled:text-faint">
-              <Undo2 className="size-4" /> 이전 선택 취소
-            </button>
-          </>
+          <motion.div style={{ opacity: btnFade }} className="mt-6 flex items-center justify-center gap-6">
+            <Round label="안 살래" onClick={() => press('skip')} className={cn('size-14 border', PRIORITY_ICON.skip.cls)}>
+              <X className="size-6" strokeWidth={2.2} />
+            </Round>
+            <Round label="고민" onClick={() => press('maybe')} className={cn('size-12 border', PRIORITY_ICON.maybe.cls)}>
+              <Hourglass className="size-5" strokeWidth={2.2} />
+            </Round>
+            <Round label="꼭 살래" onClick={() => press('must')} className={cn('size-14 border shadow-md', PRIORITY_ICON.must.cls)}>
+              <ShoppingBag className="size-6" strokeWidth={2.2} />
+            </Round>
+          </motion.div>
         )}
       </div>
     </motion.div>
@@ -304,18 +322,24 @@ function Card({ p, rate, children }: { p: Product; rate: number; children?: Reac
   )
 }
 
-function Draggable({ p, rate, exit, onDecide, stamp }: { p: Product; rate: number; exit: { x: number; y: number }; onDecide: (v: P) => void; stamp: P | null }) {
+function Draggable({ p, rate, exit, onDecide, stamp, px, py }: { p: Product; rate: number; exit: { x: number; y: number }; onDecide: (v: P) => void; stamp: P | null; px: MotionValue<number>; py: MotionValue<number> }) {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
+  const present = useIsPresent()
+  useEffect(() => {
+    px.set(0)
+    py.set(0)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useMotionValueEvent(x, 'change', (v) => present && px.set(v))
+  useMotionValueEvent(y, 'change', (v) => present && py.set(v))
   const rotate = useTransform(x, [-240, 240], [-16, 16])
-  const must = useTransform(x, [30, 120], [0, 1])
-  const skip = useTransform(x, [-120, -30], [1, 0])
-  const maybe = useTransform(y, [-120, -35], [1, 0])
+  // while dragging, the orbs around the card do the talking; the image sticker appears on release
+  const none = useMotionValue(0)
   const onEnd = (_: unknown, info: PanInfo) => {
     const { offset, velocity } = info
-    if (offset.x > 120 || velocity.x > 600) return onDecide('must')
-    if (offset.x < -120 || velocity.x < -600) return onDecide('skip')
-    if (offset.y < -120 || velocity.y < -600) return onDecide('maybe')
+    if (offset.x > 110 || velocity.x > 600) return onDecide('must')
+    if (offset.x < -110 || velocity.x < -600) return onDecide('skip')
+    if (offset.y < -110 || velocity.y < -600) return onDecide('maybe')
     animate(x, 0, { type: 'spring', stiffness: 500, damping: 30 })
     animate(y, 0, { type: 'spring', stiffness: 500, damping: 30 })
   }
@@ -331,9 +355,9 @@ function Draggable({ p, rate, exit, onDecide, stamp }: { p: Product; rate: numbe
       exit={{ x: exit.x, y: exit.y, opacity: 0, rotate: exit.x / 20, transition: { duration: 0.32 } }}
     >
       <Card p={p} rate={rate}>
-        <IconStamp v="must" o={must} forced={stamp === 'must'} className="top-6 left-6 -rotate-12" />
-        <IconStamp v="skip" o={skip} forced={stamp === 'skip'} className="top-6 right-6 rotate-12" />
-        <IconStamp v="maybe" o={maybe} forced={stamp === 'maybe'} className="top-6 left-1/2 -ml-12" />
+        <IconStamp v="must" o={none} forced={stamp === 'must'} className="top-6 left-6 -rotate-12" />
+        <IconStamp v="skip" o={none} forced={stamp === 'skip'} className="top-6 right-6 rotate-12" />
+        <IconStamp v="maybe" o={none} forced={stamp === 'maybe'} className="top-6 left-1/2 -ml-12" />
       </Card>
     </motion.div>
   )
@@ -361,6 +385,31 @@ function IconStamp({ v, o, forced, className }: { v: P; o: MotionValue<number>; 
   return (
     <motion.div style={{ opacity: o, scale }} className={base}>
       {body}
+    </motion.div>
+  )
+}
+
+/** Sub-level style option: hidden at rest, floats in at the card edge while dragging; fills when the card points at it */
+function Orb({ v, prog, show, stamp, className }: { v: P; prog: MotionValue<number>; show: MotionValue<number>; stamp: P | null; className?: string }) {
+  const { icon: I } = PRIORITY_ICON[v]
+  const scale = useTransform(prog, [0, 1], [0.86, 1.22])
+  const fill = useTransform(prog, [0.55, 1], [0, 1])
+  const forced = stamp === v
+  return (
+    <motion.div
+      style={{ opacity: stamp ? (forced ? 1 : 0) : show }}
+      className={cn('pointer-events-none absolute z-20 flex w-14 flex-col items-center gap-1', className)}
+      aria-hidden
+    >
+      <motion.span style={{ scale: forced ? 1.22 : scale }} className="relative grid size-14 place-items-center rounded-full border bg-background text-foreground shadow-lg">
+        <I className="size-6" strokeWidth={2.2} />
+        <motion.span style={{ opacity: forced ? 1 : fill }} className="absolute inset-0 grid place-items-center rounded-full bg-primary text-primary-foreground">
+          <I className="size-6" strokeWidth={2.2} />
+        </motion.span>
+      </motion.span>
+      <motion.span style={{ opacity: forced ? 1 : fill }} className="rounded-md bg-primary px-1.5 py-0.5 text-[11.5px] font-semibold whitespace-nowrap text-primary-foreground">
+        {PRIORITY_META[v].label}
+      </motion.span>
     </motion.div>
   )
 }
