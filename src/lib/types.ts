@@ -35,6 +35,7 @@ export interface Product {
   pickRate: number
   reviews: Review[]
   findId?: string
+  qty?: number
 }
 
 export type SuitcaseModel = 'ribbed' | 'classic' | 'soft'
