@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Camera, Check, ChevronLeft, Image as ImageIcon, Link2, PenLine, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
+import { PACK_CYCLE, PackingLoader } from '@/components/art/PackingLoader'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Chip, Sheet } from '@/components/ui/primitives'
@@ -144,6 +145,8 @@ export function SaveSheet() {
   )
 }
 
+const STAGES = ['스크린샷에서 상품을 찾는 중', '가격과 브랜드를 읽는 중', '원화로 바꿔 담는 중']
+
 export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; images: string[] }) {
   const { close, open, scan, addProducts, notify, rate, setTab } = useApp()
   const count = mode === 'link' ? 1 : images.length || 3
@@ -153,7 +156,7 @@ export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; i
 
   useEffect(() => {
     if (done >= results.length) return
-    const t = window.setTimeout(() => setDone((d) => d + 1), done === 0 ? 1300 : 900)
+    const t = window.setTimeout(() => setDone((d) => d + 1), PACK_CYCLE)
     return () => window.clearTimeout(t)
   }, [done, results.length])
 
@@ -180,13 +183,15 @@ export function Analyze({ mode, images }: { mode: 'shots' | 'link' | 'manual'; i
           <p className="mt-1.5 text-[14px] text-muted-foreground">{finished ? '담을 상품만 골라 주세요. 틀린 정보는 상세에서 고칠 수 있어요.' : `${Math.min(done + 1, results.length)} / ${results.length}`}</p>
         </div>
 
-        {mode !== 'link' && (
-          <div className="no-scrollbar -mx-5 mt-6 flex gap-3 overflow-x-auto px-5 pb-2">
-            {results.map((r, i) => (
-              <Shot key={r.id} src={images[i]} product={r} state={i < done ? 'done' : i === done ? 'scan' : 'wait'} />
-            ))}
+        <div className="mt-4 overflow-hidden rounded-2xl border bg-card shadow-xs">
+          <PackingLoader items={results.map((r) => r.art)} step={done} done={finished} />
+          <div className="-mt-4 px-5 pb-5 text-center">
+            <p className="text-[14px] font-medium">{finished ? `캐리어에 ${results.length}개를 담았어요` : STAGES[done % STAGES.length]}</p>
+            <div className="mx-auto mt-3 h-1 w-40 overflow-hidden rounded-full bg-muted">
+              <motion.div className="h-full bg-primary" animate={{ width: `${(Math.min(done, results.length) / results.length) * 100}%` }} transition={{ duration: 0.4 }} />
+            </div>
           </div>
-        )}
+        </div>
 
         <ul className="mt-6 flex flex-col gap-2.5">
           <AnimatePresence>
