@@ -1,14 +1,15 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronLeft, ChevronRight, Flag, Frown, Languages, Luggage, Map, Meh, MessageCircle, Minus, Pencil, Plus, Share2, ShoppingBag, Smile, Star, Store as StoreIcon, Tag, Users, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Flag, Frown, Languages, Luggage, Map, Meh, MessageCircle, Minus, Pencil, Plus, Share2, ShoppingBag, Smile, Star, Store as StoreIcon, Tag, ThumbsUp, Users, X } from 'lucide-react'
 import { forwardRef, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { tiltOf } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { IconBtn, Panel, PRIORITY_ICON, PRIORITY_META } from '@/components/ui/primitives'
+import { Chip, IconBtn, Panel, PRIORITY_ICON, PRIORITY_META, Sheet } from '@/components/ui/primitives'
 import { PHRASES, STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
 import { buyInfo } from '@/lib/buy'
+import { reviewsFor, type ReviewView } from '@/lib/reviews'
 import { FindPhoto, FlagMark } from './Finds'
 import type { Priority, Review } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
@@ -26,15 +27,16 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
   const [editRate, setEditRate] = useState(false)
   const [rateDraft, setRateDraft] = useState(String(rate))
   const [compact, setCompact] = useState(false)
+  const [allReviews, setAllReviews] = useState<string | null>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const storesRef = useRef<HTMLElement>(null)
   const reviewsRef = useRef<HTMLElement>(null)
   if (!p) return null
   const stores = STORES.filter((s) => p.storeIds.includes(s.id))
   const find = p.findId ? finds.find((f) => f.id === p.findId) : undefined
-  const good = p.reviews.filter((r) => r.mood === 'good').length
   const go = (el: HTMLElement | null) => el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   const buy = buyInfo(p, tripProducts, finds)
+  const rv = reviewsFor(p)
   const chainsShort = `${buy.chains[0]} 외 ${buy.chains.length - 1}곳`
 
   const share = async () => {
@@ -57,7 +59,7 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
       ? { icon: Flag, label: '이 가게에서만', onClick: () => go(storesRef.current) }
       : { icon: StoreIcon, label: chainsShort, onClick: () => go(storesRef.current) },
     find ? { icon: Users, label: `${find.saves}명 저장`, onClick: undefined } : { icon: Users, label: p.pickRate ? `${p.pickRate}% 선택` : '새 상품', onClick: undefined },
-    { icon: MessageCircle, label: `후기 ${p.reviews.length}`, onClick: () => go(reviewsRef.current) },
+    { icon: MessageCircle, label: `후기 ${rv.list.length}`, onClick: () => go(reviewsRef.current) },
   ]
 
   return (
@@ -132,13 +134,9 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
             </p>
           )}
           <button onClick={() => go(reviewsRef.current)} className="mt-2 inline-flex items-center gap-1.5 text-[13px]">
-            <span className="inline-flex">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Star key={i} className={cn('size-3.5', i < Math.round((good / Math.max(1, p.reviews.length)) * 5) ? 'fill-foreground' : 'text-muted-foreground/40')} />
-              ))}
-            </span>
-            <span className="font-medium tabular">{p.reviews.length ? `좋아요 ${good}` : '후기 없음'}</span>
-            <span className="text-muted-foreground tabular">({p.reviews.length}개 후기)</span>
+            <ThumbsUp className="size-3.5" />
+            <span className="font-medium tabular">{rv.list.length ? `좋아요 ${rv.likeRate}%` : '후기 없음'}</span>
+            <span className="text-muted-foreground tabular">· 후기 {rv.list.length}개</span>
           </button>
 
           {/* decision block: others' pick rate + local / KRW price */}
@@ -257,29 +255,41 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
             <Textarea value={p.memo} onChange={(e) => update(p.id, { memo: e.target.value })} rows={2} placeholder="누구 선물인지, 몇 개 살지 남겨 보세요" className="resize-none bg-background p-3.5 text-[15px]" />
           </Section>
 
-          {/* 8. reviews */}
-          <Section title={`구매 후기 ${p.reviews.length}`} ref={reviewsRef} note="예시 후기">
-            {p.reviews.length === 0 ? (
-              <p className="rounded-xl border border-dashed p-5 text-center text-[13.5px] text-muted-foreground">아직 후기가 없어요</p>
+          {/* 8. reviews — summary, keywords, horizontal cards, show all */}
+          <section ref={reviewsRef} className="scroll-mt-20 pt-8">
+            <div className="flex items-baseline justify-between">
+              <h2 className="flex items-center gap-1.5 text-[18px] font-semibold tracking-tight tabular">
+                <ThumbsUp className="size-[18px]" /> {rv.likeRate}% <span className="text-muted-foreground/50">·</span> 후기 {rv.list.length}개
+              </h2>
+              <span className="text-[11px] text-muted-foreground">예시 후기</span>
+            </div>
+            {rv.list.length === 0 ? (
+              <p className="mt-3 rounded-xl border border-dashed p-5 text-center text-[13.5px] text-muted-foreground">아직 후기가 없어요</p>
             ) : (
-              <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-xs">
-                {p.reviews.map((r, i) => {
-                  const M = MOOD[r.mood]
-                  return (
-                    <li key={i} className="p-4">
-                      <span className="inline-flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
-                        <M.icon className="size-3.5" /> {M.label}
-                      </span>
-                      <p className="mt-1.5 text-[14.5px]">{r.text}</p>
-                      <p className="mt-1.5 text-[12px] text-muted-foreground">
-                        {r.user} · {r.trip}
-                      </p>
-                    </li>
-                  )
-                })}
-              </ul>
+              <>
+                {rv.keywords.length > 0 && (
+                  <>
+                    <p className="mt-1 text-[13px] text-muted-foreground">여행자들이 자주 말해요</p>
+                    <div className="no-scrollbar -mx-5 mt-2.5 flex gap-2 overflow-x-auto px-5">
+                      {rv.keywords.map((k) => (
+                        <button key={k.word} onClick={() => setAllReviews(k.word)} className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border bg-card px-3.5 text-[13.5px] shadow-xs transition hover:bg-accent">
+                          {k.word} <span className="text-muted-foreground tabular">{k.n}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <div className="no-scrollbar -mx-5 mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-5 px-5 pb-1">
+                  {rv.list.slice(0, 6).map((r, i) => (
+                    <ReviewCard key={i} r={r} onMore={() => setAllReviews('전체')} className="w-[82%] shrink-0 snap-start" />
+                  ))}
+                </div>
+                <Button variant="outline" size="lg" className="mt-4 w-full" onClick={() => setAllReviews('전체')}>
+                  후기 {rv.list.length}개 모두 보기
+                </Button>
+              </>
             )}
-          </Section>
+          </section>
         </div>
       </div>
 
@@ -336,7 +346,49 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
           </div>
         )}
       </div>
+      <Sheet open={allReviews !== null} onClose={() => setAllReviews(null)} title={`후기 ${rv.list.length}개`}>
+        <div className="no-scrollbar -mx-5 flex gap-1.5 overflow-x-auto px-5 pb-3">
+          {['전체', ...rv.keywords.map((k) => k.word)].map((w) => (
+            <Chip key={w} active={allReviews === w} onClick={() => setAllReviews(w)}>
+              {w}
+            </Chip>
+          ))}
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {rv.list
+            .filter((r) => allReviews === '전체' || (allReviews && r.tags.includes(allReviews)))
+            .map((r, i) => (
+              <ReviewCard key={i} r={r} full />
+            ))}
+        </div>
+      </Sheet>
     </Panel>
+  )
+}
+
+function ReviewCard({ r, full, onMore, className }: { r: ReviewView; full?: boolean; onMore?: () => void; className?: string }) {
+  const M = MOOD[r.mood]
+  return (
+    <article className={cn('flex flex-col rounded-xl border bg-card p-4 shadow-xs', className)}>
+      <div className="flex items-center gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-muted text-[14px] font-semibold">{r.user.slice(0, 1).toUpperCase()}</span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14.5px] font-semibold">{r.user}</p>
+          <p className="truncate text-[12.5px] text-muted-foreground">
+            {r.trip} · {r.ago}
+          </p>
+        </div>
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-md border px-1.5 py-0.5 text-[11.5px] font-medium text-muted-foreground">
+          <M.icon className="size-3.5" /> {M.label}
+        </span>
+      </div>
+      <p className={cn('mt-3 text-[14.5px] leading-relaxed', !full && 'line-clamp-3 min-h-[4.1em]')}>{r.text}</p>
+      {!full && onMore && (
+        <button onClick={onMore} className="mt-2 self-start text-[13px] font-semibold underline underline-offset-2">
+          더보기
+        </button>
+      )}
+    </article>
   )
 }
 
