@@ -248,6 +248,19 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                 지도 <ChevronRight className="size-4" />
               </span>
             </button>
+            <button onClick={() => open({ type: 'ask', id: p.id })} className="mt-2 flex w-full items-center gap-3 rounded-xl border bg-card p-3.5 text-left shadow-xs transition hover:bg-accent/50">
+              <span className="grid size-11 shrink-0 place-items-center rounded-lg border bg-muted">
+                <Languages className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[12px] text-muted-foreground">점원에게 보여 주기</span>
+                <span lang="ja" className="block truncate text-[14.5px] font-semibold">
+                  {PHRASES[0].ja}
+                </span>
+                <span className="block truncate text-[12.5px] text-muted-foreground">{PHRASES[0].ko} · 문장 {PHRASES.length}개</span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </button>
           </Section>
 
           {/* 6. memo */}
