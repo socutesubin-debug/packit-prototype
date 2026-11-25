@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
-import { ArrowUpDown, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Flag, Footprints, Languages, LocateFixed, MapPin, Navigation, Search, Share2, ShoppingBag, Store as StoreIcon, X } from 'lucide-react'
+import { ArrowUpDown, Bookmark, BookmarkCheck, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CreditCard, Receipt, Clock, Flag, Footprints, Languages, LocateFixed, MapPin, Navigation, Search, Share2, ShoppingBag, Store as StoreIcon, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { StoreArt } from '@/components/art/Scenes'
@@ -77,13 +77,15 @@ export function MapScreen() {
   const nearbyMust = tripProducts.filter((p) => p.priority === 'must' && !p.purchased && p.storeIds.length && (!cat || p.category === cat))
 
   const [sel, setSel] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const selItem = items.find((x) => x.id === sel)
 
   /* ----- bottom sheet ----- */
   const [snap, setSnap] = useState<Snap>('peek')
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
   const heights: Record<Snap, number> = { peek: NAV_PAD + 112, half: Math.round(vh * 0.56), full: Math.round(vh * 0.88) }
-  const target = selItem ? Math.max(heights.half, Math.min(heights.full, NAV_PAD + 430)) : heights[snap]
+  const detailH = Math.max(heights.half, Math.min(heights.full, NAV_PAD + 430))
+  const target = selItem ? (expanded ? heights.full : detailH) : heights[snap]
   const h = useMotionValue(target)
   useEffect(() => {
     animate(h, target, { type: 'spring', stiffness: 320, damping: 34 })
@@ -119,6 +121,7 @@ export function MapScreen() {
 
   const select = (id: string | null) => {
     setSel(id)
+    setExpanded(false)
     if (!id) return
     setSeen((s) => new Set(s).add(id))
     const it = items.find((x) => x.id === id)
@@ -281,7 +284,7 @@ export function MapScreen() {
       </div>
 
       {/* floating actions above the sheet */}
-      {!desktop && (
+      {!desktop && !expanded && (
         <motion.div style={{ bottom: h }} className="absolute right-4 mb-3 flex flex-col items-end gap-2">
           {!sel && (
             <button onClick={() => open({ type: 'post' })} className="flex h-10 items-center gap-1.5 rounded-full bg-ink pr-3.5 pl-3 text-[13px] font-semibold text-white shadow-lg active:scale-95">
@@ -309,24 +312,47 @@ export function MapScreen() {
             onPan={(_, info) => h.set(Math.max(heights.peek - 40, Math.min(heights.full + 20, startH.current - info.offset.y)))}
             onPanEnd={(_, info) => {
               const v = h.get() - info.velocity.y * 0.15
-              if (sel) select(null)
+              if (sel) {
+                // selected shop: up = 가게 상세, down = back to the list
+                if (v > (detailH + heights.full) / 2) {
+                  setExpanded(true)
+                  animate(h, heights.full, { type: 'spring', stiffness: 320, damping: 34 })
+                } else if (v < detailH - 90) {
+                  select(null)
+                  setSnap('peek')
+                  animate(h, heights.peek, { type: 'spring', stiffness: 320, damping: 34 })
+                } else {
+                  setExpanded(false)
+                  animate(h, detailH, { type: 'spring', stiffness: 320, damping: 34 })
+                }
+                return
+              }
               const order: Snap[] = ['peek', 'half', 'full']
               const best = order.reduce((a, b) => (Math.abs(heights[b] - v) < Math.abs(heights[a] - v) ? b : a))
               setSnap(best)
               animate(h, heights[best], { type: 'spring', stiffness: 320, damping: 34 })
             }}
-            onTap={() => !sel && setSnap(snap === 'peek' ? 'half' : 'peek')}
+            onTap={() => (sel ? setExpanded(!expanded) : setSnap(snap === 'peek' ? 'half' : 'peek'))}
           >
             <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
           </motion.div>
         )}
-        <div className="min-h-0 flex-1 overflow-y-auto px-4" style={{ paddingBottom: desktop ? 16 : NAV_PAD }}>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4" style={{ paddingBottom: expanded && selItem?.kind === 'store' ? 0 : desktop ? 16 : NAV_PAD }}>
           <AnimatePresence mode="wait" initial={false}>
             {selItem ? (
               <motion.div key={selItem.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="pt-1">
                 {selItem.kind === 'store' ? (
                   <StoreSheet
                     it={selItem}
+                    expanded={expanded || desktop}
+                    desktop={desktop}
+                    onExpand={() => setExpanded(true)}
+                    onCollapse={() => setExpanded(false)}
+                    nearby={stores.filter((x) => x.id !== selItem.id && x.s.mine.length).sort((a, b) => Math.hypot(a.x - selItem.x, a.y - selItem.y) - Math.hypot(b.x - selItem.x, b.y - selItem.y)).slice(0, 3).map((x) => ({ id: x.id, s: x.s, min: walkMin(Math.hypot(x.x - selItem.x, x.y - selItem.y) * 12) }))}
+                    stories={finds.filter((f) => f.place.includes(selItem.s.name.split(' ')[0]) || selItem.s.name.includes(f.place.split(' ')[0]))}
+                    onSelectStore={(id) => select(id)}
+                    onFind={(id) => open({ type: 'find', id })}
+                    onPost={() => open({ type: 'post' })}
                     tags={tagsFor(selItem.s)}
                     walk={routeMin}
                     inTrip={inTrip}
@@ -452,13 +478,24 @@ function MiniTag({ children }: { children: React.ReactNode }) {
   return <span className="inline-flex h-5 items-center gap-1 rounded border px-1.5 text-[11px] font-medium text-ink-2 tabular">{children}</span>
 }
 
-function StoreSheet({ it, tags, walk, inTrip, onBack, onOpen, onAsk, onToggle, onProduct }: {
+type NearbyStore = { id: string; s: Extract<Item, { kind: 'store' }>['s']; min: number }
+
+function StoreSheet({ it, tags, walk, inTrip, expanded, desktop, onExpand, onCollapse, nearby, stories, onSelectStore, onFind, onPost, onBack, onAsk, onToggle, onProduct }: {
   it: Extract<Item, { kind: 'store' }>
   tags: string[]
   walk: number
   inTrip: boolean
+  expanded: boolean
+  desktop: boolean
+  onExpand: () => void
+  onCollapse: () => void
+  nearby: NearbyStore[]
+  stories: Find[]
+  onSelectStore: (id: string) => void
+  onFind: (id: string) => void
+  onPost: () => void
   onBack: () => void
-  onOpen: () => void
+  onOpen?: () => void
   onAsk: (pid: string) => void
   onToggle: (p: Product) => void
   onProduct: (pid: string) => void
@@ -466,21 +503,47 @@ function StoreSheet({ it, tags, walk, inTrip, onBack, onOpen, onAsk, onToggle, o
   const st = it.s
   const others = st.mine.filter((p) => p.priority !== 'must')
   const [more, setMore] = useState(false)
-  const list = more ? [...st.must, ...others] : st.must
   const left = st.must.filter((p) => !p.purchased)
+  const taxFree = /드럭|잡화점|기념품|전자/.test(st.kind)
+  const row = (p: Product) => (
+    <li key={p.id} className="flex items-center gap-3 py-2.5">
+      <button onClick={() => onProduct(p.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+        <ProductArt art={p.art} tone="neutral" className="size-10 shrink-0 rounded-lg" />
+        <span className="min-w-0 flex-1">
+          <span className={cn('block truncate text-[14px]', p.purchased && 'text-muted-foreground line-through')}>{p.name}</span>
+          <span className="text-[12px] text-muted-foreground tabular">{yen(p.price)}</span>
+        </span>
+      </button>
+      <button
+        onClick={() => onToggle(p)}
+        aria-label={p.purchased ? `${p.name} 산 것 취소` : `${p.name} 샀어요`}
+        aria-pressed={p.purchased}
+        className={cn('grid size-6 shrink-0 place-items-center rounded-md border-[1.5px] transition', p.purchased ? 'border-ink bg-ink text-white' : 'border-[#bdbdbd]')}
+      >
+        {p.purchased && <Check className="size-4" />}
+      </button>
+    </li>
+  )
   return (
     <div>
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="-mx-4 mb-4 overflow-hidden">
+            <StoreArt color={st.color} name={st.name} className="h-36 w-full" />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex items-start gap-2">
-        <button onClick={onBack} aria-label="목록으로" className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-full hover:bg-accent">
-          <ChevronLeft className="size-5" />
+        <button onClick={expanded && !desktop ? onCollapse : onBack} aria-label={expanded && !desktop ? '요약으로' : '목록으로'} className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-full hover:bg-accent">
+          {expanded && !desktop ? <ChevronDown className="size-5" /> : <ChevronLeft className="size-5" />}
         </button>
-        <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+        <button onClick={expanded ? undefined : onExpand} className="min-w-0 flex-1 text-left">
           <span className="flex flex-wrap items-center gap-1.5">
             <span className="text-[17px] font-semibold tracking-tight">{st.name}</span>
             {tags.map((t) => <MiniTag key={t}>{t}</MiniTag>)}
           </span>
           <span className="mt-0.5 block text-[12.5px] text-muted-foreground tabular">
-            <span className={cn('font-semibold', st.open ? 'text-ink' : '')}>{st.open ? '영업 중' : '영업 종료'}</span> · {st.hours} · {st.distance}m · 도보 {walk}분
+            <span className={cn('font-semibold', st.open ? 'text-ink' : '')}>{st.open ? '영업 중' : '영업 종료'}</span> · {st.kind} · {st.distance}m · 도보 {walk}분
           </span>
         </button>
         <a href={mapsUrl(st)} target="_blank" rel="noreferrer" aria-label="공유" className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-accent">
@@ -488,9 +551,33 @@ function StoreSheet({ it, tags, walk, inTrip, onBack, onOpen, onAsk, onToggle, o
         </a>
       </div>
 
+      {expanded && (
+        <ul className="mt-4 divide-y rounded-xl border text-[13.5px]">
+          <li className="flex items-center gap-3 px-3.5 py-2.5">
+            <Clock className="size-4 text-muted-foreground" />
+            <span className="flex-1">{st.hours}</span>
+            <span className={cn('text-[12.5px] font-semibold', st.open ? 'text-ink' : 'text-muted-foreground')}>{st.open ? '영업 중' : '영업 종료'}</span>
+          </li>
+          <li className="flex items-center gap-3 px-3.5 py-2.5">
+            <Receipt className="size-4 text-muted-foreground" />
+            <span className="flex-1">{taxFree ? '¥5,000 이상 면세 · 여권 지참' : '면세 대상 매장이 아니에요'}</span>
+            {taxFree && <span className="text-[12.5px] text-muted-foreground">1층 카운터</span>}
+          </li>
+          <li className="flex items-center gap-3 px-3.5 py-2.5">
+            <CreditCard className="size-4 text-muted-foreground" />
+            <span className="flex-1">카드 · 교통카드 · 현금</span>
+          </li>
+          <li className="flex items-center gap-3 px-3.5 py-2.5">
+            <MapPin className="size-4 text-muted-foreground" />
+            <span className="min-w-0 flex-1 truncate">{st.address}</span>
+            <span className="text-[12px] text-faint">{st.ja}</span>
+          </li>
+        </ul>
+      )}
+
       {st.mine.length > 0 ? (
         <>
-          <p className="mt-4 text-[13.5px] font-semibold">
+          <p className="mt-5 text-[13.5px] font-semibold">
             {st.must.length ? (
               <>
                 여기서 살 꼭 살래 <span className="tabular">{st.must.length}</span>개 · <span className="tabular">{yen(st.sum)}</span>
@@ -500,45 +587,85 @@ function StoreSheet({ it, tags, walk, inTrip, onBack, onOpen, onAsk, onToggle, o
             )}
           </p>
           {inTrip && st.must.length > 0 && <p className="mt-0.5 text-[12px] text-muted-foreground">체크하면 ‘샀어요’로 바뀌어요 · 남은 {left.length}개</p>}
-          <ul className="mt-1 divide-y">
-            {(st.must.length ? list : st.mine).map((p) => (
-              <li key={p.id} className="flex items-center gap-3 py-2.5">
-                <button onClick={() => onProduct(p.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                  <ProductArt art={p.art} tone="neutral" className="size-10 shrink-0 rounded-lg" />
-                  <span className="min-w-0 flex-1">
-                    <span className={cn('block truncate text-[14px]', p.purchased && 'text-muted-foreground line-through')}>{p.name}</span>
-                    <span className="text-[12px] text-muted-foreground tabular">
-                      {yen(p.price)}
-                      {p.priority !== 'must' && ' · 고민 중'}
-                    </span>
-                  </span>
+          <ul className="mt-1 divide-y">{(st.must.length ? st.must : st.mine).map(row)}</ul>
+          {st.must.length > 0 && others.length > 0 &&
+            (expanded ? (
+              <>
+                <p className="mt-4 text-[13.5px] font-semibold">
+                  고민 중 <span className="tabular">{others.length}</span>개
+                </p>
+                <ul className="mt-1 divide-y">{others.map(row)}</ul>
+              </>
+            ) : (
+              <>
+                {more && <ul className="divide-y">{others.map(row)}</ul>}
+                <button onClick={() => setMore(!more)} className="mt-1 text-[12.5px] font-medium text-muted-foreground underline-offset-2 hover:underline">
+                  {more ? '꼭 살래만 보기' : `고민 중인 상품 ${others.length}개 더 보기`}
                 </button>
-                <button
-                  onClick={() => onToggle(p)}
-                  aria-label={p.purchased ? `${p.name} 산 것 취소` : `${p.name} 샀어요`}
-                  aria-pressed={p.purchased}
-                  className={cn('grid size-6 shrink-0 place-items-center rounded-md border-[1.5px] transition', p.purchased ? 'border-ink bg-ink text-white' : 'border-[#bdbdbd]')}
-                >
-                  {p.purchased && <Check className="size-4" />}
-                </button>
-              </li>
+              </>
             ))}
-          </ul>
-          {st.must.length > 0 && others.length > 0 && (
-            <button onClick={() => setMore(!more)} className="mt-1 text-[12.5px] font-medium text-muted-foreground underline-offset-2 hover:underline">
-              {more ? '꼭 살래만 보기' : `고민 중인 상품 ${others.length}개 더 보기`}
-            </button>
-          )}
         </>
       ) : (
         <p className="mt-4 rounded-lg bg-sunken px-3 py-3 text-[13px] text-muted-foreground">이 가게에서 살 상품을 아직 담지 않았어요</p>
       )}
 
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={() => (st.mine[0] ? onAsk(st.mine[0].id) : onOpen())}
-          className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'flex-1')}
-        >
+      {!expanded && (
+        <button onClick={onExpand} className="mt-3 flex w-full items-center justify-between border-t pt-3 text-[13.5px] font-medium">
+          가게 상세 보기 <ChevronUp className="size-4 text-muted-foreground" />
+        </button>
+      )}
+
+      {expanded && (
+        <>
+          <p className="mt-7 text-[13.5px] font-semibold">이 가게 여행자 이야기</p>
+          {stories.length ? (
+            <ul className="mt-1 divide-y">
+              {stories.map((f) => (
+                <li key={f.id}>
+                  <button onClick={() => onFind(f.id)} className="flex w-full items-start gap-3 py-3 text-left">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sunken text-[12px] font-semibold">{f.author.slice(0, 1)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[14px] leading-snug font-medium">“{f.title}”</span>
+                      <span className="mt-0.5 block text-[12px] text-muted-foreground">{f.author} · 고마워요 {f.thanks}</span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <button onClick={onPost} className="mt-2 flex w-full items-center justify-between rounded-lg bg-sunken px-3.5 py-3 text-left text-[13px]">
+              <span className="text-muted-foreground">아직 이 가게 이야기가 없어요</span>
+              <span className="font-semibold">첫 팁 남기기</span>
+            </button>
+          )}
+
+          {nearby.length > 0 && (
+            <>
+              <p className="mt-7 text-[13.5px] font-semibold">같이 들르기 좋은 근처 가게</p>
+              <ul className="mt-1 divide-y">
+                {nearby.map((n) => (
+                  <li key={n.id}>
+                    <button onClick={() => onSelectStore(n.id)} className="flex w-full items-center gap-3 py-2.5 text-left">
+                      <StoreArt color={n.s.color} name={n.s.name} className="size-10 shrink-0 rounded-lg" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[14px] font-medium">{n.s.name}</span>
+                        <span className="text-[12px] text-muted-foreground tabular">
+                          {n.s.must.length ? `꼭 살래 ${n.s.must.length}개` : `저장 ${n.s.mine.length}개`} · 여기서 도보 {n.min}분
+                        </span>
+                      </span>
+                      <ChevronRight className="size-4 text-faint" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          <p className="mt-5 text-[11.5px] text-faint">매장 정보는 예시예요. 방문 전 영업시간을 확인해 주세요.</p>
+        </>
+      )}
+
+      <div className={cn('mt-4 flex gap-2 bg-background', expanded && 'sticky bottom-0 -mx-4 border-t px-4 pt-3')} style={expanded ? { paddingBottom: desktop ? 4 : NAV_PAD + 4 } : undefined}>
+        <button onClick={() => (st.mine[0] ? onAsk(st.mine[0].id) : onExpand())} className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'flex-1')}>
           <Languages className="size-4" /> 현지어 문의
         </button>
         <a href={mapsUrl(st)} target="_blank" rel="noreferrer" className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'flex-[1.4]')}>
