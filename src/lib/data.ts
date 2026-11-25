@@ -1,4 +1,4 @@
-import type { Category, Find, Product, Store, Trip } from './types'
+import type { Comment, PostKind, Category, Find, Product, Store, Trip } from './types'
 
 export const CATEGORIES: Category[] = ['뷰티', '식품', '옷', '잡화', '면세품']
 
@@ -117,16 +117,19 @@ export function seedProducts(): Product[] {
 
 /** Sample local finds around Shibuya (all fictional examples) */
 export const SEED_FINDS: Find[] = [
-  { id: 'f1', city: '도쿄', title: '골목 공방의 유리 풍경', story: '도겐자카 뒷골목 2층 작은 공방에서 할아버지가 직접 불어 만든 풍경이에요. 지도에는 안 나오고 간판도 작아요. 소리가 정말 맑아서 하나 사 왔어요.', place: '이름 없는 유리 공방 (2층)', area: '도겐자카 뒷골목', x: 30, y: 70, price: 2200, category: '잡화', art: { shape: 'jar', color: '#9CC9E8', accent: '#E8453C', bg: '#E4F1FA' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 3, saves: 42, thanks: 18, sample: true },
+  { id: 'f1', city: '도쿄', title: '골목 공방의 유리 풍경', story: '도겐자카 뒷골목 2층 작은 공방에서 할아버지가 직접 불어 만든 풍경이에요. 지도에는 안 나오고 간판도 작아요. 소리가 정말 맑아서 하나 사 왔어요.', place: '이름 없는 유리 공방 (2층)', area: '도겐자카 뒷골목', x: 30, y: 70, price: 2200, category: '잡화', art: { shape: 'jar', color: '#9CC9E8', accent: '#E8453C', bg: '#E4F1FA' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 3, saves: 42, thanks: 18, sample: true, pins: [{ x: 50, y: 40, label: '유리 풍경', price: 2200 }] },
   { id: 'f2', city: '도쿄', title: '시부야 한정 마스킹테이프', story: '동네 문구점 계산대 옆에만 있는 시부야 거리 그림 마스킹테이프. 온라인 판매를 안 한대요.', place: '골목 끝 문구점', area: '오쿠시부야', x: 18, y: 36, price: 480, category: '잡화', art: { shape: 'can', color: '#F2C94C', accent: '#141413', bg: '#FFF5D6' }, author: '단단', authorTrip: '도쿄 여행 중', daysAgo: 1, saves: 27, thanks: 9, sample: true },
-  { id: 'f3', city: '도쿄', title: '할머니 쌀과자 센베', story: '아침에만 굽는 간장 센베. 오후 2시면 다 팔려요. 포장지가 신문지라 선물용으로도 귀여워요.', place: '마루야마 센베 가게', area: '진구마에 골목', x: 52, y: 12, price: 650, category: '식품', art: { shape: 'pouch', color: '#C9824B', accent: '#FFF4E6', bg: '#F7E9DC' }, author: 'JISOO', authorTrip: '2주 전 다녀옴', daysAgo: 14, saves: 63, thanks: 31, sample: true },
+  { id: 'f3', city: '도쿄', title: '할머니 쌀과자 센베', story: '아침에만 굽는 간장 센베. 오후 2시면 다 팔려요. 포장지가 신문지라 선물용으로도 귀여워요.', place: '마루야마 센베 가게', area: '진구마에 골목', x: 52, y: 12, price: 650, category: '식품', art: { shape: 'pouch', color: '#C9824B', accent: '#FFF4E6', bg: '#F7E9DC' }, author: 'JISOO', authorTrip: '2주 전 다녀옴', daysAgo: 14, saves: 63, thanks: 31, sample: true, pins: [{ x: 40, y: 46, label: '간장 센베 5장', price: 650 }, { x: 70, y: 66, label: '신문지 포장' }] },
   { id: 'f4', city: '도쿄', title: '킷사텐 오리지널 성냥갑', story: '50년 된 킷사텐에서 커피를 마시면 계산할 때 하나씩 줘요. 따로 사려면 ¥100. 디자인이 매년 바뀐대요.', place: '킷사 코하쿠', area: '우다가와초', x: 44, y: 46, price: 100, category: '잡화', art: { shape: 'box', color: '#2F5DA8', accent: '#F2C94C', bg: '#E2EAF7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 5, saves: 19, thanks: 7, sample: true },
   { id: 'f5', city: '도쿄', title: '쪽빛 염색 데누구이', story: '작은 염색 공방에서 손으로 물들인 손수건. 같은 무늬가 하나도 없어요. 사장님이 접는 법도 알려 주셨어요.', place: '아이조메 공방', area: '시부야강 산책로', x: 82, y: 78, price: 1650, category: '잡화', art: { shape: 'towel', color: '#2F4E8C', accent: '#FFFFFF', bg: '#E1E7F3' }, author: '단단', authorTrip: '도쿄 여행 중', daysAgo: 2, saves: 35, thanks: 12, sample: true },
   { id: 'f6', city: '도쿄', title: '동네 빵집 멜론빵 키링', story: '빵집에서 직접 만든 펠트 키링. 빵을 사면 진열대 아래 바구니에 있는 걸 보여 줘요.', place: '베이커리 하루', area: '에비스 방향 주택가', x: 88, y: 46, price: 900, category: '잡화', art: { shape: 'jar', color: '#B7D37A', accent: '#F2C94C', bg: '#EEF6DD' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 6, saves: 22, thanks: 10, sample: true },
-  { id: 'f7', city: '도쿄', title: '목욕탕 한정 유리병 우유', story: '동네 센토(대중목욕탕) 카운터 냉장고에만 있는 병우유. 병은 반납해야 하지만 뚜껑 종이는 기념으로 가져갈 수 있어요.', place: '고마유 센토', area: '시부야 2초메 주택가', x: 74, y: 88, price: 150, category: '식품', art: { shape: 'bottle', color: '#F4F4F4', accent: '#3E6FD8', bg: '#EEF2F7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 0, saves: 8, thanks: 3, sample: true },
+  { id: 'f7', city: '도쿄', title: '목욕탕 한정 유리병 우유', story: '동네 센토(대중목욕탕) 카운터 냉장고에만 있는 병우유. 병은 반납해야 하지만 뚜껑 종이는 기념으로 가져갈 수 있어요.', place: '고마유 센토', area: '시부야 2초메 주택가', x: 74, y: 88, price: 150, category: '식품', art: { shape: 'bottle', color: '#F4F4F4', accent: '#3E6FD8', bg: '#EEF2F7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 0, saves: 8, thanks: 3, sample: true, pins: [{ x: 46, y: 44, label: '유리병 우유', price: 150 }, { x: 72, y: 70, label: '뚜껑 종이' }] },
   { id: 'f8', city: '도쿄', title: '헌책방 주인이 만든 책갈피', story: '헌책을 사면 주인 할아버지가 손글씨로 쓴 책갈피를 끼워 줘요. 따로도 3장에 ¥300.', place: '이치노 서점', area: '진구마에 3초메', x: 36, y: 14, price: 300, category: '잡화', art: { shape: 'bar', color: '#D9C7A8', accent: '#141413', bg: '#F3EEE4' }, author: 'JISOO', authorTrip: '도쿄 여행 중', daysAgo: 1, saves: 31, thanks: 14, sample: true },
   { id: 'f9', city: '도쿄', title: '골목 두부가게 유바 과자', story: '두부가게에서 남은 유바를 튀겨 파는 과자. 오전에만 나오고 봉투에 날짜를 손으로 써 줘요.', place: '마츠다 두부점', area: '우에하라 상점가', x: 12, y: 54, price: 380, category: '식품', art: { shape: 'pouch', color: '#EFE3C8', accent: '#8B5A3C', bg: '#F7F1E4' }, author: '민트초코', authorTrip: '도쿄 여행 중', daysAgo: 4, saves: 47, thanks: 20, sample: true },
   { id: 'f10', city: '도쿄', title: '구제 숍의 쇼와 시대 스카프', story: '지하 구제 숍 안쪽 바구니에 1970년대 실크 스카프가 섞여 있어요. 하나하나 무늬가 달라서 오래 골랐어요.', place: '지하 구제 숍 미도리', area: '캣 스트리트 뒤', x: 58, y: 24, price: 1200, category: '옷', art: { shape: 'towel', color: '#8B5A3C', accent: '#F2C94C', bg: '#F3E7DA' }, author: '단단', authorTrip: '2주 전 다녀옴', daysAgo: 12, saves: 56, thanks: 25, sample: true },
+  { id: 't1', kind: 'tip', city: '도쿄', title: '돈키호테 면세는 5,000엔부터, 영수증 합산 돼요', story: '같은 날 같은 매장이면 층이 달라도 영수증을 합쳐서 면세 받을 수 있어요. 계산대 말고 1층 면세 카운터로 가야 해요.', place: '돈키호테 시부야점', area: '우다가와초', x: 40, y: 52, category: '면세품', art: { shape: 'box', color: '#141413', accent: '#F2C94C', bg: '#EDEDED' }, author: '단단', authorTrip: '도쿄 여행 중', daysAgo: 0, saves: 88, thanks: 40, sample: true },
+  { id: 'q1', kind: 'ask', city: '도쿄', title: '시부야에서 하다라보 고쿠준 제일 싼 곳 아시는 분?', story: '마츠키요랑 돈키 둘 다 가 봤는데 가격이 조금씩 달라요. 다른 곳에서 더 싸게 보신 분 있나요?', place: '시부야역 근처', area: '시부야', x: 56, y: 58, price: 880, category: '뷰티', art: { shape: 'bottle', color: '#E9EEF5', accent: '#2F5DA8', bg: '#EEF2F7' }, author: '여행하는곰', authorTrip: '도쿄 여행 중', daysAgo: 0, saves: 5, thanks: 2, sample: true },
+  { id: 'c1', kind: 'course', city: '도쿄', title: '오쿠시부야 반나절 문구 코스', story: '골목 문구점 → 헌책방 → 킷사텐 순서로 돌면 걸어서 40분이에요. 킷사텐에서 쉬면서 산 걸 정리하기 좋아요.', place: '오쿠시부야 일대', area: '오쿠시부야', x: 22, y: 32, category: '잡화', art: { shape: 'bar', color: '#D9C7A8', accent: '#141413', bg: '#F3EEE4' }, author: 'JISOO', authorTrip: '도쿄 여행 중', daysAgo: 2, saves: 51, thanks: 22, sample: true, pins: [{ x: 22, y: 34, label: '1 골목 문구점' }, { x: 50, y: 50, label: '2 이치노 서점' }, { x: 76, y: 66, label: '3 킷사 코하쿠' }] },
   { id: 'm1', city: '오사카', title: '도톤보리 수제 젓가락', story: '오사카 시장 안쪽 젓가락 가게에서 이름을 새겨 줘요. 15분 걸려요.', place: '하시야 젓가락', area: '오사카 · 센니치마에', x: 60, y: 30, price: 1800, category: '잡화', art: { shape: 'bar', color: '#8B5A3C', accent: '#F2C94C', bg: '#F3E7DA' }, author: '수빈', authorTrip: '오사카 여행', daysAgo: 52, saves: 14, thanks: 6, mine: true },
   { id: 'm2', city: '오사카', title: '오사카 한정 타코야키 키캡', story: '전자상가 골목 작은 가게에서만 파는 레진 키캡이에요.', place: '키캡 숍 니폰바시', area: '오사카 · 니폰바시', x: 70, y: 60, price: 1200, category: '잡화', art: { shape: 'jar', color: '#C9824B', accent: '#2A2A2C', bg: '#F7E9DC' }, author: '수빈', authorTrip: '오사카 여행', daysAgo: 51, saves: 9, thanks: 4, mine: true },
 ]
@@ -148,17 +151,17 @@ export const STORIES = [
   {
     id: 's-crafts', kicker: '에디터 픽', title: '지도에 없는 도쿄 골목 공방 4곳', sub: '간판이 작아 지나치기 쉬운, 손으로 만든 물건을 파는 곳',
     intro: '도쿄에 다녀온 여행자들이 직접 찾아 올린 발견 중에서, 주인이 직접 만들어 그 가게에서만 살 수 있는 물건을 모았어요. 대부분 2층이나 골목 안쪽이라 지도 앱으로는 찾기 어려워요.',
-    findIds: ['f1', 'f5', 'f6', 'f8'],
+    findIds: ['f1', 'f5', 'f6', 'f8'], series: 'alley', ep: 3,
   },
   {
     id: 's-snacks', kicker: '아침에만 있어요', title: '오후엔 다 팔리는 동네 간식', sub: '여행 첫날 아침에 들러야 하는 가게들',
     intro: '오전에만 굽거나 하루 수량이 정해진 간식이에요. 일정 첫날 아침 동선에 넣어 두면 좋아요.',
-    findIds: ['f3', 'f9', 'f7'],
+    findIds: ['f3', 'f9', 'f7'], series: 'morning', ep: 2,
   },
   {
     id: 's-vintage', kicker: '시간이 쌓인 물건', title: '쇼와 감성 기념품', sub: '오래된 가게가 건네는 작은 물건들',
     intro: '오래된 킷사텐, 헌책방, 구제 숍에서 찾은 물건이에요. 같은 디자인을 다시 구하기 어려운 것들이라 보이면 바로 사는 걸 추천해요.',
-    findIds: ['f4', 'f10', 'f2'],
+    findIds: ['f4', 'f10', 'f2'], series: 'alley', ep: 2,
   },
 ]
 
@@ -168,3 +171,55 @@ export const COLLECTIONS = [
   { id: 'c-food', title: '먹어서 없어지는', filter: (f: Find) => f.category === '식품' },
   { id: 'c-wear', title: '입고 쓰는', filter: (f: Find) => f.category === '옷' || f.title.includes('손수건') || f.title.includes('데누구이') },
 ]
+
+/** 연재 코너 (29CM 연재처럼 회차로 쌓이는 기획) — example content */
+export const SERIES = [
+  {
+    id: 'alley', title: '지도에 없는 가게', by: 'Packit 에디터', desc: '간판이 작아 지나치는 골목 가게를 매주 한 곳씩 찾아가요',
+    eps: [
+      { ep: 3, storyId: 's-crafts', title: '골목 공방 4곳', date: '11.24' },
+      { ep: 2, storyId: 's-vintage', title: '쇼와 감성 기념품', date: '11.17' },
+      { ep: 1, title: '2층에 숨은 가게들', date: '11.10' },
+    ],
+  },
+  {
+    id: 'morning', title: '아침에만 있어요', by: 'Packit 에디터', desc: '오전에 다 팔리는 간식과 시장을 모아요',
+    eps: [
+      { ep: 2, storyId: 's-snacks', title: '오후엔 다 팔리는 동네 간식', date: '11.21' },
+      { ep: 1, title: '새벽 시장 첫 손님', date: '11.14' },
+    ],
+  },
+  {
+    id: 'receipt', title: '여행자의 영수증', by: '여행자 연재', desc: '여행자 한 명의 쇼핑 영수증을 펼쳐 보는 코너',
+    eps: [{ ep: 1, title: '3박 4일, ¥42,800의 기록', date: '11.19' }],
+  },
+] as { id: string; title: string; by: string; desc: string; eps: { ep: number; storyId?: string; title: string; date: string }[] }[]
+
+export const POST_KINDS: { kind: PostKind; label: string; desc: string; body: string }[] = [
+  { kind: 'find', label: '발견', desc: '여행 중 찾은 가게와 물건을 사진으로 소개해요', body: '어디서, 어떻게 발견했는지 들려주세요' },
+  { kind: 'tip', label: '한 줄 팁', desc: '면세 · 재고 · 가격처럼 짧게 알려 줄 정보', body: '다른 여행자가 바로 써먹을 수 있게 짧게 적어 주세요' },
+  { kind: 'course', label: '쇼핑 코스', desc: '하루 동안 들른 가게를 순서대로 엮어요', body: '어떤 순서로 돌았는지, 얼마나 걸렸는지 알려 주세요' },
+  { kind: 'ask', label: '물어보기', desc: '어디서 사는지, 얼마인지 다른 여행자에게 물어요', body: '궁금한 물건과 상황을 적어 주세요' },
+]
+
+/** places near the photo location, for the location picker */
+export const NEARBY_PLACES = [
+  { name: '마츠다 두부점', area: '우에하라 상점가', x: 12, y: 54 },
+  { name: '골목 끝 문구점', area: '오쿠시부야', x: 18, y: 36 },
+  { name: '킷사 코하쿠', area: '우다가와초', x: 44, y: 46 },
+  { name: '돈키호테 시부야점', area: '우다가와초', x: 40, y: 52 },
+  { name: '로손 시부야 2초메점', area: '시부야 2초메', x: 70, y: 82 },
+]
+
+export const SEED_COMMENTS: Record<string, Comment[]> = {
+  f7: [
+    { id: 'k1', user: '민트초코', text: '병 반납하면 10엔 돌려줘요! 저도 어제 마셨어요', ago: '1시간 전' },
+    { id: 'k2', user: 'JISOO', text: '목욕 안 해도 살 수 있나요?', ago: '40분 전' },
+  ],
+  f1: [{ id: 'k3', user: '단단', text: '토요일엔 문 닫더라고요. 평일에 가세요', ago: '2일 전' }],
+  q1: [
+    { id: 'k4', user: '단단', text: '센터가이 안쪽 코코카라파인이 ¥790이었어요', ago: '20분 전' },
+    { id: 'k5', user: '민트초코', text: '돈키 면세 받으면 그게 제일 싸요', ago: '10분 전' },
+  ],
+  t1: [{ id: 'k6', user: 'JISOO', text: '여권 꼭 챙기세요. 사진으로는 안 돼요', ago: '3시간 전' }],
+}

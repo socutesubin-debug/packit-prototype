@@ -185,5 +185,5 @@ export function Toaster() {
   useEffect(() => {
     if (t) toast(t.text)
   }, [t])
-  return <SonnerToaster position="bottom-center" offset={{ bottom: 32 }} mobileOffset={{ bottom: 112 }} toastOptions={{ className: 'justify-center font-medium' }} />
+  return <SonnerToaster position="bottom-center" offset={{ bottom: 32 }} mobileOffset={{ bottom: 112 }} toastOptions={{ className: 'justify-center font-medium', style: { fontFamily: 'var(--font-sans)' } }} />
 }

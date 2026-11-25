@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import { CATALOG, SCAN_POOL, SEED_FINDS, SEED_TRIPS, seedProducts } from './data'
-import type { Category, Find, Priority, Product, Trip } from './types'
+import { CATALOG, SCAN_POOL, SEED_COMMENTS, SEED_FINDS, SEED_TRIPS, seedProducts } from './data'
+import type { Category, Comment, Find, Priority, Product, Trip } from './types'
 import { uid } from './utils'
 
 export type Tab = 'home' | 'magazine' | 'map' | 'carry'
@@ -19,6 +19,7 @@ export type Overlay =
   | { type: 'plan' }
   | { type: 'story'; id: string }
   | { type: 'collection'; id: string }
+  | { type: 'series'; id: string }
 
 interface Toast {
   id: string
@@ -41,6 +42,23 @@ function useAppState() {
   const [points, setPoints] = useState(1240)
   const [thanked, setThanked] = useState<Set<string>>(() => new Set())
   const [redeemed, setRedeemed] = useState<string[]>([])
+  const [following, setFollowing] = useState<Set<string>>(() => new Set(['민트초코', 'JISOO']))
+  const [comments, setComments] = useState<Record<string, Comment[]>>(SEED_COMMENTS)
+  /** id of the post just published, highlighted in the feed */
+  const [justPosted, setJustPosted] = useState<string | null>(null)
+
+  const toggleFollow = useCallback((name: string) => {
+    setFollowing((s) => {
+      const n = new Set(s)
+      if (n.has(name)) n.delete(name)
+      else n.add(name)
+      return n
+    })
+  }, [])
+  const addComment = useCallback((findId: string, text: string) => {
+    const c: Comment = { id: uid(), user: '수빈', text, ago: '방금', mine: true }
+    setComments((m) => ({ ...m, [findId]: [...(m[findId] ?? []), c] }))
+  }, [])
 
   const trip = trips.find((t) => t.id === tripId) ?? trips[0]
   const tripProducts = useMemo(() => products.filter((p) => p.tripId === trip.id), [products, trip.id])
@@ -166,6 +184,7 @@ function useAppState() {
   }, [])
 
   return {
+    following, toggleFollow, comments, addComment, justPosted, setJustPosted,
     finds, points, thanked, redeemed, addFind, savedFind, toggleSaveFind, toggleThank, redeem,
     authed, setAuthed, trips, trip, tripId, setTripId, products, tripProducts, rate, setRate,
     tab, setTab, overlays, open, close, closeAll, toast, notify, update, setPriority,

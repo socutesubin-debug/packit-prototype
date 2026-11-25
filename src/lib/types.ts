@@ -96,4 +96,25 @@ export interface Find {
   thanks: number
   mine?: boolean
   sample?: boolean
+  /** 발견 · 한 줄 팁 · 쇼핑 코스 · 물어보기 */
+  kind?: PostKind
+  /** 발견 당시 날짜 (MM.DD) */
+  date?: string
+  /** numbered pins on the cover photo */
+  pins?: PhotoPin[]
+}
+
+export type PostKind = 'find' | 'tip' | 'course' | 'ask'
+export interface PhotoPin {
+  x: number
+  y: number
+  label: string
+  price?: number
+}
+export interface Comment {
+  id: string
+  user: string
+  text: string
+  ago: string
+  mine?: boolean
 }
