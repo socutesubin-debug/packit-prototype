@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronLeft, ChevronRight, Frown, Languages, Map, Meh, Pencil, Share2, Smile, Star, Store as StoreIcon, X } from 'lucide-react'
-import { useState } from 'react'
+import { Check, ChevronLeft, ChevronRight, Frown, Languages, Luggage, Map, Meh, MessageCircle, Minus, Pencil, Plus, Share2, ShoppingBag, Smile, Star, Store as StoreIcon, Tag, Users, X } from 'lucide-react'
+import { forwardRef, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { tiltOf } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { IconBtn, Panel } from '@/components/ui/primitives'
+import { IconBtn, Panel, PRIORITY_ICON, PRIORITY_META } from '@/components/ui/primitives'
 import { PHRASES, STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
 import { FindPhoto, FlagMark } from './Finds'
@@ -18,21 +18,22 @@ export const MOOD: Record<Review['mood'], { label: string; icon: typeof Smile; c
   bad: { label: '별로예요', icon: Frown, cls: 'text-muted-foreground bg-sunken' },
 }
 
-const PRI: { v: Priority; label: string; on: string }[] = [
-  { v: 'must', label: '꼭 살래', on: 'bg-ink text-white' },
-  { v: 'maybe', label: '고민', on: 'bg-ink text-white' },
-  { v: 'skip', label: '안 살래', on: 'bg-ink text-white' },
-]
-
 export function ProductDetail({ id, z }: { id: string; z: number }) {
-  const { products, close, closeAll, update, rate, setRate, open, notify, setTab, setMapFocus, finds } = useApp()
+  const { products, tripProducts, close, closeAll, update, rate, setRate, open, notify, setTab, setMapFocus, finds } = useApp()
   const p = products.find((x) => x.id === id)
   const [more, setMore] = useState(false)
   const [editRate, setEditRate] = useState(false)
   const [rateDraft, setRateDraft] = useState(String(rate))
+  const [compact, setCompact] = useState(false)
+  const scroller = useRef<HTMLDivElement>(null)
+  const storesRef = useRef<HTMLElement>(null)
+  const reviewsRef = useRef<HTMLElement>(null)
   if (!p) return null
   const stores = STORES.filter((s) => p.storeIds.includes(s.id))
   const find = p.findId ? finds.find((f) => f.id === p.findId) : undefined
+  const good = p.reviews.filter((r) => r.mood === 'good').length
+  const related = tripProducts.filter((x) => x.id !== p.id).sort((a, b) => Number(b.category === p.category) - Number(a.category === p.category)).slice(0, 4)
+  const go = (el: HTMLElement | null) => el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const share = async () => {
     try {
@@ -42,60 +43,110 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
       notify('복사할 수 없는 환경이에요')
     }
   }
+  const toMap = () => {
+    setMapFocus(find ? `f:${find.id}` : (stores[0]?.id ?? null))
+    closeAll()
+    setTab('map')
+  }
+
+  const ATTRS = [
+    { icon: Tag, label: p.category, onClick: undefined },
+    { icon: StoreIcon, label: stores.length ? `매장 ${stores.length}곳` : '매장 정보 없음', onClick: () => go(storesRef.current) },
+    { icon: Users, label: p.pickRate ? `${p.pickRate}% 선택` : '선택 정보 없음', onClick: undefined },
+    { icon: MessageCircle, label: `후기 ${p.reviews.length}`, onClick: () => go(reviewsRef.current) },
+  ]
 
   return (
     <Panel onClose={close} z={z}>
-      <div className="relative flex-1 overflow-y-auto pb-32">
-        <div className="flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))]">
-          <IconBtn label="뒤로" onClick={close} className="shadow-none">
-            <ChevronLeft className="size-5" />
-          </IconBtn>
-          <div className="flex gap-2">
-            <IconBtn label="공유" onClick={share} className="shadow-none">
-              <Share2 className="size-[18px]" />
-            </IconBtn>
-            <IconBtn label={p.favorite ? '즐겨찾기 해제' : '즐겨찾기'} onClick={() => update(p.id, { favorite: !p.favorite })} className="shadow-none">
-              <Star className={cn('size-[18px]', p.favorite && 'fill-ink')} />
-            </IconBtn>
-          </div>
-        </div>
-        <div className="px-5 pt-5">
-          <h1 className="text-[26px] leading-tight font-semibold tracking-tight text-balance">{p.name}</h1>
-          <p className="mt-1 text-[14px] text-muted-foreground">
-            {p.brand}
-            {p.ja && <span className="block text-[12.5px] text-faint">{p.ja}</span>}
-          </p>
-        </div>
-        <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }}>
-          <ProductArt art={p.art} tone="none" tilt={tiltOf(p.id)} className="mx-auto aspect-square w-[78%] max-w-[340px]" />
-        </motion.div>
+      {/* compact header — appears once the hero scrolls away */}
+      <div
+        className={cn(
+          'absolute inset-x-0 top-0 z-20 flex items-center gap-2 border-b bg-background/95 px-3 pt-[max(8px,env(safe-area-inset-top))] pb-2 backdrop-blur transition-[opacity,transform] duration-200',
+          compact ? 'opacity-100' : 'pointer-events-none -translate-y-2 opacity-0',
+        )}
+      >
+        <IconBtn label="뒤로" onClick={close} className="border-0 shadow-none">
+          <ChevronLeft className="size-5" />
+        </IconBtn>
+        <p className="min-w-0 flex-1 truncate text-center text-[15px] font-semibold">{p.name}</p>
+        <IconBtn label={p.favorite ? '즐겨찾기 해제' : '즐겨찾기'} onClick={() => update(p.id, { favorite: !p.favorite })} className="border-0 shadow-none">
+          <Star className={cn('size-[18px]', p.favorite && 'fill-foreground')} />
+        </IconBtn>
+      </div>
 
-        <div className="px-5">
-          <p className={cn('mt-3 text-[14.5px] leading-relaxed text-ink-2', !more && 'line-clamp-2')}>{p.desc}</p>
-          <button onClick={() => setMore(!more)} className="mt-1 text-[13px] font-semibold text-muted-foreground">
-            {more ? '접기' : '펼쳐보기'}
+      <div ref={scroller} onScroll={(e) => setCompact(e.currentTarget.scrollTop > 240)} className="relative flex-1 overflow-y-auto pb-28">
+        {/* 1. hero */}
+        <div className="relative bg-muted/70">
+          <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 pt-[max(12px,env(safe-area-inset-top))]">
+            <IconBtn label="뒤로" onClick={close} className="rounded-full">
+              <ChevronLeft className="size-5" />
+            </IconBtn>
+            <div className="flex gap-2">
+              <IconBtn label="공유" onClick={share} className="rounded-full">
+                <Share2 className="size-[17px]" />
+              </IconBtn>
+              <IconBtn label={p.favorite ? '즐겨찾기 해제' : '즐겨찾기'} onClick={() => update(p.id, { favorite: !p.favorite })} className="rounded-full">
+                <Star className={cn('size-[17px]', p.favorite && 'fill-foreground')} />
+              </IconBtn>
+            </div>
+          </div>
+          <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }} className="flex justify-center pt-16 pb-12">
+            <ProductArt art={p.art} tone="none" tilt={tiltOf(p.id)} className="aspect-square w-[64%] max-w-[300px]" />
+          </motion.div>
+        </div>
+
+        {/* 2. info sheet, overlapping the hero */}
+        <div className="relative -mt-6 rounded-t-[28px] bg-background px-5 pt-6">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[12px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+              {p.brand} · {p.category}
+            </p>
+            {find ? (
+              <span className="inline-flex h-6 items-center gap-1 rounded-md bg-primary px-2 text-[11.5px] font-semibold text-primary-foreground">
+                <FlagMark className="h-[11px] w-[9px]" light /> 현지 발견
+              </span>
+            ) : p.pickRate >= 60 ? (
+              <span className="inline-flex h-6 items-center rounded-md bg-primary px-2 text-[11.5px] font-semibold text-primary-foreground">인기 {p.pickRate}%</span>
+            ) : null}
+          </div>
+          <h1 className="mt-1.5 text-[24px] leading-tight font-semibold tracking-tight text-balance">{p.name}</h1>
+          {p.ja && (
+            <p lang="ja" className="mt-0.5 text-[13px] text-muted-foreground">
+              {p.ja}
+            </p>
+          )}
+          <button onClick={() => go(reviewsRef.current)} className="mt-2 inline-flex items-center gap-1.5 text-[13px]">
+            <span className="inline-flex">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Star key={i} className={cn('size-3.5', i < Math.round((good / Math.max(1, p.reviews.length)) * 5) ? 'fill-foreground' : 'text-muted-foreground/40')} />
+              ))}
+            </span>
+            <span className="font-medium tabular">{p.reviews.length ? `좋아요 ${good}` : '후기 없음'}</span>
+            <span className="text-muted-foreground tabular">({p.reviews.length}개 후기)</span>
           </button>
 
+          {/* decision block: others' pick rate + local / KRW price */}
           {p.pickRate > 0 && (
-            <div className="mt-4 rounded-xl border bg-card p-4 shadow-xs">
+            <div className="mt-5 rounded-xl border bg-card p-4 shadow-xs">
               <div className="flex items-baseline justify-between text-[13px]">
-                <span className="font-semibold">다른 여행자 <b>{p.pickRate}%</b>가 꼭 살래로 골랐어요</span>
-                <span className="text-[11px] text-faint">예시 데이터</span>
+                <span className="font-semibold">
+                  다른 여행자 <b>{p.pickRate}%</b>가 꼭 살래로 골랐어요
+                </span>
+                <span className="text-[11px] text-muted-foreground">예시 데이터</span>
               </div>
-              <div className="mt-2 h-1.5 rounded-full bg-sunken">
-                <motion.div className="h-full rounded-full bg-ink" initial={{ width: 0 }} animate={{ width: `${p.pickRate}%` }} transition={{ delay: 0.2, duration: 0.6 }} />
+              <div className="mt-2 h-1.5 rounded-full bg-muted">
+                <motion.div className="h-full rounded-full bg-primary" initial={{ width: 0 }} animate={{ width: `${p.pickRate}%` }} transition={{ delay: 0.2, duration: 0.6 }} />
               </div>
             </div>
           )}
-
-          <section className="mt-4 grid grid-cols-2 gap-2.5">
+          <section className={cn('grid grid-cols-2 gap-2.5', p.pickRate > 0 ? 'mt-2.5' : 'mt-5')}>
             <div className="rounded-xl border bg-card p-4 shadow-xs">
-              <p className="text-[12px] font-semibold text-muted-foreground">현지 가격</p>
-              <p className="mt-1 text-[24px] font-extrabold tracking-tight tabular">{yen(p.price)}</p>
+              <p className="text-[12px] font-medium text-muted-foreground">현지 가격</p>
+              <p className="mt-1 text-[24px] font-semibold tracking-tight tabular">{yen(p.price)}</p>
             </div>
             <div className="rounded-xl border bg-card p-4 shadow-xs">
-              <p className="text-[12px] font-semibold text-muted-foreground">구매 예상 가격</p>
-              <p className="mt-1 text-[24px] font-extrabold tracking-tight tabular">약 {won(toWon(p.price, rate))}</p>
+              <p className="text-[12px] font-medium text-muted-foreground">구매 예상 가격</p>
+              <p className="mt-1 text-[24px] font-semibold tracking-tight tabular">약 {won(toWon(p.price, rate))}</p>
             </div>
           </section>
           <div className="mt-2 flex items-center justify-between px-1 text-[12.5px] text-muted-foreground">
@@ -115,9 +166,9 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                   }}
                 >
                   100엔 =
-                  <input autoFocus inputMode="decimal" value={rateDraft} onChange={(e) => setRateDraft(e.target.value.replace(/[^\d.]/g, ''))} className="h-8 w-20 rounded-lg bg-background px-2 text-[14px] font-semibold tabular border border-input outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
+                  <input autoFocus inputMode="decimal" value={rateDraft} onChange={(e) => setRateDraft(e.target.value.replace(/[^\d.]/g, ''))} className="h-8 w-20 rounded-md border border-input bg-background px-2 text-[14px] font-semibold tabular outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50" />
                   원
-                  <button className="grid size-8 place-items-center rounded-full bg-ink text-white" aria-label="환율 저장">
+                  <button className="grid size-8 place-items-center rounded-md bg-primary text-primary-foreground" aria-label="환율 저장">
                     <Check className="size-4" />
                   </button>
                 </motion.form>
@@ -128,72 +179,92 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
               )}
             </AnimatePresence>
             {!editRate && (
-              <button onClick={() => { setRateDraft(String(rate)); setEditRate(true) }} className="inline-flex items-center gap-1 font-semibold text-ink-2 underline-offset-2 hover:underline">
+              <button onClick={() => { setRateDraft(String(rate)); setEditRate(true) }} className="inline-flex items-center gap-1 font-medium text-foreground/80 underline-offset-2 hover:underline">
                 <Pencil className="size-3" /> 환율 수정
               </button>
             )}
           </div>
 
-          <h2 className="mt-7 text-[16px] font-semibold">이번 여행에서는</h2>
-          <div className="mt-3 grid grid-cols-3 gap-2">
-            {PRI.map((o) => {
-              const on = p.priority === o.v
-              return (
-                <button key={o.v} onClick={() => update(p.id, { priority: on ? null : o.v })} aria-pressed={on} className={cn('h-12 rounded-2xl text-[14px] font-semibold transition active:scale-95', on ? o.on : 'bg-surface text-ink-2 border')}>
-                  {o.label}
-                </button>
-              )
-            })}
-          </div>
-          <button
-            onClick={() => {
-              update(p.id, { purchased: !p.purchased, priority: p.priority ?? 'must' })
-              notify(p.purchased ? '구매 기록을 지웠어요' : '캐리어에 담았어요')
-            }}
-            className={cn('mt-2.5 flex h-14 w-full items-center gap-3 rounded-2xl px-4 text-left transition', p.purchased ? 'bg-ink text-white' : 'bg-surface border')}
-          >
-            <span className={cn('grid size-7 place-items-center rounded-full', p.purchased ? 'bg-white text-ink' : 'ring-2 ring-line')}>{p.purchased && <Check className="size-4" strokeWidth={3} />}</span>
-            <span className="flex-1">
-              <span className="block text-[14.5px] font-semibold">샀어요</span>
-              <span className={cn('block text-[12px]', p.purchased ? 'text-white/60' : 'text-muted-foreground')}>체크하면 이번 여행 캐리어에 담겨요</span>
-            </span>
+          {/* description */}
+          <p className={cn('mt-5 text-[14.5px] leading-relaxed text-foreground/80', !more && 'line-clamp-3')}>{p.desc}</p>
+          <button onClick={() => setMore(!more)} className="mt-1 text-[13px] font-medium text-muted-foreground">
+            {more ? '접기' : '더 보기'}
           </button>
 
-          <label className="mt-7 block">
-            <span className="text-[16px] font-semibold">메모</span>
-            <Textarea
-              value={p.memo}
-              onChange={(e) => update(p.id, { memo: e.target.value })}
-              rows={2}
-              placeholder="누구 선물인지, 몇 개 살지 남겨 보세요"
-              className="mt-3 resize-none bg-background p-3.5 text-[15px]"
-            />
-          </label>
+          {/* 3. attribute row — 4 equal columns */}
+          <div className="mt-5 grid grid-cols-4 border-y">
+            {ATTRS.map((a, i) => (
+              <button
+                key={i}
+                onClick={a.onClick}
+                disabled={!a.onClick}
+                className={cn('flex flex-col items-center gap-1.5 py-4 text-[12px] text-muted-foreground transition enabled:hover:bg-accent/50', i > 0 && 'border-l')}
+              >
+                <a.icon className="size-5 text-foreground" strokeWidth={1.7} />
+                <span className="tabular">{a.label}</span>
+              </button>
+            ))}
+          </div>
 
-          {find && (
-            <button onClick={() => open({ type: 'find', id: find.id })} className="mt-6 flex w-full items-center gap-3 rounded-xl border bg-card shadow-xs p-3 text-left">
-              <FindPhoto f={find} className="size-14 shrink-0 rounded-xl" />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-1 text-[12px] font-semibold text-brand">
-                  <FlagMark className="h-[13px] w-[10px]" /> 현지 발견
-                </span>
-                <span className="mt-0.5 block truncate text-[14px] font-semibold">{find.author}님이 {find.place}에서 발견</span>
+          {/* 4. priority */}
+          <Section title="이번 여행에서는">
+            <div className="grid grid-cols-3 gap-2">
+              {(['must', 'maybe', 'skip'] as Priority[]).map((v) => {
+                const on = p.priority === v
+                const I = PRIORITY_ICON[v].icon
+                return (
+                  <button
+                    key={v}
+                    onClick={() => update(p.id, { priority: on ? null : v })}
+                    aria-pressed={on}
+                    className={cn('flex h-[72px] flex-col items-center justify-center gap-1.5 rounded-xl border text-[13px] font-medium transition active:scale-95', on ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-accent')}
+                  >
+                    <I className="size-5" strokeWidth={2} />
+                    {PRIORITY_META[v].label}
+                  </button>
+                )
+              })}
+            </div>
+            <button
+              onClick={() => {
+                update(p.id, { purchased: !p.purchased, priority: p.priority ?? 'must' })
+                notify(p.purchased ? '구매 기록을 지웠어요' : '캐리어에 담았어요')
+              }}
+              className={cn('mt-2 flex h-14 w-full items-center gap-3 rounded-xl border px-4 text-left transition', p.purchased ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-accent/50')}
+            >
+              <span className={cn('grid size-6 place-items-center rounded-full border-2', p.purchased ? 'border-primary-foreground bg-primary-foreground text-primary' : 'border-border')}>{p.purchased && <Check className="size-3.5" strokeWidth={3} />}</span>
+              <span className="flex-1">
+                <span className="block text-[14.5px] font-medium">샀어요</span>
+                <span className={cn('block text-[12px]', p.purchased ? 'text-primary-foreground/60' : 'text-muted-foreground')}>체크하면 이번 여행 캐리어에 담겨요</span>
               </span>
-              <ChevronRight className="size-4 text-muted-foreground" />
+              <Luggage className="size-5 opacity-60" />
             </button>
-          )}
-          {stores.length > 0 && (
-            <section className="mt-6">
-              <h2 className="text-[16px] font-semibold">살 수 있는 곳 {stores.length}</h2>
-              <ul className="mt-3 flex flex-col gap-2">
+          </Section>
+
+          {/* 5. where to buy */}
+          <Section title={`살 수 있는 곳 ${stores.length}`} ref={storesRef} action={stores.length > 0 ? { label: '지도', onClick: toMap } : undefined}>
+            {find && (
+              <button onClick={() => open({ type: 'find', id: find.id })} className="mb-2 flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left shadow-xs hover:bg-accent/50">
+                <FindPhoto f={find} className="size-12 shrink-0 rounded-lg" />
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
+                    <FlagMark className="h-[12px] w-[9px]" /> 현지 발견
+                  </span>
+                  <span className="mt-0.5 block truncate text-[14px] font-medium">{find.author}님이 {find.place}에서 발견</span>
+                </span>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </button>
+            )}
+            {stores.length ? (
+              <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-xs">
                 {stores.map((s) => (
                   <li key={s.id}>
-                    <button onClick={() => open({ type: 'store', id: s.id })} className="flex w-full items-center gap-3 rounded-2xl bg-surface p-3 text-left border hover:bg-accent">
-                      <span className="grid size-10 place-items-center rounded-xl" style={{ background: s.color }}>
-                        <StoreIcon className={cn('size-5', s.color === '#1E1E1E' || s.color === '#4A4A4A' ? 'text-white' : 'text-ink')} />
+                    <button onClick={() => open({ type: 'store', id: s.id })} className="flex w-full items-center gap-3 p-3 text-left hover:bg-accent/50">
+                      <span className="grid size-10 place-items-center rounded-lg border bg-muted">
+                        <StoreIcon className="size-[18px]" />
                       </span>
-                      <span className="flex-1">
-                        <span className="block text-[14px] font-semibold">{s.name}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[14px] font-medium">{s.name}</span>
                         <span className="text-[12px] text-muted-foreground tabular">
                           {s.distance}m · {s.hours}
                         </span>
@@ -203,27 +274,62 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                   </li>
                 ))}
               </ul>
-            </section>
+            ) : (
+              !find && <p className="rounded-xl border border-dashed p-4 text-center text-[13px] text-muted-foreground">아직 등록된 매장이 없어요</p>
+            )}
+          </Section>
+
+          {/* 6. memo */}
+          <Section title="메모">
+            <Textarea value={p.memo} onChange={(e) => update(p.id, { memo: e.target.value })} rows={2} placeholder="누구 선물인지, 몇 개 살지 남겨 보세요" className="resize-none bg-background p-3.5 text-[15px]" />
+          </Section>
+
+          {/* 7. related — 2-column grid */}
+          {related.length > 0 && (
+            <Section title="함께 담은 상품">
+              <div className="grid grid-cols-2 gap-2.5">
+                {related.map((r) => {
+                  const on = r.priority === 'must'
+                  return (
+                    <div key={r.id} className="relative overflow-hidden rounded-xl border bg-card shadow-xs">
+                      <button onClick={() => open({ type: 'product', id: r.id })} className="block w-full text-left">
+                        <span className="block bg-muted/70 p-3">
+                          <ProductArt art={r.art} tone="none" tilt={tiltOf(r.id)} className="mx-auto aspect-square w-[70%]" />
+                        </span>
+                        <span className="block px-3 pt-2.5 pb-3">
+                          <span className="line-clamp-1 block text-[13.5px] font-medium">{r.name}</span>
+                          <span className="mt-0.5 block text-[12.5px] text-muted-foreground tabular">{yen(r.price)}</span>
+                        </span>
+                      </button>
+                      <button
+                        aria-label={on ? '꼭 살래 해제' : '꼭 살래로 담기'}
+                        onClick={() => update(r.id, { priority: on ? null : 'must' })}
+                        className={cn('absolute top-2 right-2 grid size-8 place-items-center rounded-md border transition active:scale-90', on ? 'border-primary bg-primary text-primary-foreground' : 'bg-background')}
+                      >
+                        {on ? <ShoppingBag className="size-4" /> : <Plus className="size-4" />}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </Section>
           )}
 
-          <section className="mt-7">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-[16px] font-semibold">구매 후기 {p.reviews.length}</h2>
-              <span className="text-[11px] text-faint">예시 후기</span>
-            </div>
+          {/* 8. reviews */}
+          <Section title={`구매 후기 ${p.reviews.length}`} ref={reviewsRef} note="예시 후기">
             {p.reviews.length === 0 ? (
-              <p className="mt-3 rounded-2xl bg-surface p-5 text-center text-[13.5px] text-muted-foreground border">아직 후기가 없어요. 첫 후기를 남겨 보세요</p>
+              <p className="rounded-xl border border-dashed p-5 text-center text-[13.5px] text-muted-foreground">아직 후기가 없어요</p>
             ) : (
-              <ul className="mt-3 flex flex-col gap-2">
+              <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-xs">
                 {p.reviews.map((r, i) => {
                   const M = MOOD[r.mood]
                   return (
-                    <li key={i} className="rounded-xl border bg-card p-4 shadow-xs">
-                      <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] font-semibold', M.cls)}>
+                    <li key={i} className="p-4">
+                      <span className="inline-flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
                         <M.icon className="size-3.5" /> {M.label}
                       </span>
-                      <p className="mt-2 text-[14.5px]">{r.text}</p>
-                      <p className="mt-2 text-[12px] text-muted-foreground">
+                      <p className="mt-1.5 text-[14.5px]">{r.text}</p>
+                      <p className="mt-1.5 text-[12px] text-muted-foreground">
                         {r.user} · {r.trip}
                       </p>
                     </li>
@@ -231,29 +337,40 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
                 })}
               </ul>
             )}
-          </section>
+          </Section>
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 flex gap-2 bg-gradient-to-t from-ground from-60% to-transparent px-5 pt-6 pb-[max(16px,env(safe-area-inset-bottom))]">
+      {/* bottom bar */}
+      <div className="absolute inset-x-0 bottom-0 z-20 flex gap-2 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
         <Button variant="outline" size="lg" className="flex-1" onClick={() => open({ type: 'ask', id: p.id })}>
           <Languages className="size-5" /> 현지어 문의
         </Button>
-        <Button
-          size="lg"
-          className="flex-1"
-          onClick={() => {
-            setMapFocus(find ? `f:${find.id}` : (stores[0]?.id ?? null))
-            closeAll()
-            setTab('map')
-          }}
-        >
+        <Button size="lg" className="flex-1" onClick={toMap}>
           <Map className="size-5" /> 지도에서 보기
         </Button>
       </div>
     </Panel>
   )
 }
+
+const Section = forwardRef<HTMLElement, { title: string; children: React.ReactNode; action?: { label: string; onClick: () => void }; note?: string }>(function Section({ title, children, action, note }, ref) {
+  return (
+    <section ref={ref} className="scroll-mt-20 pt-8">
+      <div className="mb-3 flex items-baseline justify-between">
+        <h2 className="text-[16px] font-semibold tracking-tight">{title}</h2>
+        {action ? (
+          <button onClick={action.onClick} className="inline-flex items-center gap-0.5 text-[13px] font-medium text-muted-foreground hover:text-foreground">
+            {action.label} <ChevronRight className="size-3.5" />
+          </button>
+        ) : note ? (
+          <span className="text-[11px] text-muted-foreground">{note}</span>
+        ) : null}
+      </div>
+      {children}
+    </section>
+  )
+})
 
 export function AskCard({ id }: { id: string }) {
   const { products, close } = useApp()
