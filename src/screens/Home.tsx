@@ -25,16 +25,21 @@ import type { Product } from '@/lib/types'
 import { cn, dday, toWon, won, yen } from '@/lib/utils'
 
 const SORTS = ['최근 담은 순', '가격 높은 순', '가격 낮은 순', '여행자 인기순', '우선순위 순'] as const
+const SORT_DESC: Partial<Record<(typeof SORTS)[number], string>> = {
+  '최근 담은 순': '방금 저장한 상품부터',
+  '여행자 인기순': '다른 여행자가 많이 고른 순서',
+  '우선순위 순': '꼭 살래 → 고민 → 미정 → 안 살래',
+}
 type Sort = (typeof SORTS)[number]
 const CATS = ['전체', '즐겨찾기', ...CATEGORIES] as const
 type Cat = (typeof CATS)[number]
 type PriFilter = 'all' | 'must' | 'maybe' | 'skip' | 'none'
-const PRI_TABS: { v: PriFilter; label: string }[] = [
-  { v: 'all', label: '전체' },
-  { v: 'must', label: '꼭 살래' },
-  { v: 'maybe', label: '고민' },
-  { v: 'skip', label: '안 살래' },
-  { v: 'none', label: '미정' },
+const PRI_TABS: { v: PriFilter; label: string; desc: string }[] = [
+  { v: 'all', label: '전체', desc: '모든 상품' },
+  { v: 'must', label: '꼭 살래', desc: '이번 여행에서 꼭 살 것' },
+  { v: 'maybe', label: '고민', desc: '보고 결정할 것' },
+  { v: 'skip', label: '안 살래', desc: '이번엔 패스' },
+  { v: 'none', label: '미정', desc: '아직 고르지 않은 것' },
 ]
 const rank = (p: Product) => (p.priority === 'must' ? 0 : p.priority === 'maybe' ? 1 : p.priority === null ? 2 : 3)
 
@@ -140,19 +145,23 @@ export function Home() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className={cn('inline-flex h-9 shrink-0 items-center gap-1 rounded-full border pr-3 pl-4 text-[13.5px] font-medium shadow-xs transition outline-none data-[state=open]:ring-[3px] data-[state=open]:ring-ring/30', pri !== 'all' ? 'border-primary bg-primary text-primary-foreground' : 'bg-background hover:bg-accent')}>
-                    {PRI_TABS.find((t) => t.v === pri)?.label === '전체' ? '우선순위' : PRI_TABS.find((t) => t.v === pri)?.label}
+                    {pri === 'all' ? '우선순위' : PRI_TABS.find((t) => t.v === pri)?.label}
                     <ChevronDown className="size-4 opacity-70" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" sideOffset={6} className="min-w-[200px] rounded-xl p-1.5">
+                <DropdownMenuContent align="start" sideOffset={6} className="w-[260px] rounded-xl p-1.5">
+                  <DropdownMenuLabel className="px-2 pt-1.5 pb-1 text-[12px] font-medium text-muted-foreground">우선순위</DropdownMenuLabel>
                   <DropdownMenuRadioGroup value={pri} onValueChange={(v) => setPri(v as PriFilter)}>
                     {PRI_TABS.map((t) => {
                       const n = t.v === 'all' ? tripProducts.length : tripProducts.filter((p) => (t.v === 'none' ? !p.priority : p.priority === t.v)).length
                       const I = t.v === 'must' || t.v === 'maybe' || t.v === 'skip' ? PRIORITY_ICON[t.v].icon : null
                       return (
-                        <DropdownMenuRadioItem key={t.v} value={t.v} className="h-10 gap-2.5 rounded-lg text-[14px]">
-                          <span className="grid size-5 place-items-center text-muted-foreground">{I ? <I className="size-4" /> : t.v === 'all' ? <LayoutGrid className="size-4" /> : <CircleDashed className="size-4" />}</span>
-                          <span className="flex-1">{t.label}</span>
+                        <DropdownMenuRadioItem key={t.v} value={t.v} className="min-h-12 gap-3 rounded-lg py-2 text-[14px]">
+                          <span className="grid size-8 shrink-0 place-items-center rounded-full border bg-background text-foreground">{I ? <I className="size-4" /> : t.v === 'all' ? <LayoutGrid className="size-4" /> : <CircleDashed className="size-4" />}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">{t.label}</span>
+                            <span className="block text-[12px] text-muted-foreground">{t.desc}</span>
+                          </span>
                           <span className="text-[12.5px] text-muted-foreground tabular">{n}</span>
                         </DropdownMenuRadioItem>
                       )
@@ -160,6 +169,11 @@ export function Home() {
                   </DropdownMenuRadioGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
+              {(pri !== 'all' || cat !== '전체') && (
+                <button onClick={() => { setPri('all'); setCat('전체') }} className="order-last inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3 text-[13px] font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground">
+                  초기화
+                </button>
+              )}
               {CATEGORIES.map((c) => {
                 const on = cat === c
                 return (
@@ -182,11 +196,15 @@ export function Home() {
                     {sort} <ChevronDown className="size-3.5 text-muted-foreground" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" sideOffset={4} className="min-w-[168px] rounded-xl p-1.5">
+                <DropdownMenuContent align="end" sideOffset={4} className="w-[232px] rounded-xl p-1.5">
+                  <DropdownMenuLabel className="px-2 pt-1.5 pb-1 text-[12px] font-medium text-muted-foreground">정렬</DropdownMenuLabel>
                   <DropdownMenuRadioGroup value={sort} onValueChange={(v) => setSort(v as Sort)}>
                     {SORTS.map((o) => (
-                      <DropdownMenuRadioItem key={o} value={o} className="h-10 rounded-lg text-[14px]">
-                        {o}
+                      <DropdownMenuRadioItem key={o} value={o} className="min-h-11 rounded-lg py-2 text-[14px]">
+                        <span className="min-w-0">
+                          <span className="block font-medium">{o}</span>
+                          {SORT_DESC[o] && <span className="block text-[12px] text-muted-foreground">{SORT_DESC[o]}</span>}
+                        </span>
                       </DropdownMenuRadioItem>
                     ))}
                   </DropdownMenuRadioGroup>
