@@ -1,4 +1,4 @@
-import { AnimatePresence, motion, useMotionValue, useTransform, animate, type PanInfo } from 'motion/react'
+import { AnimatePresence, motion, useMotionValue, useTransform, animate, type MotionValue, type PanInfo } from 'motion/react'
 import { ArrowLeft, Heart, Hourglass, RotateCcw, ShoppingBag, Undo2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
@@ -139,6 +139,16 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
   const current = cards[i]
   const done = i >= cards.length
 
+  // buttons / keys: stamp the icon onto the image first, then let the card fly
+  const [stamp, setStamp] = useState<P | null>(null)
+  const press = (v: P) => {
+    if (!current || stamp) return
+    setStamp(v)
+    setTimeout(() => {
+      decide(v)
+      setStamp(null)
+    }, 320)
+  }
   const decide = (v: P) => {
     if (!current) return
     setExit(v === 'must' ? { x: 500, y: 40 } : v === 'skip' ? { x: -500, y: 40 } : { x: 0, y: -600 })
@@ -164,9 +174,9 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
       exit={{ opacity: 0 }}
       tabIndex={-1}
       onKeyDown={(e) => {
-        if (e.key === 'ArrowRight') decide('must')
-        if (e.key === 'ArrowLeft') decide('skip')
-        if (e.key === 'ArrowUp') decide('maybe')
+        if (e.key === 'ArrowRight') press('must')
+        if (e.key === 'ArrowLeft') press('skip')
+        if (e.key === 'ArrowUp') press('maybe')
       }}
     >
       <div className="mx-auto flex w-full max-w-[480px] flex-1 flex-col px-5 pt-[max(12px,env(safe-area-inset-top))] pb-[max(20px,env(safe-area-inset-bottom))]">
@@ -223,7 +233,7 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
                 </div>
               )}
               <AnimatePresence custom={exit}>
-                <Draggable key={current.id} p={current} rate={rate} exit={exit} onDecide={decide} />
+                <Draggable key={current.id} p={current} rate={rate} exit={exit} onDecide={decide} stamp={stamp} />
               </AnimatePresence>
             </>
           )}
@@ -232,13 +242,13 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
         {!done && (
           <>
             <div className="mt-6 flex items-center justify-center gap-5">
-              <Round label="안 살래" onClick={() => decide('skip')} className={cn('size-16 border', PRIORITY_ICON.skip.cls)}>
+              <Round label="안 살래" onClick={() => press('skip')} className={cn('size-16 border', PRIORITY_ICON.skip.cls)}>
                 <X className="size-7" strokeWidth={2.2} />
               </Round>
-              <Round label="고민" onClick={() => decide('maybe')} className={cn('size-13 border', PRIORITY_ICON.maybe.cls)}>
+              <Round label="고민" onClick={() => press('maybe')} className={cn('size-13 border', PRIORITY_ICON.maybe.cls)}>
                 <Hourglass className="size-6" strokeWidth={2.2} />
               </Round>
-              <Round label="꼭 살래" onClick={() => decide('must')} className={cn('size-16 border shadow-lg', PRIORITY_ICON.must.cls)}>
+              <Round label="꼭 살래" onClick={() => press('must')} className={cn('size-16 border shadow-lg', PRIORITY_ICON.must.cls)}>
                 <ShoppingBag className="size-7" strokeWidth={2.2} />
               </Round>
             </div>
@@ -264,31 +274,43 @@ function Round({ label, children, onClick, className }: { label: string; childre
 }
 
 function Card({ p, rate, children }: { p: Product; rate: number; children?: React.ReactNode }) {
+  const cur = p.priority ? PRIORITY_ICON[p.priority] : null
   return (
-    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-xs shadow-lg">
-      <ProductArt art={p.art} className="min-h-0 flex-1" />
-      <div className="p-5">
-        <p className="text-[11.5px] font-semibold tracking-wide text-muted-foreground">
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border bg-card shadow-lg">
+      {/* image area — priority icons are stuck on here */}
+      <div className="relative min-h-0 flex-1 bg-muted/50">
+        <ProductArt art={p.art} className="absolute inset-0" />
+        {cur && p.priority && (
+          <span className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full border bg-background/90 py-1 pr-2.5 pl-1 text-[12px] font-medium shadow-xs backdrop-blur">
+            <span className={cn('grid size-6 place-items-center rounded-full border', cur.cls)}>
+              <cur.icon className="size-3.5" strokeWidth={2.2} />
+            </span>
+            지금 {PRIORITY_META[p.priority].label}
+          </span>
+        )}
+        {children}
+      </div>
+      <div className="border-t p-5">
+        <p className="text-[11.5px] font-medium text-muted-foreground">
           {p.brand} · {p.category}
         </p>
-        <h2 className="mt-1 line-clamp-2 text-[20px] leading-tight font-extrabold tracking-tight">{p.name}</h2>
+        <h2 className="mt-1 line-clamp-2 text-[20px] leading-tight font-semibold tracking-tight">{p.name}</h2>
         <p className="mt-2 flex items-baseline gap-2">
-          <span className="text-[22px] font-extrabold tabular">{yen(p.price)}</span>
+          <span className="text-[22px] font-semibold tabular">{yen(p.price)}</span>
           <span className="text-[13px] text-muted-foreground tabular">약 {won(toWon(p.price, rate))}</span>
         </p>
       </div>
-      {children}
     </div>
   )
 }
 
-function Draggable({ p, rate, exit, onDecide }: { p: Product; rate: number; exit: { x: number; y: number }; onDecide: (v: P) => void }) {
+function Draggable({ p, rate, exit, onDecide, stamp }: { p: Product; rate: number; exit: { x: number; y: number }; onDecide: (v: P) => void; stamp: P | null }) {
   const x = useMotionValue(0)
   const y = useMotionValue(0)
   const rotate = useTransform(x, [-240, 240], [-16, 16])
-  const must = useTransform(x, [30, 130], [0, 1])
-  const skip = useTransform(x, [-130, -30], [1, 0])
-  const maybe = useTransform(y, [-130, -40], [1, 0])
+  const must = useTransform(x, [30, 120], [0, 1])
+  const skip = useTransform(x, [-120, -30], [1, 0])
+  const maybe = useTransform(y, [-120, -35], [1, 0])
   const onEnd = (_: unknown, info: PanInfo) => {
     const { offset, velocity } = info
     if (offset.x > 120 || velocity.x > 600) return onDecide('must')
@@ -301,7 +323,7 @@ function Draggable({ p, rate, exit, onDecide }: { p: Product; rate: number; exit
     <motion.div
       className="absolute inset-0 cursor-grab touch-none active:cursor-grabbing"
       style={{ x, y, rotate }}
-      drag
+      drag={!stamp}
       dragSnapToOrigin={false}
       onDragEnd={onEnd}
       initial={{ scale: 0.94, opacity: 0.7 }}
@@ -309,19 +331,36 @@ function Draggable({ p, rate, exit, onDecide }: { p: Product; rate: number; exit
       exit={{ x: exit.x, y: exit.y, opacity: 0, rotate: exit.x / 20, transition: { duration: 0.32 } }}
     >
       <Card p={p} rate={rate}>
-        <Stamp style={{ opacity: must }} className="top-8 left-6 -rotate-12 border-brand text-brand">꼭 살래</Stamp>
-        <Stamp style={{ opacity: skip }} className="top-8 right-6 rotate-12 border-ink-2 text-ink-2">안 살래</Stamp>
-        <Stamp style={{ opacity: maybe }} className="top-8 left-1/2 -translate-x-1/2 border-maybe text-maybe">고민</Stamp>
+        <IconStamp v="must" o={must} forced={stamp === 'must'} className="top-6 left-6 -rotate-12" />
+        <IconStamp v="skip" o={skip} forced={stamp === 'skip'} className="top-6 right-6 rotate-12" />
+        <IconStamp v="maybe" o={maybe} forced={stamp === 'maybe'} className="top-6 left-1/2 -ml-12" />
       </Card>
     </motion.div>
   )
 }
 
-function Stamp({ children, className, style }: { children: React.ReactNode; className?: string; style: Parameters<typeof motion.span>[0]['style'] }) {
+/** the badge icon, stuck onto the product image like a sticker */
+function IconStamp({ v, o, forced, className }: { v: P; o: MotionValue<number>; forced: boolean; className?: string }) {
+  const { icon: I, cls } = PRIORITY_ICON[v]
+  const scale = useTransform(o, [0, 1], [0.7, 1])
+  const base = cn('pointer-events-none absolute flex w-24 flex-col items-center gap-1.5', className)
+  const body = (
+    <>
+      <span className={cn('grid size-20 place-items-center rounded-full border-2 shadow-lg', cls)}>
+        <I className="size-9" strokeWidth={2} />
+      </span>
+      <span className="rounded-md border bg-background px-2 py-0.5 text-[13px] font-semibold shadow-sm">{PRIORITY_META[v].label}</span>
+    </>
+  )
+  if (forced)
+    return (
+      <motion.div initial={{ opacity: 0, scale: 1.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', stiffness: 600, damping: 18 }} className={base}>
+        {body}
+      </motion.div>
+    )
   return (
-    <motion.span style={style} className={cn('pointer-events-none absolute rounded-xl border-[3px] bg-white/80 px-3 py-1 text-[22px] font-black backdrop-blur', className)}>
-      {children}
-    </motion.span>
+    <motion.div style={{ opacity: o, scale }} className={base}>
+      {body}
+    </motion.div>
   )
 }
-
