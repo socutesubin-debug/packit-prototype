@@ -31,6 +31,8 @@ function useAppState() {
   const [tripId, setTripId] = useState('t1')
   const [products, setProducts] = useState<Product[]>(seedProducts)
   const [rate, setRate] = useState(844)
+  /** 여행 전 / 여행 중 — prototype lets you flip it to preview in-trip UI */
+  const [inTrip, setInTrip] = useState(false)
   const [tab, setTab] = useState<Tab>('home')
   const [overlays, setOverlays] = useState<Overlay[]>([])
   const [toast, setToast] = useState<Toast | null>(null)
@@ -167,7 +169,7 @@ function useAppState() {
     finds, points, thanked, redeemed, addFind, savedFind, toggleSaveFind, toggleThank, redeem,
     authed, setAuthed, trips, trip, tripId, setTripId, products, tripProducts, rate, setRate,
     tab, setTab, overlays, open, close, closeAll, toast, notify, update, setPriority,
-    addTrip, updateTrip, scan, addProducts, addManual, mapFocus, setMapFocus,
+    addTrip, updateTrip, scan, addProducts, addManual, mapFocus, setMapFocus, inTrip, setInTrip,
   }
 }
 

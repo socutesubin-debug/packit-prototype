@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, ChevronLeft, ChevronRight, Frown, Languages, Luggage, Map, Meh, MessageCircle, Minus, Pencil, Plus, Share2, ShoppingBag, Smile, Star, Store as StoreIcon, Tag, Users, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Flag, Frown, Languages, Luggage, Map, Meh, MessageCircle, Minus, Pencil, Plus, Share2, ShoppingBag, Smile, Star, Store as StoreIcon, Tag, Users, X } from 'lucide-react'
 import { forwardRef, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { tiltOf } from '@/components/ProductCard'
@@ -18,8 +18,16 @@ export const MOOD: Record<Review['mood'], { label: string; icon: typeof Smile; c
   bad: { label: '별로예요', icon: Frown, cls: 'text-muted-foreground bg-sunken' },
 }
 
+const CHAINS: Record<string, string[]> = {
+  뷰티: ['드럭스토어', '돈키호테', '로프트'],
+  식품: ['공항 면세점', '돈키호테', '편의점'],
+  옷: ['백화점', '편집숍'],
+  잡화: ['돈키호테', '로프트', '기념품점'],
+  면세품: ['공항 면세점', '시내 면세점'],
+}
+
 export function ProductDetail({ id, z }: { id: string; z: number }) {
-  const { products, tripProducts, close, closeAll, update, rate, setRate, open, notify, setTab, setMapFocus, finds } = useApp()
+  const { products, tripProducts, close, closeAll, update, rate, setRate, open, notify, setTab, setMapFocus, finds, inTrip, setInTrip } = useApp()
   const p = products.find((x) => x.id === id)
   const [more, setMore] = useState(false)
   const [editRate, setEditRate] = useState(false)
@@ -34,6 +42,18 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
   const good = p.reviews.filter((r) => r.mood === 'good').length
   const related = tripProducts.filter((x) => x.id !== p.id).sort((a, b) => Number(b.category === p.category) - Number(a.category === p.category)).slice(0, 4)
   const go = (el: HTMLElement | null) => el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // everyday products: summarise instead of listing every shop
+  const chains = CHAINS[p.category] ?? ['돈키호테', '드럭스토어']
+  const chainsShort = `${chains[0]} 외 ${chains.length - 1}곳`
+  const nearest = [...stores].sort((a, b) => a.distance - b.distance)[0]
+  const cheapestStore = stores.find((s) => s.kind === '잡화점') ?? stores[0]
+  const cheapest = cheapestStore ? { store: cheapestStore, price: Math.round((p.price * 0.92) / 10) * 10 } : undefined
+  const must = tripProducts.filter((x) => x.priority === 'must' && !x.purchased)
+  const mustCount = must.length
+  // only shops that actually sell this product
+  const oneStop = !find && mustCount >= 2 && p.priority === 'must'
+    ? stores.map((st) => ({ store: st, n: must.filter((x) => x.storeIds.includes(st.id)).length })).sort((a, b) => b.n - a.n).find((o) => o.n >= 2)
+    : undefined
 
   const share = async () => {
     try {
@@ -51,8 +71,10 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
 
   const ATTRS = [
     { icon: Tag, label: p.category, onClick: undefined },
-    { icon: StoreIcon, label: stores.length ? `매장 ${stores.length}곳` : '매장 정보 없음', onClick: () => go(storesRef.current) },
-    { icon: Users, label: p.pickRate ? `${p.pickRate}% 선택` : '선택 정보 없음', onClick: undefined },
+    find
+      ? { icon: Flag, label: '이 가게에서만', onClick: () => go(storesRef.current) }
+      : { icon: StoreIcon, label: chainsShort, onClick: () => go(storesRef.current) },
+    find ? { icon: Users, label: `${find.saves}명 저장`, onClick: undefined } : { icon: Users, label: p.pickRate ? `${p.pickRate}% 선택` : '새 상품', onClick: undefined },
     { icon: MessageCircle, label: `후기 ${p.reviews.length}`, onClick: () => go(reviewsRef.current) },
   ]
 
@@ -88,6 +110,18 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
               <IconBtn label={p.favorite ? '즐겨찾기 해제' : '즐겨찾기'} onClick={() => update(p.id, { favorite: !p.favorite })} className="rounded-full">
                 <Star className={cn('size-[17px]', p.favorite && 'fill-foreground')} />
               </IconBtn>
+            </div>
+          </div>
+          <div className="absolute top-[max(16px,env(safe-area-inset-top))] left-1/2 z-10 -translate-x-1/2">
+            <div className="flex h-8 items-center rounded-full border bg-background/90 p-[3px] text-[12px] font-medium shadow-xs backdrop-blur" role="group" aria-label="미리보기: 여행 시점">
+              {[
+                { v: false, label: '여행 전' },
+                { v: true, label: '여행 중' },
+              ].map((o) => (
+                <button key={o.label} onClick={() => setInTrip(o.v)} aria-pressed={inTrip === o.v} className={cn('h-full rounded-full px-3 transition-colors', inTrip === o.v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+                  {o.label}
+                </button>
+              ))}
             </div>
           </div>
           <motion.div initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: 'spring', stiffness: 200, damping: 20 }} className="flex justify-center pt-16 pb-12">
@@ -206,76 +240,64 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
             ))}
           </div>
 
-          {/* 4. priority */}
-          <Section title="이번 여행에서는">
-            <div className="grid grid-cols-3 gap-2">
-              {(['must', 'maybe', 'skip'] as Priority[]).map((v) => {
-                const on = p.priority === v
-                const I = PRIORITY_ICON[v].icon
-                return (
-                  <button
-                    key={v}
-                    onClick={() => update(p.id, { priority: on ? null : v })}
-                    aria-pressed={on}
-                    className={cn('flex h-[72px] flex-col items-center justify-center gap-1.5 rounded-xl border text-[13px] font-medium transition active:scale-95', on ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-accent')}
-                  >
-                    <I className="size-5" strokeWidth={2} />
-                    {PRIORITY_META[v].label}
-                  </button>
-                )
-              })}
-            </div>
-            <button
-              onClick={() => {
-                update(p.id, { purchased: !p.purchased, priority: p.priority ?? 'must' })
-                notify(p.purchased ? '구매 기록을 지웠어요' : '캐리어에 담았어요')
-              }}
-              className={cn('mt-2 flex h-14 w-full items-center gap-3 rounded-xl border px-4 text-left transition', p.purchased ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-accent/50')}
-            >
-              <span className={cn('grid size-6 place-items-center rounded-full border-2', p.purchased ? 'border-primary-foreground bg-primary-foreground text-primary' : 'border-border')}>{p.purchased && <Check className="size-3.5" strokeWidth={3} />}</span>
-              <span className="flex-1">
-                <span className="block text-[14.5px] font-medium">샀어요</span>
-                <span className={cn('block text-[12px]', p.purchased ? 'text-primary-foreground/60' : 'text-muted-foreground')}>체크하면 이번 여행 캐리어에 담겨요</span>
-              </span>
-              <Luggage className="size-5 opacity-60" />
-            </button>
-          </Section>
-
-          {/* 5. where to buy */}
-          <Section title={`살 수 있는 곳 ${stores.length}`} ref={storesRef} action={stores.length > 0 ? { label: '지도', onClick: toMap } : undefined}>
-            {find && (
-              <button onClick={() => open({ type: 'find', id: find.id })} className="mb-2 flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left shadow-xs hover:bg-accent/50">
-                <FindPhoto f={find} className="size-12 shrink-0 rounded-lg" />
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
-                    <FlagMark className="h-[12px] w-[9px]" /> 현지 발견
+          {/* 5. where to buy — exact place for local finds, a summary for everyday products */}
+          <Section title={find ? '여기서 살 수 있어요' : '어디서 살까요'} ref={storesRef} action={stores.length > 0 || find ? { label: '지도', onClick: toMap } : undefined} note={find ? undefined : '예시 데이터'}>
+            {find ? (
+              <>
+                <button onClick={() => open({ type: 'find', id: find.id })} className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left shadow-xs hover:bg-accent/50">
+                  <FindPhoto f={find} className="size-14 shrink-0 rounded-lg" />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
+                      <FlagMark className="h-[12px] w-[9px]" /> 현지 발견 · 이 가게에서만
+                    </span>
+                    <span className="mt-0.5 block truncate text-[15px] font-semibold">{find.place}</span>
+                    <span className="block truncate text-[12.5px] text-muted-foreground">
+                      {find.area} · {find.author}님이 발견
+                    </span>
                   </span>
-                  <span className="mt-0.5 block truncate text-[14px] font-medium">{find.author}님이 {find.place}에서 발견</span>
-                </span>
-                <ChevronRight className="size-4 text-muted-foreground" />
-              </button>
-            )}
-            {stores.length ? (
-              <ul className="divide-y overflow-hidden rounded-xl border bg-card shadow-xs">
-                {stores.map((s) => (
-                  <li key={s.id}>
-                    <button onClick={() => open({ type: 'store', id: s.id })} className="flex w-full items-center gap-3 p-3 text-left hover:bg-accent/50">
-                      <span className="grid size-10 place-items-center rounded-lg border bg-muted">
-                        <StoreIcon className="size-[18px]" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[14px] font-medium">{s.name}</span>
-                        <span className="text-[12px] text-muted-foreground tabular">
-                          {s.distance}m · {s.hours}
-                        </span>
-                      </span>
-                      <ChevronRight className="size-4 text-muted-foreground" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                  <ChevronRight className="size-4 text-muted-foreground" />
+                </button>
+              </>
             ) : (
-              !find && <p className="rounded-xl border border-dashed p-4 text-center text-[13px] text-muted-foreground">아직 등록된 매장이 없어요</p>
+              <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+                <div className="flex items-center gap-2.5 p-4">
+                  <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-primary px-2 text-[12px] font-semibold text-primary-foreground">흔해요</span>
+                  <p className="min-w-0 text-[13.5px] text-foreground/80">
+                    <b className="font-semibold text-foreground">{chains.join(' · ')}</b>에서 팔아요
+                  </p>
+                </div>
+                {cheapest && (
+                  <button onClick={() => open({ type: 'store', id: cheapest.store.id })} className="flex w-full items-center gap-3 border-t px-4 py-3 text-left hover:bg-accent/50">
+                    <span className="w-[84px] shrink-0 text-[12.5px] text-muted-foreground">가장 저렴한 곳</span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{cheapest.store.name}</span>
+                    <span className="shrink-0 text-[14px] font-semibold tabular">{yen(cheapest.price)}</span>
+                    <span className="shrink-0 rounded border px-1 text-[10.5px] text-muted-foreground">면세</span>
+                  </button>
+                )}
+                {nearest && (
+                  <button onClick={() => open({ type: 'store', id: nearest.id })} className="flex w-full items-center gap-3 border-t px-4 py-3 text-left hover:bg-accent/50">
+                    <span className="w-[84px] shrink-0 text-[12.5px] text-muted-foreground">가장 가까운 곳</span>
+                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{nearest.name}</span>
+                    <span className="shrink-0 text-[13px] text-muted-foreground tabular">{nearest.distance}m</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Packit's own angle: buy your list in one stop */}
+            {oneStop && (
+              <button onClick={() => open({ type: 'store', id: oneStop.store.id })} className="mt-2 flex w-full items-center gap-3 rounded-xl bg-primary p-4 text-left text-primary-foreground shadow-sm transition hover:bg-primary/90">
+                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-foreground/10">
+                  <ShoppingBag className="size-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12.5px] text-primary-foreground/60">{oneStop.store.name}에서</span>
+                  <span className="block text-[14.5px] font-semibold">
+                    꼭 살래 {mustCount}개 중 {oneStop.n}개를 한 번에 살 수 있어요
+                  </span>
+                </span>
+                <ChevronRight className="size-4 opacity-60" />
+              </button>
             )}
           </Section>
 
@@ -341,14 +363,58 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
         </div>
       </div>
 
-      {/* bottom bar */}
-      <div className="absolute inset-x-0 bottom-0 z-20 flex gap-2 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
-        <Button variant="outline" size="lg" className="flex-1" onClick={() => open({ type: 'ask', id: p.id })}>
-          <Languages className="size-5" /> 현지어 문의
-        </Button>
-        <Button size="lg" className="flex-1" onClick={toMap}>
-          <Map className="size-5" /> 지도에서 보기
-        </Button>
+      {/* bottom bar — 여행 전: decide · 여행 중: act in the store */}
+      <div className="absolute inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur">
+        {inTrip ? (
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" className="size-11 shrink-0" onClick={() => open({ type: 'ask', id: p.id })} aria-label="현지어 문의">
+              <Languages className="size-5" />
+            </Button>
+            <Button variant="outline" size="icon" className="size-11 shrink-0" onClick={toMap} aria-label="지도에서 보기">
+              <Map className="size-5" />
+            </Button>
+            <Button
+              size="lg"
+              className="flex-1"
+              variant={p.purchased ? 'outline' : 'default'}
+              onClick={() => {
+                update(p.id, { purchased: !p.purchased, priority: p.priority ?? 'must' })
+                notify(p.purchased ? '구매 기록을 지웠어요' : '캐리어에 담았어요')
+              }}
+            >
+              {p.purchased ? (
+                <>
+                  <Check /> 캐리어에 담았어요
+                </>
+              ) : (
+                <>
+                  <Luggage /> 샀어요
+                </>
+              )}
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            {(['skip', 'maybe', 'must'] as Priority[]).map((v) => {
+              const on = p.priority === v
+              const I = PRIORITY_ICON[v].icon
+              return (
+                <button
+                  key={v}
+                  onClick={() => {
+                    update(p.id, { priority: on ? null : v })
+                    if (!on) notify(`${PRIORITY_META[v].label}로 정했어요`)
+                  }}
+                  aria-pressed={on}
+                  className={cn('flex h-12 items-center justify-center gap-1.5 rounded-lg border text-[14px] font-medium transition active:scale-95', on ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-accent')}
+                >
+                  <I className="size-[18px]" strokeWidth={2} />
+                  {PRIORITY_META[v].label}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </Panel>
   )
