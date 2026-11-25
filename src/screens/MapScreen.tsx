@@ -74,16 +74,20 @@ export function MapScreen() {
   const bundleTop = [...stores].sort((x, y) => y.s.must.length - x.s.must.length)[0]
   const nearTop = [...stores].filter((x) => x.s.must.length).sort((x, y) => x.s.distance - y.s.distance)[0]
   const listed = [...stores].sort((x, y) => (sort === 'bundle' ? y.s.must.length - x.s.must.length || x.s.distance - y.s.distance : x.s.distance - y.s.distance))
+  const railItems: Item[] = [...listed, ...findItems]
   const nearbyMust = tripProducts.filter((p) => p.priority === 'must' && !p.purchased && p.storeIds.length && (!cat || p.category === cat))
 
   const [sel, setSel] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(false)
+  /** card centred in the peek rail — highlights its pin without opening it */
+  const [peekId, setPeekId] = useState<string | null>(null)
+  const railRef = useRef<HTMLDivElement>(null)
   const selItem = items.find((x) => x.id === sel)
 
   /* ----- bottom sheet ----- */
   const [snap, setSnap] = useState<Snap>('peek')
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
-  const heights: Record<Snap, number> = { peek: NAV_PAD + 112, half: Math.round(vh * 0.56), full: Math.round(vh * 0.88) }
+  const heights: Record<Snap, number> = { peek: NAV_PAD + 168, half: Math.round(vh * 0.56), full: Math.round(vh * 0.88) }
   const detailH = Math.max(heights.half, Math.min(heights.full, NAV_PAD + 430))
   const target = selItem ? (expanded ? heights.full : detailH) : heights[snap]
   const h = useMotionValue(target)
@@ -154,6 +158,17 @@ export function MapScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pid])
 
+  // keep the highlighted rail card's pin in view
+  const railFirst = railItems[0]?.id
+  useEffect(() => {
+    if (desktop || sel || snap !== 'peek' || !railFirst) return
+    setPeekId(null)
+    railRef.current?.scrollTo({ left: 0 })
+    const it = items.find((x) => x.id === railFirst)
+    if (it) center(it.x, it.y)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [railFirst])
+
   const routeTo = selItem
   const routeMin = selItem ? (selItem.kind === 'store' ? walkMin(selItem.s.distance) : walkMin(Math.hypot(selItem.x - ME.x, selItem.y - ME.y) * 12)) : 0
 
@@ -194,7 +209,7 @@ export function MapScreen() {
             <span className="block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink shadow ring-4 ring-white" />
           </div>
           {items.map((it) => {
-            const on = it.id === sel
+            const on = it.id === sel || (!sel && snap === 'peek' && !desktop && it.id === (peekId ?? railItems[0]?.id))
             if (it.kind === 'find')
               return (
                 <button key={it.id} onClick={(e) => { e.stopPropagation(); select(it.id) }} className="absolute" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 6 : 2 }} aria-label={`여행자 발견: ${it.f.title}`}>
@@ -378,23 +393,67 @@ export function MapScreen() {
               </motion.div>
             ) : (
               <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                {!product && (
-                  <button onClick={() => !desktop && setSnap(snap === 'peek' ? 'half' : 'peek')} className="block w-full pt-1 text-left">
-                    <span className="flex items-baseline justify-between">
-                      <span className="text-[16px] font-semibold tracking-tight">
+                <button onClick={() => !desktop && setSnap(snap === 'peek' ? 'half' : 'peek')} className="flex w-full items-baseline justify-between pt-1 text-left">
+                  <span className="text-[16px] font-semibold tracking-tight">
+                    {product ? (buy?.find ? '살 수 있는 곳' : `살 수 있는 가게 ${stores.length}곳`) : (
+                      <>
                         근처에서 살 수 있는 꼭 살래 <span className="tabular">{nearbyMust.length}</span>개
-                      </span>
-                      <span className="text-[12.5px] text-muted-foreground tabular">가게 {stores.filter((x) => x.s.must.length).length}곳</span>
-                    </span>
-                    <span className="mt-2.5 flex items-center gap-1.5">
-                      {nearbyMust.slice(0, 5).map((p) => (
-                        <ProductArt key={p.id} art={p.art} tone="neutral" className="size-12 shrink-0 rounded-lg" />
-                      ))}
-                      {nearbyMust.length > 5 && <span className="pl-1 text-[12.5px] text-muted-foreground tabular">+{nearbyMust.length - 5}</span>}
-                    </span>
-                  </button>
-                )}
-                <div className={cn('flex items-center justify-between', product ? 'pt-1' : 'mt-6')}>
+                      </>
+                    )}
+                  </span>
+                  {!product && <span className="text-[12.5px] text-muted-foreground tabular">가게 {stores.filter((x) => x.s.must.length).length}곳</span>}
+                </button>
+                {snap === 'peek' && !desktop ? (
+                  <div
+                    ref={railRef}
+                    className="no-scrollbar -mx-4 mt-3 flex snap-x snap-mandatory scroll-px-4 gap-2.5 overflow-x-auto px-4 pb-1"
+                    onScroll={(e) => {
+                      const el = e.currentTarget
+                      const first = el.firstElementChild as HTMLElement | null
+                      if (!first) return
+                      const idx = Math.round(el.scrollLeft / (first.offsetWidth + 10))
+                      const it = railItems[Math.min(idx, railItems.length - 1)]
+                      if (it && it.id !== peekId) {
+                        setPeekId(it.id)
+                        center(it.x, it.y)
+                      }
+                    }}
+                  >
+                    {railItems.map((it) => (
+                      <button key={it.id} onClick={() => select(it.id)} className={cn('flex w-[82%] shrink-0 snap-start items-center gap-3 rounded-xl border p-2.5 text-left transition', it.id === (peekId ?? railItems[0]?.id) ? 'border-ink' : 'border-border')}>
+                        {it.kind === 'store' ? (
+                          <>
+                            <StoreArt color={it.s.color} name={it.s.name} className="size-14 shrink-0 rounded-lg" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14.5px] font-semibold">{it.s.name}</span>
+                              <span className="mt-0.5 block truncate text-[12.5px] text-muted-foreground tabular">
+                                {product ? `${it.s.open ? '영업 중' : '영업 종료'} · ${it.s.distance}m` : it.s.must.length ? `꼭 살래 ${it.s.must.length}개 · ${yen(it.s.sum)} · ${it.s.distance}m` : `저장 ${it.s.mine.length}개 · ${it.s.distance}m`}
+                              </span>
+                              <span className="mt-1 flex flex-wrap gap-1">
+                                {tagsFor(it.s).slice(0, 2).map((t) => <MiniTag key={t}>{t}</MiniTag>)}
+                              </span>
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <FindPhoto f={it.f} className="size-14 shrink-0 rounded-lg" />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[14.5px] font-semibold">{it.f.place}</span>
+                              <span className="mt-0.5 block truncate text-[12.5px] text-muted-foreground">여기서만 · {it.f.title}</span>
+                              <span className="mt-1 flex">
+                                <MiniTag>
+                                  <FlagMark className="h-[10px] w-[8px]" /> 여행자 발견
+                                </MiniTag>
+                              </span>
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                <>
+                <div className="mt-5 flex items-center justify-between">
                   <p className="text-[14.5px] font-semibold">
                     {product && buy?.find ? '살 수 있는 곳' : `가게 ${stores.length}곳`}
                     {!product && findItems.length > 0 && <span className="font-normal text-muted-foreground"> · 발견 {findItems.length}</span>}
@@ -452,6 +511,8 @@ export function MapScreen() {
                     </li>
                   ))}
                 </ul>
+                </>
+                )}
                 {!items.length && <p className="py-10 text-center text-[14px] text-muted-foreground">조건에 맞는 장소가 없어요</p>}
               </motion.div>
             )}
