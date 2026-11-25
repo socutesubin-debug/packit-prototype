@@ -105,7 +105,7 @@ export function PriorityIcon({ value, onClick, size = 'md', showLabel }: { value
 export const nextPriority = (p: Priority | null): Priority | null =>
   p === null ? 'must' : p === 'must' ? 'maybe' : p === 'maybe' ? 'skip' : null
 
-function useIsDesktop() {
+export function useIsDesktop() {
   const q = '(min-width: 768px)'
   const [desktop, setDesktop] = useState(() => typeof window !== 'undefined' && window.matchMedia(q).matches)
   useEffect(() => {

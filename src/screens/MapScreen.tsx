@@ -1,14 +1,14 @@
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
-import { Bookmark, BookmarkCheck, ChevronLeft, Clock, Flag, Footprints, LocateFixed, MapPin, Navigation, Search, Share2, ShoppingBag, Store as StoreIcon, X } from 'lucide-react'
+import { ArrowUpDown, Bookmark, BookmarkCheck, Check, ChevronLeft, ChevronRight, Clock, Flag, Footprints, Languages, LocateFixed, MapPin, Navigation, Search, Share2, ShoppingBag, Store as StoreIcon, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { StoreArt } from '@/components/art/Scenes'
 import { ProductRow } from '@/components/ProductCard'
 import { buttonVariants } from '@/components/ui/button'
-import { Chip, IconBtn, Panel } from '@/components/ui/primitives'
-import { STORES } from '@/lib/data'
+import { IconBtn, Panel, useIsDesktop } from '@/components/ui/primitives'
+import { CATEGORIES, STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
-import type { Find, Product, Store } from '@/lib/types'
+import type { Category, Find, Product, Store } from '@/lib/types'
 import { FindPhoto, FlagMark } from './Finds'
 import { cn, yen } from '@/lib/utils'
 import { buyInfo } from '@/lib/buy'
@@ -20,56 +20,87 @@ const mapsUrl = (s: Store) => `https://www.google.com/maps/search/?api=1&query=$
 
 type Item =
   | { kind: 'find'; id: string; x: number; y: number; f: Find }
-  | { kind: 'store'; id: string; x: number; y: number; s: Store & { mine: Product[] } }
+  | { kind: 'store'; id: string; x: number; y: number; s: Store & { mine: Product[]; must: Product[]; sum: number } }
+
+type Snap = 'peek' | 'half' | 'full'
+const NAV_PAD = 92
+const walkMin = (m: number) => Math.max(1, Math.round(m / 80))
 
 export function MapScreen() {
-  const { tripProducts, products, open, mapFocus, setMapFocus, trip, finds, savedFind, toggleSaveFind, notify } = useApp()
+  const { tripProducts, products, open, mapFocus, setMapFocus, finds, savedFind, toggleSaveFind, notify, update, inTrip } = useApp()
+  const desktop = useIsDesktop()
   // product mode: "어디서 살까요" for one product, opened from its detail
   const [pid, setPid] = useState<string | null>(mapFocus?.startsWith('p:') ? mapFocus.slice(2) : null)
   const product = pid ? products.find((x) => x.id === pid) : undefined
   const buy = product ? buyInfo(product, tripProducts, finds) : undefined
+  const [myList, setMyList] = useState(true)
   const [showFinds, setShowFinds] = useState(true)
-  const [showStores, setShowStores] = useState(true)
-  const [mustOnly, setMustOnly] = useState(false)
-  const [openOnly, setOpenOnly] = useState(false)
+  const [cat, setCat] = useState<Category | null>(null)
+  const [q, setQ] = useState('')
+  const [sort, setSort] = useState<'bundle' | 'near'>('bundle')
+  const [seen, setSeen] = useState<Set<string>>(() => new Set())
   const vp = useRef<HTMLDivElement>(null)
-  const rail = useRef<HTMLDivElement>(null)
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
   const [bounds, setBounds] = useState({ left: -CW, right: 0, top: -CH, bottom: 0 })
   const LIST = 440
 
   const items = useMemo<Item[]>(() => {
+    const mineAt = (st: Store) => tripProducts.filter((p) => p.storeIds.includes(st.id) && (!cat || p.category === cat))
+    const toItem = (st: Store): Item => {
+      const mine = mineAt(st)
+      const must = mine.filter((p) => p.priority === 'must')
+      return { kind: 'store', id: st.id, x: st.x, y: st.y, s: { ...st, mine, must, sum: must.reduce((a, p) => a + p.price, 0) } }
+    }
     if (product && buy) {
       if (buy.find) return [{ kind: 'find', id: `f:${buy.find.id}`, x: buy.find.x, y: buy.find.y, f: buy.find }]
-      return buy.stores
-        .map((st) => ({ ...st, mine: tripProducts.filter((p) => p.storeIds.includes(st.id)) }))
-        .sort((x, y) => x.distance - y.distance)
-        .map((st) => ({ kind: 'store' as const, id: st.id, x: st.x, y: st.y, s: st }))
+      return buy.stores.map(toItem)
     }
-    const fs: Item[] = showFinds ? finds.filter((f) => f.city === '도쿄').map((f) => ({ kind: 'find', id: `f:${f.id}`, x: f.x, y: f.y, f })) : []
-    const ss: Item[] = showStores
-      ? STORES.map((st) => ({ ...st, mine: tripProducts.filter((p) => p.storeIds.includes(st.id) && (!mustOnly || p.priority === 'must')) }))
-          .filter((st) => (!openOnly || st.open) && (!mustOnly || st.mine.length))
-          .sort((x, y) => x.distance - y.distance)
-          .map((st) => ({ kind: 'store', id: st.id, x: st.x, y: st.y, s: st }))
+    const qq = q.trim()
+    const fs: Item[] = showFinds
+      ? finds.filter((f) => f.city === '도쿄' && (!cat || f.category === cat) && (!qq || f.title.includes(qq) || f.place.includes(qq))).map((f) => ({ kind: 'find', id: `f:${f.id}`, x: f.x, y: f.y, f }))
       : []
-    return [...fs, ...ss]
-  }, [finds, tripProducts, showFinds, showStores, mustOnly, openOnly, product, buy])
+    const ss = STORES.map(toItem).filter((it) => {
+      const st = (it as Extract<Item, { kind: 'store' }>).s
+      if (myList && !st.mine.length) return false
+      if (qq && !st.name.includes(qq) && !st.mine.some((p) => p.name.includes(qq))) return false
+      return true
+    })
+    return [...ss, ...fs]
+  }, [finds, tripProducts, showFinds, myList, cat, q, product, buy])
 
-  const [sel, setSel] = useState<string | null>(mapFocus ?? items[0]?.id ?? null)
+  const stores = items.filter((x): x is Extract<Item, { kind: 'store' }> => x.kind === 'store')
+  const findItems = items.filter((x): x is Extract<Item, { kind: 'find' }> => x.kind === 'find')
+  const bundleTop = [...stores].sort((x, y) => y.s.must.length - x.s.must.length)[0]
+  const nearTop = [...stores].filter((x) => x.s.must.length).sort((x, y) => x.s.distance - y.s.distance)[0]
+  const listed = [...stores].sort((x, y) => (sort === 'bundle' ? y.s.must.length - x.s.must.length || x.s.distance - y.s.distance : x.s.distance - y.s.distance))
+  const nearbyMust = tripProducts.filter((p) => p.priority === 'must' && !p.purchased && p.storeIds.length && (!cat || p.category === cat))
+
+  const [sel, setSel] = useState<string | null>(null)
+  const selItem = items.find((x) => x.id === sel)
+
+  /* ----- bottom sheet ----- */
+  const [snap, setSnap] = useState<Snap>('peek')
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+  const heights: Record<Snap, number> = { peek: NAV_PAD + 112, half: Math.round(vh * 0.56), full: Math.round(vh * 0.88) }
+  const target = selItem ? Math.max(heights.half, Math.min(heights.full, NAV_PAD + 430)) : heights[snap]
+  const h = useMotionValue(target)
+  useEffect(() => {
+    animate(h, target, { type: 'spring', stiffness: 320, damping: 34 })
+  }, [target, h])
+  const startH = useRef(0)
 
   const center = (x: number, y: number, smooth = true) => {
     const el = vp.current
     if (!el) return
     const w = el.clientWidth
-    const h = el.clientHeight
-    const desktop = window.matchMedia('(min-width: 1024px)').matches
+    const hh = el.clientHeight
     const cx = desktop ? 420 + (w - 420) / 2 : w / 2
-    const cy = desktop ? h / 2 : h * 0.36
+    const cy = desktop ? hh / 2 : (hh - heights.half) / 2 + 40
     const maxX = desktop ? LIST : 0
     const tx = Math.min(maxX, Math.max(w - CW, cx - (x / 100) * CW))
-    const ty = Math.min(0, Math.max(h - CH, cy - (y / 100) * CH))
+    const extra = desktop ? 0 : heights.half
+    const ty = Math.min(0, Math.max(hh - CH - extra, cy - (y / 100) * CH))
     if (smooth) {
       animate(mx, tx, { type: 'spring', stiffness: 160, damping: 26 })
       animate(my, ty, { type: 'spring', stiffness: 160, damping: 26 })
@@ -81,14 +112,18 @@ export function MapScreen() {
 
   useEffect(() => {
     const el = vp.current
-    if (el) {
-      const desktop = window.matchMedia('(min-width: 1024px)').matches
-      setBounds({ left: Math.min(0, el.clientWidth - CW), right: desktop ? LIST : 0, top: Math.min(0, el.clientHeight - CH), bottom: 0 })
-    }
-    const it = items.find((x) => x.id === sel)
-    center(it?.x ?? ME.x, it?.y ?? ME.y, false)
+    if (el) setBounds({ left: Math.min(0, el.clientWidth - CW), right: desktop ? LIST : 0, top: Math.min(0, el.clientHeight - CH - (desktop ? 0 : heights.half)), bottom: 0 })
+    center(ME.x, ME.y, false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const select = (id: string | null) => {
+    setSel(id)
+    if (!id) return
+    setSeen((s) => new Set(s).add(id))
+    const it = items.find((x) => x.id === id)
+    if (it) center(it.x, it.y)
+  }
 
   // focus requests from other screens (also when the map is already open)
   useEffect(() => {
@@ -98,7 +133,12 @@ export function MapScreen() {
       setMapFocus(null)
       return
     }
+    if (mapFocus.startsWith('f:')) setShowFinds(true)
     if (items.some((x) => x.id === mapFocus)) select(mapFocus)
+    else if (STORES.some((s) => s.id === mapFocus)) {
+      setMyList(false)
+      window.setTimeout(() => select(mapFocus), 60)
+    }
     setMapFocus(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapFocus, items])
@@ -111,23 +151,41 @@ export function MapScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pid])
 
-  const autoScroll = useRef(0)
-  const select = (id: string, scrollCard = true) => {
-    setSel(id)
-    const it = items.find((x) => x.id === id)
-    if (it) center(it.x, it.y)
-    if (scrollCard) {
-      const idx = items.findIndex((x) => x.id === id)
-      autoScroll.current = Date.now()
-      ;(rail.current?.children[idx] as HTMLElement | undefined)?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  const routeTo = selItem
+  const routeMin = selItem ? (selItem.kind === 'store' ? walkMin(selItem.s.distance) : walkMin(Math.hypot(selItem.x - ME.x, selItem.y - ME.y) * 12)) : 0
+
+  const tagsFor = (st: Extract<Item, { kind: 'store' }>['s']) => {
+    const t: string[] = []
+    if (buy && !buy.find) {
+      if (buy.oneStop?.store.id === st.id) t.push(`몰아 사기 ${buy.oneStop.n}개`)
+      if (buy.cheapest?.store.id === st.id) t.push(`가장 저렴 ${yen(buy.cheapest.price)}`)
+      if (buy.nearest?.id === st.id) t.push('가장 가까움')
+      return t
     }
+    if (bundleTop?.s.id === st.id && st.must.length > 1) t.push('몰아 사기')
+    if (nearTop?.s.id === st.id) t.push('가장 가까움')
+    if (/드럭|잡화점/.test(st.kind)) t.push('면세')
+    return t
   }
 
   return (
     <div className="relative h-dvh overflow-hidden">
       <div ref={vp} className="absolute inset-0 overflow-hidden bg-[#EDEDED]">
-        <motion.div drag dragConstraints={bounds} dragElastic={0.08} style={{ x: mx, y: my, width: CW, height: CH }} className="absolute top-0 left-0 cursor-grab active:cursor-grabbing">
+        <motion.div drag dragConstraints={bounds} dragElastic={0.08} onTap={() => sel && select(null)} style={{ x: mx, y: my, width: CW, height: CH }} className="absolute top-0 left-0 cursor-grab active:cursor-grabbing">
           <ShibuyaMap />
+          {routeTo && (
+            <svg viewBox={`0 0 ${CW} ${CH}`} className="pointer-events-none absolute inset-0 h-full w-full">
+              <path
+                d={`M${(ME.x / 100) * CW} ${(ME.y / 100) * CH} L${(routeTo.x / 100) * CW} ${(ME.y / 100) * CH} L${(routeTo.x / 100) * CW} ${(routeTo.y / 100) * CH}`}
+                stroke="#111" strokeWidth="3.5" strokeDasharray="8 8" strokeLinecap="round" fill="none"
+              />
+            </svg>
+          )}
+          {routeTo && (
+            <span className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-md bg-white px-2 py-1 text-[11.5px] font-semibold whitespace-nowrap shadow" style={{ left: `${(ME.x + routeTo.x) / 2}%`, top: `${ME.y}%` }}>
+              도보 {routeMin}분
+            </span>
+          )}
           <div className="absolute" style={{ left: `${ME.x}%`, top: `${ME.y}%` }} aria-label="내 위치">
             <span className="absolute -inset-5 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-black/15" />
             <span className="block size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink shadow ring-4 ring-white" />
@@ -136,203 +194,400 @@ export function MapScreen() {
             const on = it.id === sel
             if (it.kind === 'find')
               return (
-                <button key={it.id} onClick={() => select(it.id)} className="absolute" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 6 : 2 }} aria-label={`현지 발견: ${it.f.title}`}>
-                  <AnimatePresence>
-                    {on && (
-                      <motion.span
-                        initial={{ opacity: 0, y: 6, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 6, scale: 0.9 }}
-                        className="absolute bottom-[50px] left-[-8px] flex w-max max-w-[220px] items-center gap-2 rounded-2xl bg-ink py-1.5 pr-3 pl-1.5 text-left text-white shadow-lg"
-                      >
-                        <FindPhoto f={it.f} className="size-9 shrink-0 rounded-xl" />
-                        <span className="truncate text-[12.5px] font-semibold">{it.f.title}</span>
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                  <motion.span animate={{ scale: on ? 1.2 : 1 }} style={{ originX: 0.1, originY: 1 }} className="absolute bottom-0 left-[-5px] block">
-                    <FlagMark className="h-[42px] w-[32px]" active={on} />
+                <button key={it.id} onClick={(e) => { e.stopPropagation(); select(it.id) }} className="absolute" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 6 : 2 }} aria-label={`여행자 발견: ${it.f.title}`}>
+                  <motion.span animate={{ scale: on ? 1.25 : 1 }} style={{ originX: 0.1, originY: 1 }} className="absolute bottom-0 left-[-5px] block">
+                    <FlagMark className="h-[34px] w-[26px]" active={on} />
                   </motion.span>
                 </button>
               )
             const st = it.s
+            const price = product ? product.price : st.sum
+            const big = product ? true : st.must.length > 0
+            const wasSeen = seen.has(it.id) && !on
+            if (!big)
+              return (
+                <button key={it.id} onClick={(e) => { e.stopPropagation(); select(it.id) }} aria-label={st.name} className="absolute grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 5 : 1 }}>
+                  <span className={cn('block rounded-full border-2 transition-all', on ? 'size-4 border-white bg-ink shadow-md' : 'size-3 border-[#8a8a8a] bg-white')} />
+                </button>
+              )
             return (
-              <button key={it.id} onClick={() => select(it.id)} className="absolute -translate-x-1/2 -translate-y-full" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 5 : 1 }} aria-label={`${st.name}, 저장한 상품 ${st.mine.length}개`}>
-                <motion.span animate={{ scale: on ? 1.12 : 1 }} className={cn('flex items-center gap-1.5 rounded-full py-1 pr-3 pl-1 shadow-lg', on ? 'bg-ink text-white' : 'bg-surface text-ink')}>
-                  <span className="grid size-7 place-items-center rounded-full" style={{ background: st.color }}>
-                    <StoreIcon className={cn('size-4', st.color === '#1E1E1E' || st.color === '#4A4A4A' ? 'text-white' : 'text-ink')} />
-                  </span>
-                  <span className="text-[12.5px] font-semibold whitespace-nowrap">{st.name.split(' ')[0]}</span>
-                  {st.mine.length > 0 && <span className="grid size-5 place-items-center rounded-full bg-brand text-[11px] font-semibold text-white">{st.mine.length}</span>}
+              <button key={it.id} onClick={(e) => { e.stopPropagation(); select(it.id) }} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${it.x}%`, top: `${it.y}%`, zIndex: on ? 5 : 3 }} aria-label={`${st.name}, 꼭 살래 ${st.must.length}개 ${yen(price)}`}>
+                <motion.span
+                  animate={{ scale: on ? 1.12 : 1 }}
+                  className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.22)] tabular', on ? 'bg-ink text-white' : 'bg-white', wasSeen && 'text-[#8a8a8a]')}
+                >
+                  {yen(price)}
+                  {!product && st.must.length > 1 && <span className={cn('text-[11.5px] font-medium', on ? 'text-white/70' : 'text-muted-foreground')}>· {st.must.length}</span>}
                 </motion.span>
-                <span className={cn('mx-auto block h-2.5 w-2.5 -translate-y-1 rotate-45', on ? 'bg-ink' : 'bg-surface')} />
               </button>
             )
           })}
         </motion.div>
       </div>
 
-      {/* top controls */}
+      {/* top: search + filters */}
       <div className="pointer-events-none absolute inset-x-0 top-0 px-4 pt-[max(14px,env(safe-area-inset-top))] lg:px-8 lg:pt-8 lg:pl-[436px]">
         <div className="pointer-events-auto flex items-center gap-2">
-          <span className="flex h-11 items-center gap-1.5 rounded-full bg-surface px-4 text-[14px] font-semibold shadow-xs">
-            <MapPin className="size-4" /> {trip.city} · 시부야
-          </span>
-          <span className="flex-1" />
-          <button onClick={() => open({ type: 'post' })} className="flex h-11 items-center gap-1.5 rounded-full bg-ink pr-4 pl-3 text-[13.5px] font-semibold text-white shadow-lg active:scale-95">
-            <Flag className="size-4" /> 발견 올리기
-          </button>
-          <IconBtn label="검색">
-            <Search className="size-[18px]" />
-          </IconBtn>
-        </div>
-        {product && buy ? (
-          <motion.div initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="pointer-events-auto mt-2.5 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur lg:max-w-[420px]">
-            <div className="flex items-center gap-3">
-              <ProductArt art={product.art} tone="none" className="size-11 shrink-0 rounded-lg bg-muted" />
-              <div className="min-w-0 flex-1">
-                <p className="text-[12px] text-muted-foreground">어디서 살까요</p>
-                <p className="truncate text-[14.5px] font-semibold">{product.name}</p>
-              </div>
-              <button onClick={() => setPid(null)} aria-label="전체 지도 보기" className="grid size-8 shrink-0 place-items-center rounded-md hover:bg-accent">
+          {product ? (
+            <div className="flex h-12 flex-1 items-center gap-3 rounded-xl bg-white pr-2 pl-2 shadow-md">
+              <ProductArt art={product.art} tone="none" className="size-9 shrink-0 rounded-lg bg-muted" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11.5px] text-muted-foreground">어디서 살까요</span>
+                <span className="block truncate text-[14px] font-semibold">{product.name}</span>
+              </span>
+              <button onClick={() => { setPid(null); select(null) }} aria-label="전체 지도 보기" className="grid size-9 place-items-center rounded-md hover:bg-accent">
                 <X className="size-4" />
               </button>
             </div>
-            <div className="mt-2.5 border-t pt-2.5 text-[13px]">
-              {buy.find ? (
-                <p className="flex items-center gap-1.5">
-                  <FlagMark className="h-[13px] w-[10px]" /> <b className="font-semibold">이 가게에서만</b> 살 수 있어요 · {buy.find.place}
-                </p>
-              ) : (
-                <>
-                  <p className="flex items-center gap-1.5 text-foreground/80">
-                    <span className="rounded bg-primary px-1.5 py-px text-[11px] font-semibold text-primary-foreground">흔해요</span>
-                    {buy.chains.join(' · ')}에서 팔아요
-                  </p>
-                  {buy.oneStop && (
-                    <p className="mt-1.5 flex items-center gap-1.5 font-medium">
-                      <ShoppingBag className="size-3.5" /> {buy.oneStop.store.name}에서 꼭 살래 {buy.mustCount}개 중 {buy.oneStop.n}개를 한 번에
-                    </p>
-                  )}
-                </>
+          ) : (
+            <label className="flex h-12 flex-1 items-center gap-2 rounded-xl bg-white px-3.5 shadow-md">
+              <Search className="size-[18px] text-muted-foreground" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="가게나 상품 찾기" className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-faint" />
+              {q && (
+                <button onClick={() => setQ('')} aria-label="검색어 지우기">
+                  <X className="size-4 text-muted-foreground" />
+                </button>
               )}
-            </div>
-          </motion.div>
-        ) : (
-          <div className="no-scrollbar pointer-events-auto -mx-4 mt-2.5 flex gap-1.5 overflow-x-auto px-4">
-          <Chip active={showFinds} onClick={() => setShowFinds((v) => !v)}>
-            <FlagMark light={showFinds} className="h-[15px] w-[12px]" /> 현지 발견
-          </Chip>
-          <Chip active={showStores} onClick={() => setShowStores((v) => !v)}>
-            <StoreIcon className="size-3.5" /> 매장
-          </Chip>
-          <Chip active={mustOnly} onClick={() => setMustOnly((v) => !v)}>꼭 살래 상품</Chip>
-          <Chip active={openOnly} onClick={() => setOpenOnly((v) => !v)}>영업 중</Chip>
+            </label>
+          )}
         </div>
+        {product && buy ? (
+          <p className="pointer-events-auto mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12.5px] shadow-sm">
+            {buy.find ? (
+              <>
+                <FlagMark className="h-[13px] w-[10px]" /> <b className="font-semibold">이 가게에서만</b> 살 수 있어요
+              </>
+            ) : (
+              <>
+                <b className="font-semibold">흔해요</b> · {buy.chains.join(' · ')}에서 팔아요
+              </>
+            )}
+          </p>
+        ) : (
+          <div className="no-scrollbar pointer-events-auto -mx-4 mt-2 flex gap-1.5 overflow-x-auto px-4 pb-1">
+            <MapChip active={myList} onClick={() => setMyList((v) => !v)}>
+              <ShoppingBag className="size-3.5" /> 내 리스트
+            </MapChip>
+            <MapChip active={showFinds} onClick={() => setShowFinds((v) => !v)}>
+              <FlagMark light={showFinds} className="h-[13px] w-[10px]" /> 여행자 발견
+            </MapChip>
+            {CATEGORIES.map((c) => (
+              <MapChip key={c} active={cat === c} onClick={() => setCat(cat === c ? null : c)}>
+                {c}
+              </MapChip>
+            ))}
+          </div>
         )}
       </div>
-      <div className="absolute right-4 bottom-[290px] flex flex-col items-end gap-2 lg:right-8 lg:bottom-8">
-        <IconBtn label="내 위치로" onClick={() => center(ME.x, ME.y)}>
-          <LocateFixed className="size-[18px]" />
-        </IconBtn>
+
+      {/* floating actions above the sheet */}
+      {!desktop && (
+        <motion.div style={{ bottom: h }} className="absolute right-4 mb-3 flex flex-col items-end gap-2">
+          {!sel && (
+            <button onClick={() => open({ type: 'post' })} className="flex h-10 items-center gap-1.5 rounded-full bg-ink pr-3.5 pl-3 text-[13px] font-semibold text-white shadow-lg active:scale-95">
+              <Flag className="size-4" /> 발견 올리기
+            </button>
+          )}
+          <IconBtn label="내 위치로" onClick={() => center(ME.x, ME.y)} className="size-10 rounded-full bg-white shadow-md">
+            <LocateFixed className="size-[18px]" />
+          </IconBtn>
+        </motion.div>
+      )}
+
+      {/* bottom sheet (mobile) / side panel (desktop) */}
+      <motion.section
+        style={desktop ? undefined : { height: h }}
+        className={cn(
+          'absolute flex flex-col overflow-hidden bg-background',
+          desktop ? 'top-8 bottom-8 left-8 w-[380px] rounded-2xl border shadow-lg' : 'inset-x-0 bottom-0 rounded-t-[22px] shadow-[0_-4px_24px_rgba(0,0,0,0.12)]',
+        )}
+      >
+        {!desktop && (
+          <motion.div
+            className="shrink-0 cursor-grab touch-none pt-2.5 pb-1.5 active:cursor-grabbing"
+            onPanStart={() => (startH.current = h.get())}
+            onPan={(_, info) => h.set(Math.max(heights.peek - 40, Math.min(heights.full + 20, startH.current - info.offset.y)))}
+            onPanEnd={(_, info) => {
+              const v = h.get() - info.velocity.y * 0.15
+              if (sel) select(null)
+              const order: Snap[] = ['peek', 'half', 'full']
+              const best = order.reduce((a, b) => (Math.abs(heights[b] - v) < Math.abs(heights[a] - v) ? b : a))
+              setSnap(best)
+              animate(h, heights[best], { type: 'spring', stiffness: 320, damping: 34 })
+            }}
+            onTap={() => !sel && setSnap(snap === 'peek' ? 'half' : 'peek')}
+          >
+            <div className="mx-auto h-1.5 w-10 rounded-full bg-border" />
+          </motion.div>
+        )}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4" style={{ paddingBottom: desktop ? 16 : NAV_PAD }}>
+          <AnimatePresence mode="wait" initial={false}>
+            {selItem ? (
+              <motion.div key={selItem.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="pt-1">
+                {selItem.kind === 'store' ? (
+                  <StoreSheet
+                    it={selItem}
+                    tags={tagsFor(selItem.s)}
+                    walk={routeMin}
+                    inTrip={inTrip}
+                    onBack={() => select(null)}
+                    onOpen={() => open({ type: 'store', id: selItem.s.id })}
+                    onAsk={(pidd) => open({ type: 'ask', id: pidd })}
+                    onToggle={(p) => {
+                      update(p.id, { purchased: !p.purchased })
+                      notify(p.purchased ? '다시 살 목록에 넣었어요' : `${p.name} 샀어요`)
+                    }}
+                    onProduct={(pidd) => open({ type: 'product', id: pidd })}
+                  />
+                ) : (
+                  <FindSheet
+                    f={selItem.f}
+                    walk={routeMin}
+                    saved={savedFind(selItem.f.id)}
+                    onBack={() => select(null)}
+                    onOpen={() => open({ type: 'find', id: selItem.f.id })}
+                    onSave={() => notify(toggleSaveFind(selItem.f) ? '내 여행에 저장했어요' : '저장을 취소했어요')}
+                  />
+                )}
+              </motion.div>
+            ) : (
+              <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {!product && (
+                  <button onClick={() => !desktop && setSnap(snap === 'peek' ? 'half' : 'peek')} className="block w-full pt-1 text-left">
+                    <span className="flex items-baseline justify-between">
+                      <span className="text-[16px] font-semibold tracking-tight">
+                        근처에서 살 수 있는 꼭 살래 <span className="tabular">{nearbyMust.length}</span>개
+                      </span>
+                      <span className="text-[12.5px] text-muted-foreground tabular">가게 {stores.filter((x) => x.s.must.length).length}곳</span>
+                    </span>
+                    <span className="mt-2.5 flex items-center gap-1.5">
+                      {nearbyMust.slice(0, 5).map((p) => (
+                        <ProductArt key={p.id} art={p.art} tone="neutral" className="size-12 shrink-0 rounded-lg" />
+                      ))}
+                      {nearbyMust.length > 5 && <span className="pl-1 text-[12.5px] text-muted-foreground tabular">+{nearbyMust.length - 5}</span>}
+                    </span>
+                  </button>
+                )}
+                <div className={cn('flex items-center justify-between', product ? 'pt-1' : 'mt-6')}>
+                  <p className="text-[14.5px] font-semibold">
+                    {product && buy?.find ? '살 수 있는 곳' : `가게 ${stores.length}곳`}
+                    {!product && findItems.length > 0 && <span className="font-normal text-muted-foreground"> · 발견 {findItems.length}</span>}
+                  </p>
+                  {!product && (
+                    <button onClick={() => setSort(sort === 'bundle' ? 'near' : 'bundle')} className="flex items-center gap-0.5 text-[12.5px] text-muted-foreground hover:text-ink">
+                      {sort === 'bundle' ? '몰아 사기 순' : '가까운 순'} <ArrowUpDown className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+                <ul className="mt-1 divide-y">
+                  {listed.map((it) => {
+                    const st = it.s
+                    const tags = tagsFor(st)
+                    return (
+                      <li key={it.id}>
+                        <button onClick={() => select(it.id)} className="flex w-full items-center gap-3 py-3 text-left">
+                          <StoreArt color={st.color} name={st.name} className="size-12 shrink-0 rounded-lg" />
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-1.5">
+                              <span className="truncate text-[14.5px] font-semibold">{st.name}</span>
+                            </span>
+                            <span className="mt-0.5 block truncate text-[12.5px] text-muted-foreground tabular">
+                              {product ? `${st.open ? '영업 중' : '영업 종료'} · ${st.distance}m` : st.must.length ? `꼭 살래 ${st.must.length}개 · ${yen(st.sum)} · ${st.distance}m` : `저장한 상품 ${st.mine.length}개 · ${st.distance}m`}
+                            </span>
+                            {tags.length > 0 && (
+                              <span className="mt-1 flex flex-wrap gap-1">
+                                {tags.map((t) => <MiniTag key={t}>{t}</MiniTag>)}
+                              </span>
+                            )}
+                          </span>
+                          <ChevronRight className="size-4 text-faint" />
+                        </button>
+                      </li>
+                    )
+                  })}
+                  {findItems.map((it) => (
+                    <li key={it.id}>
+                      <button onClick={() => select(it.id)} className="flex w-full items-center gap-3 py-3 text-left">
+                        <FindPhoto f={it.f} className="size-12 shrink-0 rounded-lg" />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[14.5px] font-semibold">{it.f.place}</span>
+                          <span className="mt-0.5 block truncate text-[12.5px] text-muted-foreground">
+                            여기서만 · {it.f.title}
+                            {it.f.price != null && <span className="tabular"> {yen(it.f.price)}</span>}
+                          </span>
+                          <span className="mt-1 flex">
+                            <MiniTag>
+                              <FlagMark className="h-[10px] w-[8px]" /> 여행자 발견
+                            </MiniTag>
+                          </span>
+                        </span>
+                        <ChevronRight className="size-4 text-faint" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {!items.length && <p className="py-10 text-center text-[14px] text-muted-foreground">조건에 맞는 장소가 없어요</p>}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.section>
+    </div>
+  )
+}
+
+function MapChip({ active, onClick, children }: { active?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn('flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-medium whitespace-nowrap shadow-sm transition', active ? 'border-ink bg-ink text-white' : 'border-black/10 bg-white text-ink')}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MiniTag({ children }: { children: React.ReactNode }) {
+  return <span className="inline-flex h-5 items-center gap-1 rounded border px-1.5 text-[11px] font-medium text-ink-2 tabular">{children}</span>
+}
+
+function StoreSheet({ it, tags, walk, inTrip, onBack, onOpen, onAsk, onToggle, onProduct }: {
+  it: Extract<Item, { kind: 'store' }>
+  tags: string[]
+  walk: number
+  inTrip: boolean
+  onBack: () => void
+  onOpen: () => void
+  onAsk: (pid: string) => void
+  onToggle: (p: Product) => void
+  onProduct: (pid: string) => void
+}) {
+  const st = it.s
+  const others = st.mine.filter((p) => p.priority !== 'must')
+  const [more, setMore] = useState(false)
+  const list = more ? [...st.must, ...others] : st.must
+  const left = st.must.filter((p) => !p.purchased)
+  return (
+    <div>
+      <div className="flex items-start gap-2">
+        <button onClick={onBack} aria-label="목록으로" className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-full hover:bg-accent">
+          <ChevronLeft className="size-5" />
+        </button>
+        <button onClick={onOpen} className="min-w-0 flex-1 text-left">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[17px] font-semibold tracking-tight">{st.name}</span>
+            {tags.map((t) => <MiniTag key={t}>{t}</MiniTag>)}
+          </span>
+          <span className="mt-0.5 block text-[12.5px] text-muted-foreground tabular">
+            <span className={cn('font-semibold', st.open ? 'text-ink' : '')}>{st.open ? '영업 중' : '영업 종료'}</span> · {st.hours} · {st.distance}m · 도보 {walk}분
+          </span>
+        </button>
+        <a href={mapsUrl(st)} target="_blank" rel="noreferrer" aria-label="공유" className="grid size-8 shrink-0 place-items-center rounded-full hover:bg-accent">
+          <Share2 className="size-4" />
+        </a>
       </div>
 
-      {/* cards: bottom rail on mobile, side list on desktop */}
-      <div
-        ref={rail}
-        className="no-scrollbar absolute inset-x-0 bottom-[100px] flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-4 pb-2 lg:top-8 lg:bottom-8 lg:left-8 lg:w-[380px] lg:flex-col lg:snap-none lg:overflow-y-auto lg:px-0"
-        onScroll={(e) => {
-          if (window.matchMedia('(min-width: 1024px)').matches || Date.now() - autoScroll.current < 700) return
-          const el = e.currentTarget
-          const idx = Math.round(el.scrollLeft / ((el.firstElementChild as HTMLElement).offsetWidth + 10))
-          const it = items[idx]
-          if (it && it.id !== sel) select(it.id, false)
-        }}
-      >
-        {items.map((it) => {
-          const on = it.id === sel
-          const base = cn('w-[86%] max-w-[360px] shrink-0 snap-center rounded-xl border bg-card shadow-xs p-3.5 shadow-[0_10px_30px_-14px_rgba(20,20,19,0.3)] transition lg:w-full lg:max-w-none', on ? 'ring-2 ring-ink' : 'ring-1 ring-black/[0.04]')
-          if (it.kind === 'find') {
-            const f = it.f
-            const saved = savedFind(f.id)
-            return (
-              <article key={it.id} onClick={() => select(it.id, false)} className={base}>
-                <div className="flex gap-3">
-                  <FindPhoto f={f} className="size-[72px] shrink-0 rounded-2xl" />
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1 text-[11.5px] font-semibold text-brand">
-                      <FlagMark className="h-[13px] w-[10px]" /> 여기서만 살 수 있어요
-                    </p>
-                    <h3 className="mt-0.5 truncate text-[15.5px] font-semibold">{f.title}</h3>
-                    <p className="mt-0.5 truncate text-[12.5px] text-muted-foreground">
-                      {f.place} · {f.saves}명 저장
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button onClick={(e) => { e.stopPropagation(); open({ type: 'find', id: f.id }) }} className={cn(buttonVariants({ variant: 'secondary', size: 'default' }), 'flex-1')}>
-                    사진·이야기 보기
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      const ok = toggleSaveFind(f)
-                      notify(ok ? '내 여행에 저장했어요' : '저장을 취소했어요')
-                    }}
-                    className={cn(buttonVariants({ variant: saved ? 'outline' : 'default', size: 'default' }), 'flex-1')}
-                  >
-                    {saved ? <BookmarkCheck className="size-4" /> : <Bookmark className="size-4" />} {saved ? '저장됨' : '저장'}
-                  </button>
-                </div>
-              </article>
-            )
-          }
-          const st = it.s
-          return (
-            <article key={it.id} onClick={() => select(it.id, false)} className={base}>
-              <div className="flex gap-3">
-                <StoreArt color={st.color} name={st.name} className="size-[72px] shrink-0 rounded-2xl" />
-                <div className="min-w-0 flex-1">
-                  {buy && !buy.find && (
-                    <p className="mb-1 flex flex-wrap gap-1">
-                      {buy.oneStop?.store.id === st.id && <Tag>몰아 사기 {buy.oneStop.n}개</Tag>}
-                      {buy.cheapest?.store.id === st.id && <Tag>가장 저렴 {yen(buy.cheapest.price)} · 면세</Tag>}
-                      {buy.nearest?.id === st.id && <Tag>가장 가까움</Tag>}
-                    </p>
-                  )}
-                  <h3 className="truncate text-[15.5px] font-semibold">{st.name}</h3>
-                  <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted-foreground tabular">
-                    <span className={cn('font-semibold', st.open ? 'text-open' : 'text-muted-foreground')}>{st.open ? '영업 중' : '영업 종료'}</span>· {st.distance}m · {st.hours}
-                  </p>
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <div className="flex -space-x-2">
-                      {st.mine.slice(0, 4).map((p) => (
-                        <ProductArt key={p.id} art={p.art} className="size-7 rounded-full ring-2 ring-white" />
-                      ))}
-                    </div>
-                    <span className="text-[12.5px] font-medium text-ink-2">{st.mine.length ? `내가 저장한 상품 ${st.mine.length}개` : '저장한 상품 없음'}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button onClick={(e) => { e.stopPropagation(); open({ type: 'store', id: st.id }) }} className={cn(buttonVariants({ variant: 'secondary', size: 'default' }), 'flex-1')}>
-                  상세보기
+      {st.mine.length > 0 ? (
+        <>
+          <p className="mt-4 text-[13.5px] font-semibold">
+            {st.must.length ? (
+              <>
+                여기서 살 꼭 살래 <span className="tabular">{st.must.length}</span>개 · <span className="tabular">{yen(st.sum)}</span>
+              </>
+            ) : (
+              <>저장한 상품 {st.mine.length}개</>
+            )}
+          </p>
+          {inTrip && st.must.length > 0 && <p className="mt-0.5 text-[12px] text-muted-foreground">체크하면 ‘샀어요’로 바뀌어요 · 남은 {left.length}개</p>}
+          <ul className="mt-1 divide-y">
+            {(st.must.length ? list : st.mine).map((p) => (
+              <li key={p.id} className="flex items-center gap-3 py-2.5">
+                <button onClick={() => onProduct(p.id)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                  <ProductArt art={p.art} tone="neutral" className="size-10 shrink-0 rounded-lg" />
+                  <span className="min-w-0 flex-1">
+                    <span className={cn('block truncate text-[14px]', p.purchased && 'text-muted-foreground line-through')}>{p.name}</span>
+                    <span className="text-[12px] text-muted-foreground tabular">
+                      {yen(p.price)}
+                      {p.priority !== 'must' && ' · 고민 중'}
+                    </span>
+                  </span>
                 </button>
-                <a href={mapsUrl(st)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className={cn(buttonVariants({ variant: 'default', size: 'default' }), 'flex-1')}>
-                  <Navigation className="size-4" /> 길찾기
-                </a>
-              </div>
-            </article>
-          )
-        })}
-        {!items.length && <p className="w-full rounded-xl border bg-card shadow-xs p-6 text-center text-[14px] text-muted-foreground">조건에 맞는 장소가 없어요</p>}
+                <button
+                  onClick={() => onToggle(p)}
+                  aria-label={p.purchased ? `${p.name} 산 것 취소` : `${p.name} 샀어요`}
+                  aria-pressed={p.purchased}
+                  className={cn('grid size-6 shrink-0 place-items-center rounded-md border-[1.5px] transition', p.purchased ? 'border-ink bg-ink text-white' : 'border-[#bdbdbd]')}
+                >
+                  {p.purchased && <Check className="size-4" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {st.must.length > 0 && others.length > 0 && (
+            <button onClick={() => setMore(!more)} className="mt-1 text-[12.5px] font-medium text-muted-foreground underline-offset-2 hover:underline">
+              {more ? '꼭 살래만 보기' : `고민 중인 상품 ${others.length}개 더 보기`}
+            </button>
+          )}
+        </>
+      ) : (
+        <p className="mt-4 rounded-lg bg-sunken px-3 py-3 text-[13px] text-muted-foreground">이 가게에서 살 상품을 아직 담지 않았어요</p>
+      )}
+
+      <div className="mt-4 flex gap-2">
+        <button
+          onClick={() => (st.mine[0] ? onAsk(st.mine[0].id) : onOpen())}
+          className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'flex-1')}
+        >
+          <Languages className="size-4" /> 현지어 문의
+        </button>
+        <a href={mapsUrl(st)} target="_blank" rel="noreferrer" className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'flex-[1.4]')}>
+          <Footprints className="size-4" /> 길찾기
+        </a>
       </div>
     </div>
   )
 }
 
-function Tag({ children }: { children: React.ReactNode }) {
-  return <span className="inline-flex h-5 items-center rounded bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular">{children}</span>
+function FindSheet({ f, walk, saved, onBack, onOpen, onSave }: { f: Find; walk: number; saved: boolean; onBack: () => void; onOpen: () => void; onSave: () => void }) {
+  return (
+    <div>
+      <div className="flex items-start gap-2">
+        <button onClick={onBack} aria-label="목록으로" className="-ml-1.5 grid size-8 shrink-0 place-items-center rounded-full hover:bg-accent">
+          <ChevronLeft className="size-5" />
+        </button>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate text-[17px] font-semibold tracking-tight">{f.place}</span>
+            <MiniTag>
+              <FlagMark className="h-[10px] w-[8px]" /> 여행자 발견
+            </MiniTag>
+          </span>
+          <span className="mt-0.5 block text-[12.5px] text-muted-foreground">
+            {f.area} · 도보 {walk}분
+          </span>
+        </span>
+      </div>
+      <button onClick={onOpen} className="mt-3 flex w-full gap-3 text-left">
+        <FindPhoto f={f} className="size-20 shrink-0 rounded-xl" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[11.5px] font-semibold text-muted-foreground">여기서만 살 수 있어요</span>
+          <span className="mt-0.5 block text-[15px] leading-snug font-semibold">{f.title}</span>
+          <span className="mt-1 block text-[12.5px] text-muted-foreground tabular">
+            {f.author} · {f.saves}명 저장{f.price != null && ` · ${yen(f.price)}`}
+          </span>
+        </span>
+      </button>
+      <div className="mt-4 flex gap-2">
+        <button onClick={onOpen} className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'flex-1')}>
+          사진·이야기 보기
+        </button>
+        <button onClick={onSave} className={cn(buttonVariants({ variant: saved ? 'outline' : 'default', size: 'lg' }), 'flex-1')}>
+          {saved ? <BookmarkCheck className="size-4" /> : <Bookmark className="size-4" />} {saved ? '저장됨' : '내 여행에 저장'}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export function ShibuyaMap() {
