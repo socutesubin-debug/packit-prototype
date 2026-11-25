@@ -7,7 +7,7 @@ import { Home } from '@/screens/Home'
 import { Login } from '@/screens/Login'
 import { MapScreen, StoreDetail } from '@/screens/MapScreen'
 import { PlanPanel, Swipe } from '@/screens/Priority'
-import { CollectionPanel, Magazine, SeriesPanel, StoryArticle } from '@/screens/Magazine'
+import { AuthorPanel, CollectionPanel, Magazine, SeriesPanel, StoryArticle, TravelerSeriesPanel } from '@/screens/Magazine'
 import { AskCard, ProductDetail } from '@/screens/ProductDetail'
 import { Analyze, SaveSheet } from '@/screens/Save'
 import { Benefits, FindDetail, PostFind } from '@/screens/Finds'
@@ -45,6 +45,10 @@ function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
       return <CollectionPanel id={o.id} z={z} />
     case 'series':
       return <SeriesPanel id={o.id} z={z} />
+    case 'tseries':
+      return <TravelerSeriesPanel id={o.id} z={z} />
+    case 'author':
+      return <AuthorPanel name={o.name} z={z} />
   }
 }
 

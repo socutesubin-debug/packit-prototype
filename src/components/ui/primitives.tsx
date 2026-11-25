@@ -162,12 +162,23 @@ export function Sheet({
 }
 
 /** Full-screen page on mobile, right-side panel on desktop */
+/** open panels, topmost last — only the top one answers Escape */
+const PANEL_STACK: symbol[] = []
+
 export function Panel({ children, onClose, wide, z = 50 }: { children: ReactNode; onClose: () => void; wide?: boolean; z?: number }) {
+  const [me] = useState(() => Symbol('panel'))
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    PANEL_STACK.push(me)
+    return () => {
+      const i = PANEL_STACK.indexOf(me)
+      if (i >= 0) PANEL_STACK.splice(i, 1)
+    }
+  }, [me])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && PANEL_STACK[PANEL_STACK.length - 1] === me && onClose()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  }, [onClose, me])
   return (
     <div className="fixed inset-0 flex justify-end" style={{ zIndex: z }}>
       <motion.div

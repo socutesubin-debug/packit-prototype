@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeft, Bookmark, BookmarkCheck, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Flag, Heart, ImagePlus, Lightbulb, LocateFixed, MapPin, MessageCircle, MessageCircleQuestion, Route, Search, ShoppingBag, Sparkles, Tag, Trophy, X } from 'lucide-react'
+import { ArrowLeft, Bookmark, BookmarkCheck, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Flag, Heart, ImagePlus, Lightbulb, LocateFixed, MapPin, MessageCircle, MessageCircleQuestion, Quote, Route, Search, ShoppingBag, Sparkles, Tag, Trophy, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { tiltOf } from '@/components/ProductCard'
@@ -116,13 +116,33 @@ export function PinnedPhoto({ f, className }: { f: Find; className?: string }) {
   )
 }
 
+/** post body: paragraphs, with "> " lines as pull quotes */
+function Body({ text }: { text: string }) {
+  return (
+    <div className="mt-4 space-y-3">
+      {text.split('\n').filter((l) => l.trim()).map((l, i) =>
+        l.startsWith('>') ? (
+          <blockquote key={i} className="border-l-[3px] border-ink py-1 pl-4 text-[19px] leading-snug font-semibold tracking-[-0.02em]">
+            {l.replace(/^>\s?/, '')}
+          </blockquote>
+        ) : (
+          <p key={i} className="text-[15.5px] leading-[1.8] text-ink-2">
+            {l}
+          </p>
+        ),
+      )}
+    </div>
+  )
+}
+
 export function FindDetail({ id, z }: { id: string; z: number }) {
-  const { finds, close, closeAll, savedFind, toggleSaveFind, thanked, toggleThank, notify, setMapFocus, setTab, trip, following, toggleFollow, comments, addComment } = useApp()
+  const { finds, close, closeAll, savedFind, toggleSaveFind, thanked, toggleThank, notify, setMapFocus, setTab, trip, following, toggleFollow, comments, addComment, open, tSeries } = useApp()
   const [text, setText] = useState('')
   const cref = useRef<HTMLDivElement>(null)
   const f = finds.find((x) => x.id === id)
   if (!f) return null
   const k = f.kind ?? 'find'
+  const series = tSeries.find((x) => x.id === f.seriesId)
   const saved = savedFind(f.id)
   const liked = thanked.has(f.id)
   const list = comments[f.id] ?? []
@@ -148,14 +168,16 @@ export function FindDetail({ id, z }: { id: string; z: number }) {
         </div>
 
         <div className="flex items-center gap-2.5 px-5 pt-2 pb-4">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-sunken text-[14px] font-semibold">{f.author.slice(0, 1)}</span>
-          <span className="min-w-0 flex-1">
-            <b className="block text-[14.5px] font-semibold">{f.author}</b>
-            <span className="text-[12.5px] text-muted-foreground">{f.authorTrip} · {when(f.daysAgo)}</span>
-          </span>
+          <button onClick={() => open({ type: 'author', name: f.author })} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-sunken text-[14px] font-semibold">{f.author.slice(0, 1)}</span>
+            <span className="min-w-0 flex-1">
+              <b className="block text-[14.5px] font-semibold">{f.author}</b>
+              <span className="text-[12.5px] text-muted-foreground">{f.authorTrip} · {when(f.daysAgo)}</span>
+            </span>
+          </button>
           {!f.mine && (
             <Button size="sm" variant={following.has(f.author) ? 'outline' : 'default'} className="rounded-full" onClick={() => toggleFollow(f.author)}>
-              {following.has(f.author) ? '팔로잉' : '팔로우'}
+              {following.has(f.author) ? '구독 중' : '구독'}
             </Button>
           )}
         </div>
@@ -174,8 +196,14 @@ export function FindDetail({ id, z }: { id: string; z: number }) {
         )}
 
         <div className="px-5 pt-5">
-          <h1 className="text-[23px] leading-tight font-semibold tracking-tight">{f.title}</h1>
-          <p className="mt-3 text-[15.5px] leading-[1.75] text-ink-2">{f.story}</p>
+          {series && (
+            <button onClick={() => open({ type: 'tseries', id: series.id })} className="mb-2 text-[11.5px] font-semibold tracking-[0.12em] text-muted-foreground hover:text-ink">
+              TRAVELER SERIES · {series.title} {series.eps.findIndex((e) => e.findId === f.id) + 1}화
+            </button>
+          )}
+          <h1 className="text-[24px] leading-tight font-bold tracking-[-0.02em]">{f.title}</h1>
+          {f.subtitle && <p className="mt-1.5 text-[15px] text-muted-foreground">{f.subtitle}</p>}
+          <Body text={f.story} />
 
           <div className="mt-6 overflow-hidden rounded-xl border bg-card shadow-xs">
             <p className="border-b bg-sunken/50 px-4 py-2.5 text-[12.5px] font-semibold text-muted-foreground">발견 정보</p>
@@ -284,8 +312,11 @@ interface Draft {
   cat: Category | null
   catAuto: boolean
   attached: string[]
+  subtitle: string
+  /** 연재에 묶기: existing series id, or a new series title */
+  series: { id?: string; title: string } | null
 }
-const EMPTY: Draft = { kind: null, title: '', body: '', photos: [], place: null, price: '', cat: null, catAuto: false, attached: [] }
+const EMPTY: Draft = { kind: null, title: '', body: '', photos: [], place: null, price: '', cat: null, catAuto: false, attached: [], subtitle: '', series: null }
 let SAVED_DRAFT: Draft | null = null
 
 const guessCat = (t: string): Category | null => {
@@ -299,10 +330,14 @@ const guessCat = (t: string): Category | null => {
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y)
 
 export function PostFind() {
-  const { close, addFind, setTab, trip, tripProducts, rate, notify, setJustPosted, tab } = useApp()
+  const { close, addFind, setTab, trip, tripProducts, rate, notify, setJustPosted, tab, tSeries, addEpisode, updateFind } = useApp()
+  const mySeries = tSeries.filter((x) => x.author === '수빈')
+  const [pinMode, setPinMode] = useState(false)
+  const [newSeries, setNewSeries] = useState('')
+  const bodyRef = useRef<HTMLTextAreaElement>(null)
   const [d, setD] = useState<Draft>(() => SAVED_DRAFT ?? EMPTY)
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }))
-  const [sheet, setSheet] = useState<null | 'kind' | 'place' | 'price' | 'photo' | 'product'>(SAVED_DRAFT ? null : 'kind')
+  const [sheet, setSheet] = useState<null | 'kind' | 'place' | 'price' | 'photo' | 'product' | 'series'>(SAVED_DRAFT ? null : 'kind')
   const [notice, setNotice] = useState(true)
   const [tried, setTried] = useState(false)
   const file = useRef<HTMLInputElement>(null)
@@ -346,12 +381,20 @@ export function PostFind() {
       photo: first?.src,
       pins: first?.pins.length ? first.pins : undefined,
       date: TODAY,
+      subtitle: d.subtitle.trim() || undefined,
     })
+    let msg = '지도에 깃발을 꽂았어요 · +50P'
+    if (d.series) {
+      const sid = addEpisode(d.series.id ? { id: d.series.id } : { title: d.series.title }, { title: d.title.trim(), findId: f.id, spent: d.price ? Number(d.price) : undefined })
+      updateFind(f.id, { seriesId: sid })
+      const n = d.series.id ? (mySeries.find((x) => x.id === d.series?.id)?.eps.length ?? 0) + 1 : 1
+      msg = `‘${d.series.title}’ ${n}화로 올렸어요 · +50P`
+    }
     SAVED_DRAFT = null
     setJustPosted(f.id)
     close()
     if (tab !== 'magazine') setTab('magazine')
-    window.setTimeout(() => notify('지도에 깃발을 꽂았어요 · +50P'), 250)
+    window.setTimeout(() => notify(msg), 250)
   }
 
   return (
@@ -383,7 +426,90 @@ export function PostFind() {
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <button onClick={() => setSheet('kind')} className={cn('flex h-14 w-full items-center justify-between border-y px-5 text-left', tried && !d.kind && 'bg-sunken')}>
+          {/* 표지 (브런치) — 첫 사진 위에 제목 */}
+          <div className="relative aspect-[4/3] w-full overflow-hidden bg-sunken">
+            {d.photos[0] ? (
+              d.photos[0].src ? (
+                <img src={d.photos[0].src} alt="" className="size-full object-cover grayscale" />
+              ) : (
+                <ProductArt art={attached[0]?.art ?? SAMPLE_ART} tone="neutral" className="size-full" />
+              )
+            ) : (
+              <button onClick={() => setSheet('photo')} className="absolute inset-x-0 top-[22%] mx-auto flex w-fit flex-col items-center gap-2 text-[13px] font-medium text-muted-foreground">
+                <span className="grid size-12 place-items-center rounded-full border-2 border-dashed border-faint">
+                  <ImagePlus className="size-5" />
+                </span>
+                표지 사진 넣기
+              </button>
+            )}
+            {d.photos[0]?.pins.map((p, i) => (
+              <span key={i} className="absolute z-20 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ink text-[12px] font-semibold text-white ring-[3px] ring-white shadow tabular" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+                {i + 1}
+              </span>
+            ))}
+            {!pinMode && (
+              <div className={cn('absolute inset-x-0 bottom-0 px-5 pt-16 pb-4', d.photos[0] && 'bg-gradient-to-t from-white via-white/80 to-transparent')}>
+                <textarea
+                  value={d.title}
+                  onChange={(e) => set({ title: e.target.value.slice(0, 40).replace(/\n/g, '') })}
+                  rows={1}
+                  placeholder="제목을 입력하세요"
+                  aria-label="제목"
+                  className={cn('field-sizing-content w-full resize-none bg-transparent text-[25px] leading-[1.25] font-bold tracking-[-0.03em] outline-none placeholder:text-faint', tried && !d.title.trim() && 'placeholder:text-ink-2')}
+                />
+                <input value={d.subtitle} onChange={(e) => set({ subtitle: e.target.value.slice(0, 60) })} placeholder="부제목을 입력하세요 (선택)" aria-label="부제목" className="mt-1 w-full bg-transparent text-[14.5px] text-ink-2 outline-none placeholder:text-faint" />
+              </div>
+            )}
+            {pinMode && d.photos[0] && (
+              <div
+                className="absolute inset-0 z-10 cursor-crosshair"
+                onClick={(e) => {
+                  const r = e.currentTarget.getBoundingClientRect()
+                  const ph = d.photos[0]
+                  const n = ph.pins.length
+                  const pin: PhotoPin = { x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100, label: attached[n]?.name ?? `물건 ${n + 1}` }
+                  set({ photos: [{ ...ph, pins: [...ph.pins, pin] }, ...d.photos.slice(1)] })
+                }}
+              >
+                <span className="absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-ink px-3 py-1.5 text-[12px] font-medium text-white">물건을 누르면 번호 핀이 생겨요</span>
+              </div>
+            )}
+            {d.photos[0] && (
+              <div className="absolute top-3 right-3 z-30 flex gap-1.5">
+                <button onClick={() => setPinMode(!pinMode)} className={cn('flex h-8 items-center gap-1 rounded-full px-3 text-[12px] font-semibold shadow-xs', pinMode ? 'bg-ink text-white' : 'bg-white/90')}>
+                  {pinMode ? '완료' : '핀 달기'}
+                </button>
+                {!pinMode && (
+                  <button
+                    aria-label="표지 사진 빼기"
+                    onClick={() => set({ photos: d.photos.slice(1) })}
+                    className="grid size-8 place-items-center rounded-full bg-white/90 shadow-xs"
+                  >
+                    <X className="size-4" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          {!!d.photos[0]?.pins.length && (
+            <div className="px-5 pt-2">
+              {d.photos[0].pins.map((p, i) => (
+                <div key={i} className="mt-1.5 flex items-center gap-2">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ink text-[11.5px] font-semibold text-white tabular">{i + 1}</span>
+                  <input
+                    value={p.label}
+                    onChange={(e) => set({ photos: [{ ...d.photos[0], pins: d.photos[0].pins.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) }, ...d.photos.slice(1)] })}
+                    className="h-9 min-w-0 flex-1 border-b bg-transparent text-[14px] outline-none focus:border-ink"
+                    aria-label={`핀 ${i + 1} 이름`}
+                  />
+                  <button aria-label="핀 지우기" onClick={() => set({ photos: [{ ...d.photos[0], pins: d.photos[0].pins.filter((_, j) => j !== i) }, ...d.photos.slice(1)] })} className="grid size-8 place-items-center text-muted-foreground">
+                    <X className="size-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          <button onClick={() => setSheet('kind')} className={cn('mt-2 flex h-13 w-full items-center justify-between border-y px-5 text-left', tried && !d.kind && 'bg-sunken')}>
             {kindMeta ? (
               <span className="flex items-center gap-2 text-[15px] font-semibold">
                 {(() => {
@@ -399,6 +525,13 @@ export function PostFind() {
             )}
             <ChevronDown className="size-5 text-muted-foreground" />
           </button>
+          <button onClick={() => setSheet('series')} className="flex h-13 w-full items-center justify-between gap-3 border-b px-5 text-left">
+            <span className="shrink-0 text-[14px] text-muted-foreground">연재에 묶기</span>
+            <span className="flex min-w-0 items-center gap-1 text-[14px] font-semibold">
+              <span className="truncate">{d.series ? `${d.series.title} · ${d.series.id ? (mySeries.find((x) => x.id === d.series?.id)?.eps.length ?? 0) + 1 : 1}화` : '묶지 않음'}</span>
+              <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
+            </span>
+          </button>
 
           <AnimatePresence>
             {notice && (
@@ -413,19 +546,9 @@ export function PostFind() {
             )}
           </AnimatePresence>
 
-          <div className="px-5 pt-6">
-            <textarea
-              value={d.title}
-              onChange={(e) => set({ title: e.target.value.slice(0, 40).replace(/\n/g, '') })}
-              rows={1}
-              placeholder="제목을 입력하세요"
-              aria-label="제목"
-              className={cn('field-sizing-content w-full resize-none bg-transparent text-[24px] leading-snug font-semibold tracking-tight outline-none placeholder:text-faint', tried && !d.title.trim() && 'placeholder:text-ink-2')}
-            />
-            <div className="mt-3 h-px bg-ink/80" />
-
+          <div className="px-5 pt-2">
             {/* 발견 정보 카드 */}
-            <div className="mt-5 overflow-hidden rounded-xl border">
+            <div className="mt-3 overflow-hidden rounded-xl border">
               <InfoRow
                 icon={<MapPin className="size-4" />}
                 k="가게"
@@ -446,14 +569,13 @@ export function PostFind() {
             </div>
 
             {/* 본문: 사진 · 담은 상품 · 이야기 */}
-            {d.photos.map((ph, pi) => (
+            {d.photos.slice(1).map((ph) => (
               <PhotoBlock
                 key={ph.id}
                 photo={ph}
                 labels={attached.map((p) => p.name)}
                 onChange={(n) => set({ photos: d.photos.map((x) => (x.id === ph.id ? n : x)) })}
                 onRemove={() => set({ photos: d.photos.filter((x) => x.id !== ph.id) })}
-                cover={pi === 0}
               />
             ))}
             {attached.map((p) => (
@@ -471,6 +593,7 @@ export function PostFind() {
               </div>
             ))}
             <textarea
+              ref={bodyRef}
               value={d.body}
               onChange={(e) => set({ body: e.target.value })}
               placeholder={kindMeta ? kindMeta.body : '종류를 먼저 골라 주세요'}
@@ -485,7 +608,19 @@ export function PostFind() {
           <div className="flex items-center gap-1 px-2 py-1.5">
             <ToolBtn onClick={() => setSheet('photo')} icon={<ImagePlus className="size-5" />} label={`사진${d.photos.length ? ` ${d.photos.length}` : ''}`} />
             <ToolBtn onClick={() => setSheet('product')} icon={<ShoppingBag className="size-5" />} label={`담은 상품${attached.length ? ` ${attached.length}` : ''}`} />
-            <ToolBtn onClick={() => setSheet('place')} icon={<MapPin className="size-5" />} label="장소" />
+            <ToolBtn
+              onClick={() => {
+                set({ body: `${d.body}${d.body && !d.body.endsWith('\n') ? '\n' : ''}> ` })
+                window.setTimeout(() => {
+                  const el = bodyRef.current
+                  if (!el) return
+                  el.focus()
+                  el.setSelectionRange(el.value.length, el.value.length)
+                }, 0)
+              }}
+              icon={<Quote className="size-5" />}
+              label="인용"
+            />
             <span className="ml-auto pr-3 text-[12px] text-faint tabular">{d.title.length} / 40</span>
           </div>
         </div>
@@ -568,6 +703,44 @@ export function PostFind() {
         </Button>
       </Sheet>
 
+      {/* 연재에 묶기 */}
+      <Sheet open={sheet === 'series'} onClose={() => setSheet(null)} title="연재에 묶기">
+        <p className="-mt-1 mb-2 text-[12.5px] text-muted-foreground">묶으면 내 연재의 다음 화로 올라가요</p>
+        <ul className="divide-y">
+          <li>
+            <button onClick={() => { set({ series: null }); setSheet(null) }} className="flex w-full items-center justify-between py-3.5 text-left text-[15px]">
+              묶지 않고 올리기 {!d.series && <Check className="size-5" />}
+            </button>
+          </li>
+          {mySeries.map((x) => (
+            <li key={x.id}>
+              <button onClick={() => { set({ series: { id: x.id, title: x.title } }); setSheet(null) }} className="flex w-full items-center justify-between py-3.5 text-left">
+                <span>
+                  <b className="block text-[15px] font-semibold">{x.title}</b>
+                  <span className="text-[12.5px] text-muted-foreground">{x.eps.length + 1}화로 올라가요</span>
+                </span>
+                {d.series?.id === x.id && <Check className="size-5" />}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-[13px] font-semibold">새 연재 시작하기</p>
+        <div className="mt-2 flex gap-2">
+          <Input value={newSeries} onChange={(e) => setNewSeries(e.target.value.slice(0, 24))} placeholder="예: 도쿄 3박 4일 영수증" className="h-11 text-[15px]" />
+          <Button
+            size="lg"
+            disabled={!newSeries.trim()}
+            onClick={() => {
+              set({ series: { title: newSeries.trim() } })
+              setNewSeries('')
+              setSheet(null)
+            }}
+          >
+            시작
+          </Button>
+        </div>
+      </Sheet>
+
       {/* 사진 추가 */}
       <Sheet open={sheet === 'photo'} onClose={() => setSheet(null)} title="사진 넣기">
         <div className="grid grid-cols-2 gap-2">
@@ -590,7 +763,7 @@ export function PostFind() {
             <ImagePlus className="size-5" /> 예시 사진 쓰기
           </button>
         </div>
-        <p className="mt-3 text-[12.5px] text-muted-foreground">첫 사진이 표지가 돼요. 사진을 누르면 물건에 번호 핀을 달 수 있어요.</p>
+        <p className="mt-3 text-[12.5px] text-muted-foreground">첫 사진이 표지가 돼요. '핀 달기'로 물건에 번호 핀을 달 수 있어요.</p>
       </Sheet>
 
       {/* 담은 상품 */}

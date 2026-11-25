@@ -102,6 +102,9 @@ export interface Find {
   date?: string
   /** numbered pins on the cover photo */
   pins?: PhotoPin[]
+  subtitle?: string
+  /** traveler series (브런치북) this post belongs to */
+  seriesId?: string
 }
 
 export type PostKind = 'find' | 'tip' | 'course' | 'ask'
@@ -117,4 +120,21 @@ export interface Comment {
   text: string
   ago: string
   mine?: boolean
+}
+
+export interface TravelerSeries {
+  id: string
+  author: string
+  title: string
+  desc: string
+  city: string
+  subs: number
+  eps: { title: string; spent?: number; stores?: number; findId?: string }[]
+  ongoing?: boolean
+}
+export interface Author {
+  name: string
+  bio: string
+  subs: number
+  cities: string[]
 }

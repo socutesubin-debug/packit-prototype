@@ -1,4 +1,4 @@
-import type { Comment, PostKind, Category, Find, Product, Store, Trip } from './types'
+import type { Author, Comment, PostKind, TravelerSeries, Category, Find, Product, Store, Trip } from './types'
 
 export const CATEGORIES: Category[] = ['뷰티', '식품', '옷', '잡화', '면세품']
 
@@ -222,4 +222,46 @@ export const SEED_COMMENTS: Record<string, Comment[]> = {
     { id: 'k5', user: '민트초코', text: '돈키 면세 받으면 그게 제일 싸요', ago: '10분 전' },
   ],
   t1: [{ id: 'k6', user: 'JISOO', text: '여권 꼭 챙기세요. 사진으로는 안 돼요', ago: '3시간 전' }],
+}
+
+/** 여행자 연재 (브런치북처럼 여행자가 회차로 묶는 글) — example content */
+export const SEED_TRAVELER_SERIES: TravelerSeries[] = [
+  {
+    id: 'ts-receipt', author: '단단', city: '도쿄', title: '도쿄 3박 4일 영수증', subs: 312, ongoing: true,
+    desc: '하루치 쇼핑 영수증을 펼쳐서, 어디서 무엇을 얼마에 샀는지 기록해요.',
+    eps: [
+      { title: '첫날, 공항 면세점', spent: 8400, stores: 3 },
+      { title: '시부야 골목 문구점', spent: 3120, stores: 4, findId: 'f2' },
+      { title: '돈키호테 마지막 밤', spent: 14800, stores: 1, findId: 't1' },
+      { title: '쪽빛 손수건 하나', spent: 1650, stores: 1, findId: 'f5' },
+    ],
+  },
+  {
+    id: 'ts-snack', author: '민트초코', city: '도쿄', title: '동네 간식 일지', subs: 188, ongoing: true,
+    desc: '편의점 말고, 동네 가게에서만 파는 간식을 하루 하나씩 먹어 봐요.',
+    eps: [
+      { title: '두부가게의 유바 과자', spent: 380, stores: 1, findId: 'f9' },
+      { title: '빵집 키링은 덤', spent: 900, stores: 1, findId: 'f6' },
+      { title: '오후 2시의 센베', spent: 650, stores: 1, findId: 'f3' },
+    ],
+  },
+  {
+    id: 'ts-osaka', author: '단단', city: '오사카', title: '오사카 문구점 지도', subs: 97, ongoing: true,
+    desc: '오사카 골목 문구점을 한 곳씩 지도에 꽂아요.',
+    eps: [{ title: '센니치마에 젓가락 가게', spent: 1800, stores: 1 }, { title: '니폰바시 키캡 숍', spent: 1200, stores: 1 }],
+  },
+]
+
+export const AUTHORS: Record<string, Author> = {
+  단단: { name: '단단', bio: '골목 문구점만 찾아다니는 여행자', subs: 312, cities: ['도쿄', '오사카', '교토'] },
+  민트초코: { name: '민트초코', bio: '동네 간식과 빵집 기록', subs: 188, cities: ['도쿄', '후쿠오카'] },
+  JISOO: { name: 'JISOO', bio: '오래된 가게를 좋아해요', subs: 241, cities: ['도쿄'] },
+  여행하는곰: { name: '여행하는곰', bio: '목욕탕과 시장을 돌아다녀요', subs: 64, cities: ['도쿄', '삿포로'] },
+  수빈: { name: '수빈', bio: '쇼핑 리스트로 여행을 준비해요', subs: 12, cities: ['오사카', '도쿄'] },
+}
+
+// link seeded posts to their traveler series
+for (const ts of SEED_TRAVELER_SERIES) for (const e of ts.eps) {
+  const f = SEED_FINDS.find((x) => x.id === e.findId)
+  if (f) f.seriesId = ts.id
 }

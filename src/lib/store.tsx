@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react'
-import { CATALOG, SCAN_POOL, SEED_COMMENTS, SEED_FINDS, SEED_TRIPS, seedProducts } from './data'
-import type { Category, Comment, Find, Priority, Product, Trip } from './types'
+import { CATALOG, SCAN_POOL, SEED_COMMENTS, SEED_FINDS, SEED_TRAVELER_SERIES, SEED_TRIPS, seedProducts } from './data'
+import type { Category, Comment, Find, Priority, Product, TravelerSeries, Trip } from './types'
 import { uid } from './utils'
 
 export type Tab = 'home' | 'magazine' | 'map' | 'carry'
@@ -20,6 +20,8 @@ export type Overlay =
   | { type: 'story'; id: string }
   | { type: 'collection'; id: string }
   | { type: 'series'; id: string }
+  | { type: 'tseries'; id: string }
+  | { type: 'author'; name: string }
 
 interface Toast {
   id: string
@@ -46,6 +48,16 @@ function useAppState() {
   const [comments, setComments] = useState<Record<string, Comment[]>>(SEED_COMMENTS)
   /** id of the post just published, highlighted in the feed */
   const [justPosted, setJustPosted] = useState<string | null>(null)
+  const [tSeries, setTSeries] = useState<TravelerSeries[]>(SEED_TRAVELER_SERIES)
+  /** add a post as the next episode; creates the series when given a new title */
+  const addEpisode = useCallback((target: { id?: string; title?: string }, ep: { title: string; findId: string; spent?: number }) => {
+    const id = target.id ?? `ts-${uid()}`
+    setTSeries((ls) => {
+      if (target.id) return ls.map((x) => (x.id === id ? { ...x, eps: [...x.eps, { title: ep.title, findId: ep.findId, spent: ep.spent, stores: 1 }] } : x))
+      return [{ id, author: '수빈', city: '도쿄', title: target.title ?? '새 연재', desc: '', subs: 0, ongoing: true, eps: [{ title: ep.title, findId: ep.findId, spent: ep.spent, stores: 1 }] }, ...ls]
+    })
+    return id
+  }, [])
 
   const toggleFollow = useCallback((name: string) => {
     setFollowing((s) => {
@@ -138,6 +150,8 @@ function useAppState() {
     [trip.id],
   )
 
+  const updateFind = useCallback((id: string, patch: Partial<Find>) => setFinds((fs) => fs.map((x) => (x.id === id ? { ...x, ...patch } : x))), [])
+
   const addFind = useCallback((f: Omit<Find, 'id' | 'city' | 'author' | 'authorTrip' | 'daysAgo' | 'saves' | 'thanks' | 'mine'>) => {
     const nf: Find = { ...f, city: trip.city, id: `f-${uid()}`, author: '수빈', authorTrip: `${trip.city} 여행 중`, daysAgo: 0, saves: 0, thanks: 0, mine: true }
     setFinds((fs) => [nf, ...fs])
@@ -184,6 +198,7 @@ function useAppState() {
   }, [])
 
   return {
+    tSeries, addEpisode, updateFind,
     following, toggleFollow, comments, addComment, justPosted, setJustPosted,
     finds, points, thanked, redeemed, addFind, savedFind, toggleSaveFind, toggleThank, redeem,
     authed, setAuthed, trips, trip, tripId, setTripId, products, tripProducts, rate, setRate,
