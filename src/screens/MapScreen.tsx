@@ -1,5 +1,5 @@
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
-import { Bookmark, BookmarkCheck, ChevronLeft, Clock, Flag, Footprints, LocateFixed, MapPin, Navigation, Search, Share2, Store as StoreIcon } from 'lucide-react'
+import { Bookmark, BookmarkCheck, ChevronLeft, Clock, Flag, Footprints, LocateFixed, MapPin, Navigation, Search, Share2, ShoppingBag, Store as StoreIcon, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { StoreArt } from '@/components/art/Scenes'
@@ -10,7 +10,8 @@ import { STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
 import type { Find, Product, Store } from '@/lib/types'
 import { FindPhoto, FlagMark } from './Finds'
-import { cn } from '@/lib/utils'
+import { cn, yen } from '@/lib/utils'
+import { buyInfo } from '@/lib/buy'
 
 export const CW = 1200
 export const CH = 1000
@@ -22,7 +23,11 @@ type Item =
   | { kind: 'store'; id: string; x: number; y: number; s: Store & { mine: Product[] } }
 
 export function MapScreen() {
-  const { tripProducts, open, mapFocus, setMapFocus, trip, finds, savedFind, toggleSaveFind, notify } = useApp()
+  const { tripProducts, products, open, mapFocus, setMapFocus, trip, finds, savedFind, toggleSaveFind, notify } = useApp()
+  // product mode: "어디서 살까요" for one product, opened from its detail
+  const [pid, setPid] = useState<string | null>(mapFocus?.startsWith('p:') ? mapFocus.slice(2) : null)
+  const product = pid ? products.find((x) => x.id === pid) : undefined
+  const buy = product ? buyInfo(product, tripProducts, finds) : undefined
   const [showFinds, setShowFinds] = useState(true)
   const [showStores, setShowStores] = useState(true)
   const [mustOnly, setMustOnly] = useState(false)
@@ -35,6 +40,13 @@ export function MapScreen() {
   const LIST = 440
 
   const items = useMemo<Item[]>(() => {
+    if (product && buy) {
+      if (buy.find) return [{ kind: 'find', id: `f:${buy.find.id}`, x: buy.find.x, y: buy.find.y, f: buy.find }]
+      return buy.stores
+        .map((st) => ({ ...st, mine: tripProducts.filter((p) => p.storeIds.includes(st.id)) }))
+        .sort((x, y) => x.distance - y.distance)
+        .map((st) => ({ kind: 'store' as const, id: st.id, x: st.x, y: st.y, s: st }))
+    }
     const fs: Item[] = showFinds ? finds.filter((f) => f.city === '도쿄').map((f) => ({ kind: 'find', id: `f:${f.id}`, x: f.x, y: f.y, f })) : []
     const ss: Item[] = showStores
       ? STORES.map((st) => ({ ...st, mine: tripProducts.filter((p) => p.storeIds.includes(st.id) && (!mustOnly || p.priority === 'must')) }))
@@ -43,7 +55,7 @@ export function MapScreen() {
           .map((st) => ({ kind: 'store', id: st.id, x: st.x, y: st.y, s: st }))
       : []
     return [...fs, ...ss]
-  }, [finds, tripProducts, showFinds, showStores, mustOnly, openOnly])
+  }, [finds, tripProducts, showFinds, showStores, mustOnly, openOnly, product, buy])
 
   const [sel, setSel] = useState<string | null>(mapFocus ?? items[0]?.id ?? null)
 
@@ -81,10 +93,23 @@ export function MapScreen() {
   // focus requests from other screens (also when the map is already open)
   useEffect(() => {
     if (!mapFocus) return
+    if (mapFocus.startsWith('p:')) {
+      setPid(mapFocus.slice(2))
+      setMapFocus(null)
+      return
+    }
     if (items.some((x) => x.id === mapFocus)) select(mapFocus)
     setMapFocus(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapFocus, items])
+
+  useEffect(() => {
+    if (!product || !items.length) return
+    const first = buy?.oneStop ? buy.oneStop.store.id : items[0].id
+    const t = window.setTimeout(() => select(first), 60)
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pid])
 
   const autoScroll = useRef(0)
   const select = (id: string, scrollCard = true) => {
@@ -161,7 +186,40 @@ export function MapScreen() {
             <Search className="size-[18px]" />
           </IconBtn>
         </div>
-        <div className="no-scrollbar pointer-events-auto -mx-4 mt-2.5 flex gap-1.5 overflow-x-auto px-4">
+        {product && buy ? (
+          <motion.div initial={{ y: -8, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="pointer-events-auto mt-2.5 rounded-xl border bg-background/95 p-3 shadow-lg backdrop-blur lg:max-w-[420px]">
+            <div className="flex items-center gap-3">
+              <ProductArt art={product.art} tone="none" className="size-11 shrink-0 rounded-lg bg-muted" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] text-muted-foreground">어디서 살까요</p>
+                <p className="truncate text-[14.5px] font-semibold">{product.name}</p>
+              </div>
+              <button onClick={() => setPid(null)} aria-label="전체 지도 보기" className="grid size-8 shrink-0 place-items-center rounded-md hover:bg-accent">
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="mt-2.5 border-t pt-2.5 text-[13px]">
+              {buy.find ? (
+                <p className="flex items-center gap-1.5">
+                  <FlagMark className="h-[13px] w-[10px]" /> <b className="font-semibold">이 가게에서만</b> 살 수 있어요 · {buy.find.place}
+                </p>
+              ) : (
+                <>
+                  <p className="flex items-center gap-1.5 text-foreground/80">
+                    <span className="rounded bg-primary px-1.5 py-px text-[11px] font-semibold text-primary-foreground">흔해요</span>
+                    {buy.chains.join(' · ')}에서 팔아요
+                  </p>
+                  {buy.oneStop && (
+                    <p className="mt-1.5 flex items-center gap-1.5 font-medium">
+                      <ShoppingBag className="size-3.5" /> {buy.oneStop.store.name}에서 꼭 살래 {buy.mustCount}개 중 {buy.oneStop.n}개를 한 번에
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </motion.div>
+        ) : (
+          <div className="no-scrollbar pointer-events-auto -mx-4 mt-2.5 flex gap-1.5 overflow-x-auto px-4">
           <Chip active={showFinds} onClick={() => setShowFinds((v) => !v)}>
             <FlagMark light={showFinds} className="h-[15px] w-[12px]" /> 현지 발견
           </Chip>
@@ -171,6 +229,7 @@ export function MapScreen() {
           <Chip active={mustOnly} onClick={() => setMustOnly((v) => !v)}>꼭 살래 상품</Chip>
           <Chip active={openOnly} onClick={() => setOpenOnly((v) => !v)}>영업 중</Chip>
         </div>
+        )}
       </div>
       <div className="absolute right-4 bottom-[290px] flex flex-col items-end gap-2 lg:right-8 lg:bottom-8">
         <IconBtn label="내 위치로" onClick={() => center(ME.x, ME.y)}>
@@ -234,6 +293,13 @@ export function MapScreen() {
               <div className="flex gap-3">
                 <StoreArt color={st.color} name={st.name} className="size-[72px] shrink-0 rounded-2xl" />
                 <div className="min-w-0 flex-1">
+                  {buy && !buy.find && (
+                    <p className="mb-1 flex flex-wrap gap-1">
+                      {buy.oneStop?.store.id === st.id && <Tag>몰아 사기 {buy.oneStop.n}개</Tag>}
+                      {buy.cheapest?.store.id === st.id && <Tag>가장 저렴 {yen(buy.cheapest.price)} · 면세</Tag>}
+                      {buy.nearest?.id === st.id && <Tag>가장 가까움</Tag>}
+                    </p>
+                  )}
                   <h3 className="truncate text-[15.5px] font-semibold">{st.name}</h3>
                   <p className="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted-foreground tabular">
                     <span className={cn('font-semibold', st.open ? 'text-open' : 'text-muted-foreground')}>{st.open ? '영업 중' : '영업 종료'}</span>· {st.distance}m · {st.hours}
@@ -263,6 +329,10 @@ export function MapScreen() {
       </div>
     </div>
   )
+}
+
+function Tag({ children }: { children: React.ReactNode }) {
+  return <span className="inline-flex h-5 items-center rounded bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground tabular">{children}</span>
 }
 
 export function ShibuyaMap() {

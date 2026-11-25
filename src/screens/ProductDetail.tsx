@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { IconBtn, Panel, PRIORITY_ICON, PRIORITY_META } from '@/components/ui/primitives'
 import { PHRASES, STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
+import { buyInfo } from '@/lib/buy'
 import { FindPhoto, FlagMark } from './Finds'
 import type { Priority, Review } from '@/lib/types'
 import { cn, toWon, won, yen } from '@/lib/utils'
@@ -16,14 +17,6 @@ export const MOOD: Record<Review['mood'], { label: string; icon: typeof Smile; c
   good: { label: '좋아요', icon: Smile, cls: 'text-ink bg-sunken' },
   soso: { label: '보통', icon: Meh, cls: 'text-ink-2 bg-sunken' },
   bad: { label: '별로예요', icon: Frown, cls: 'text-muted-foreground bg-sunken' },
-}
-
-const CHAINS: Record<string, string[]> = {
-  뷰티: ['드럭스토어', '돈키호테', '로프트'],
-  식품: ['공항 면세점', '돈키호테', '편의점'],
-  옷: ['백화점', '편집숍'],
-  잡화: ['돈키호테', '로프트', '기념품점'],
-  면세품: ['공항 면세점', '시내 면세점'],
 }
 
 export function ProductDetail({ id, z }: { id: string; z: number }) {
@@ -40,20 +33,9 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
   const stores = STORES.filter((s) => p.storeIds.includes(s.id))
   const find = p.findId ? finds.find((f) => f.id === p.findId) : undefined
   const good = p.reviews.filter((r) => r.mood === 'good').length
-  const related = tripProducts.filter((x) => x.id !== p.id).sort((a, b) => Number(b.category === p.category) - Number(a.category === p.category)).slice(0, 4)
   const go = (el: HTMLElement | null) => el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  // everyday products: summarise instead of listing every shop
-  const chains = CHAINS[p.category] ?? ['돈키호테', '드럭스토어']
-  const chainsShort = `${chains[0]} 외 ${chains.length - 1}곳`
-  const nearest = [...stores].sort((a, b) => a.distance - b.distance)[0]
-  const cheapestStore = stores.find((s) => s.kind === '잡화점') ?? stores[0]
-  const cheapest = cheapestStore ? { store: cheapestStore, price: Math.round((p.price * 0.92) / 10) * 10 } : undefined
-  const must = tripProducts.filter((x) => x.priority === 'must' && !x.purchased)
-  const mustCount = must.length
-  // only shops that actually sell this product
-  const oneStop = !find && mustCount >= 2 && p.priority === 'must'
-    ? stores.map((st) => ({ store: st, n: must.filter((x) => x.storeIds.includes(st.id)).length })).sort((a, b) => b.n - a.n).find((o) => o.n >= 2)
-    : undefined
+  const buy = buyInfo(p, tripProducts, finds)
+  const chainsShort = `${buy.chains[0]} 외 ${buy.chains.length - 1}곳`
 
   const share = async () => {
     try {
@@ -64,7 +46,7 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
     }
   }
   const toMap = () => {
-    setMapFocus(find ? `f:${find.id}` : (stores[0]?.id ?? null))
+    setMapFocus(`p:${p.id}`)
     closeAll()
     setTab('map')
   }
@@ -240,102 +222,40 @@ export function ProductDetail({ id, z }: { id: string; z: number }) {
             ))}
           </div>
 
-          {/* 5. where to buy — exact place for local finds, a summary for everyday products */}
-          <Section title={find ? '여기서 살 수 있어요' : '어디서 살까요'} ref={storesRef} action={stores.length > 0 || find ? { label: '지도', onClick: toMap } : undefined} note={find ? undefined : '예시 데이터'}>
-            {find ? (
-              <>
-                <button onClick={() => open({ type: 'find', id: find.id })} className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left shadow-xs hover:bg-accent/50">
-                  <FindPhoto f={find} className="size-14 shrink-0 rounded-lg" />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 text-[12px] font-medium text-muted-foreground">
-                      <FlagMark className="h-[12px] w-[9px]" /> 현지 발견 · 이 가게에서만
+          {/* 5. where to buy → lives on the map */}
+          <Section title="어디서 살까요" ref={storesRef}>
+            <button onClick={toMap} className="flex w-full items-center gap-3 rounded-xl border bg-card p-3.5 text-left shadow-xs transition hover:bg-accent/50">
+              <span className="grid size-11 shrink-0 place-items-center rounded-lg border bg-muted">{find ? <Flag className="size-5" /> : <Map className="size-5" />}</span>
+              <span className="min-w-0 flex-1">
+                {find ? (
+                  <>
+                    <span className="block text-[12px] text-muted-foreground">현지 발견 · 이 가게에서만</span>
+                    <span className="block truncate text-[14.5px] font-semibold">
+                      {find.place} · {find.area}
                     </span>
-                    <span className="mt-0.5 block truncate text-[15px] font-semibold">{find.place}</span>
-                    <span className="block truncate text-[12.5px] text-muted-foreground">
-                      {find.area} · {find.author}님이 발견
+                  </>
+                ) : (
+                  <>
+                    <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+                      <span className="rounded bg-primary px-1.5 py-px text-[11px] font-semibold text-primary-foreground">흔해요</span>
+                      {buy.chains.join(' · ')}
                     </span>
-                  </span>
-                  <ChevronRight className="size-4 text-muted-foreground" />
-                </button>
-              </>
-            ) : (
-              <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
-                <div className="flex items-center gap-2.5 p-4">
-                  <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-primary px-2 text-[12px] font-semibold text-primary-foreground">흔해요</span>
-                  <p className="min-w-0 text-[13.5px] text-foreground/80">
-                    <b className="font-semibold text-foreground">{chains.join(' · ')}</b>에서 팔아요
-                  </p>
-                </div>
-                {cheapest && (
-                  <button onClick={() => open({ type: 'store', id: cheapest.store.id })} className="flex w-full items-center gap-3 border-t px-4 py-3 text-left hover:bg-accent/50">
-                    <span className="w-[84px] shrink-0 text-[12.5px] text-muted-foreground">가장 저렴한 곳</span>
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{cheapest.store.name}</span>
-                    <span className="shrink-0 text-[14px] font-semibold tabular">{yen(cheapest.price)}</span>
-                    <span className="shrink-0 rounded border px-1 text-[10.5px] text-muted-foreground">면세</span>
-                  </button>
+                    <span className="mt-0.5 block truncate text-[14.5px] font-semibold">
+                      {buy.oneStop ? `${buy.oneStop.store.name.split(' ')[0]}에서 꼭 살래 ${buy.oneStop.n}개 한 번에` : buy.nearest ? `가장 가까운 곳 ${buy.nearest.distance}m` : '지도에서 매장 보기'}
+                    </span>
+                  </>
                 )}
-                {nearest && (
-                  <button onClick={() => open({ type: 'store', id: nearest.id })} className="flex w-full items-center gap-3 border-t px-4 py-3 text-left hover:bg-accent/50">
-                    <span className="w-[84px] shrink-0 text-[12.5px] text-muted-foreground">가장 가까운 곳</span>
-                    <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{nearest.name}</span>
-                    <span className="shrink-0 text-[13px] text-muted-foreground tabular">{nearest.distance}m</span>
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Packit's own angle: buy your list in one stop */}
-            {oneStop && (
-              <button onClick={() => open({ type: 'store', id: oneStop.store.id })} className="mt-2 flex w-full items-center gap-3 rounded-xl bg-primary p-4 text-left text-primary-foreground shadow-sm transition hover:bg-primary/90">
-                <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary-foreground/10">
-                  <ShoppingBag className="size-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[12.5px] text-primary-foreground/60">{oneStop.store.name}에서</span>
-                  <span className="block text-[14.5px] font-semibold">
-                    꼭 살래 {mustCount}개 중 {oneStop.n}개를 한 번에 살 수 있어요
-                  </span>
-                </span>
-                <ChevronRight className="size-4 opacity-60" />
-              </button>
-            )}
+              </span>
+              <span className="flex shrink-0 items-center gap-0.5 text-[13px] font-medium text-muted-foreground">
+                지도 <ChevronRight className="size-4" />
+              </span>
+            </button>
           </Section>
 
           {/* 6. memo */}
           <Section title="메모">
             <Textarea value={p.memo} onChange={(e) => update(p.id, { memo: e.target.value })} rows={2} placeholder="누구 선물인지, 몇 개 살지 남겨 보세요" className="resize-none bg-background p-3.5 text-[15px]" />
           </Section>
-
-          {/* 7. related — 2-column grid */}
-          {related.length > 0 && (
-            <Section title="함께 담은 상품">
-              <div className="grid grid-cols-2 gap-2.5">
-                {related.map((r) => {
-                  const on = r.priority === 'must'
-                  return (
-                    <div key={r.id} className="relative overflow-hidden rounded-xl border bg-card shadow-xs">
-                      <button onClick={() => open({ type: 'product', id: r.id })} className="block w-full text-left">
-                        <span className="block bg-muted/70 p-3">
-                          <ProductArt art={r.art} tone="none" tilt={tiltOf(r.id)} className="mx-auto aspect-square w-[70%]" />
-                        </span>
-                        <span className="block px-3 pt-2.5 pb-3">
-                          <span className="line-clamp-1 block text-[13.5px] font-medium">{r.name}</span>
-                          <span className="mt-0.5 block text-[12.5px] text-muted-foreground tabular">{yen(r.price)}</span>
-                        </span>
-                      </button>
-                      <button
-                        aria-label={on ? '꼭 살래 해제' : '꼭 살래로 담기'}
-                        onClick={() => update(r.id, { priority: on ? null : 'must' })}
-                        className={cn('absolute top-2 right-2 grid size-8 place-items-center rounded-md border transition active:scale-90', on ? 'border-primary bg-primary text-primary-foreground' : 'bg-background')}
-                      >
-                        {on ? <ShoppingBag className="size-4" /> : <Plus className="size-4" />}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </Section>
-          )}
 
           {/* 8. reviews */}
           <Section title={`구매 후기 ${p.reviews.length}`} ref={reviewsRef} note="예시 후기">
