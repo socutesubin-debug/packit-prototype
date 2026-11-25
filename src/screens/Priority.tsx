@@ -146,7 +146,7 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
   const py = useMotionValue(0)
   const dist = useTransform([px, py], ([x, y]: number[]) => Math.max(Math.abs(x), -y, 0))
   const show = useTransform(dist, [6, 36], [0, 1])
-  const btnFade = useTransform(show, [0, 1], [1, 0.25])
+  const btnFade = useTransform(show, [0, 1], [1, 0.35])
   const nextScale = useTransform(dist, [0, 140], [0.95, 1])
   const nextY = useTransform(dist, [0, 140], [12, 0])
   const pMust = useTransform(px, [20, 110], [0, 1])
@@ -254,10 +254,6 @@ export function Swipe({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
               <AnimatePresence custom={exit}>
                 <Draggable key={current.id} p={current} rate={rate} exit={exit} onDecide={press} stamp={stamp} px={px} py={py} />
               </AnimatePresence>
-              {/* sub-level options: float in around the card while dragging */}
-              <Orb v="skip" prog={pSkip} show={show} stamp={stamp} className="top-[42%] -left-5" />
-              <Orb v="maybe" prog={pMaybe} show={show} stamp={stamp} className="-top-5 left-1/2 -ml-7" />
-              <Orb v="must" prog={pMust} show={show} stamp={stamp} className="top-[42%] -right-5" />
             </>
           )}
         </div>
@@ -333,8 +329,10 @@ function Draggable({ p, rate, exit, onDecide, stamp, px, py }: { p: Product; rat
   useMotionValueEvent(x, 'change', (v) => present && px.set(v))
   useMotionValueEvent(y, 'change', (v) => present && py.set(v))
   const rotate = useTransform(x, [-240, 240], [-16, 16])
-  // while dragging, the orbs around the card do the talking; the image sticker appears on release
-  const none = useMotionValue(0)
+  // the badge icon grows on the image in the direction you drag
+  const must = useTransform(x, [30, 120], [0, 1])
+  const skip = useTransform(x, [-120, -30], [1, 0])
+  const maybe = useTransform(y, [-120, -35], [1, 0])
   const onEnd = (_: unknown, info: PanInfo) => {
     const { offset, velocity } = info
     if (offset.x > 110 || velocity.x > 600) return onDecide('must')
@@ -355,9 +353,9 @@ function Draggable({ p, rate, exit, onDecide, stamp, px, py }: { p: Product; rat
       exit={{ x: exit.x, y: exit.y, opacity: 0, rotate: exit.x / 20, transition: { duration: 0.32 } }}
     >
       <Card p={p} rate={rate}>
-        <IconStamp v="must" o={none} forced={stamp === 'must'} className="top-6 left-6 -rotate-12" />
-        <IconStamp v="skip" o={none} forced={stamp === 'skip'} className="top-6 right-6 rotate-12" />
-        <IconStamp v="maybe" o={none} forced={stamp === 'maybe'} className="top-6 left-1/2 -ml-12" />
+        <IconStamp v="must" o={must} forced={stamp === 'must'} className="top-6 left-6 -rotate-12" />
+        <IconStamp v="skip" o={skip} forced={stamp === 'skip'} className="top-6 right-6 rotate-12" />
+        <IconStamp v="maybe" o={maybe} forced={stamp === 'maybe'} className="top-6 left-1/2 -ml-12" />
       </Card>
     </motion.div>
   )
