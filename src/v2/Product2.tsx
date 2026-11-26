@@ -82,7 +82,7 @@ export function Product2({ id, z }: { id: string; z: number }) {
             onChange={(e) => update(p.id, { memo: e.target.value })}
             placeholder="메모를 남겨보세요."
             rows={1}
-            className="t-body-m field-sizing-content mt-6 min-h-[52px] w-full resize-none rounded-xl bg-white px-5 py-[15px] outline-none placeholder:text-[#92928C]"
+            className="t-body-m field-sizing-content mt-6 min-h-[52px] w-full resize-none rounded-xl bg-white px-5 py-4 outline-none placeholder:text-[#737370]"
             style={{ fontWeight: 400 }}
           />
 

@@ -108,7 +108,7 @@ export function Home2() {
               <SearchCircle onClick={() => setQ('')} />
             ) : (
               <label className="flex h-10 flex-1 items-center gap-2 rounded-full bg-white px-4">
-                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="담은 상품 검색" className="t-label min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#8E8E93]" />
+                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="담은 상품 검색" className="t-label min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#737370]" />
                 <button aria-label="검색 닫기" onClick={() => setQ(null)}>
                   <X className="size-4" style={{ color: C.gray }} />
                 </button>
@@ -235,7 +235,7 @@ function GridCard({ p }: { p: Product }) {
         <Price yen={p.price} size="s" className="mt-1" />
       </button>
       <button aria-label={p.favorite ? '찜 해제' : '찜하기'} aria-pressed={p.favorite} onClick={() => update(p.id, { favorite: !p.favorite })} className="absolute top-0 right-2 grid size-8 place-items-center">
-        <Heart className="size-[18px]" style={{ color: C.pink, fill: p.favorite ? C.pink : 'transparent' }} strokeWidth={2} />
+        <Heart className="size-[18px]" style={{ color: C.pinkLine, fill: p.favorite ? C.pink : 'transparent' }} strokeWidth={2} />
       </button>
     </li>
   )
@@ -245,7 +245,7 @@ export function PriorityPill({ p, onClick }: { p: Product; onClick?: () => void 
   const must = p.priority === 'must'
   return (
     <button onClick={onClick} className="t-label flex h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3" style={{ borderColor: C.g4 }}>
-      {must ? <Heart className="size-4" style={{ color: C.pink, fill: C.pink }} /> : <Bookmark className="size-4" style={{ color: C.gray, fill: C.gray }} />}
+      {must ? <Heart className="size-4" style={{ color: C.pinkLine, fill: C.pink }} /> : <Bookmark className="size-4" style={{ color: C.gray, fill: C.gray }} />}
       {must ? '꼭 살래' : '고민'}
     </button>
   )

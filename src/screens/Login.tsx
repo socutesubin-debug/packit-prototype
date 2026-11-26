@@ -23,7 +23,7 @@ export function Login() {
           <PillButton onClick={start} className="bg-[#24222D]">
             애플로 시작하기
           </PillButton>
-          <PillButton onClick={start} className="bg-[#F3C768]">
+          <PillButton onClick={start} className="bg-[#FEE500] text-black/85">
             카카오톡으로 시작하기
           </PillButton>
         </motion.div>

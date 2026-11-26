@@ -19,10 +19,10 @@ const C = {
   ink: '#111111',
   btn: '#24222D',
   sub: '#666661',
-  ter: '#92928C',
-  gray: '#8E8E93',
+  ter: '#737370',
+  gray: '#737370',
   g3: '#C7C7CC',
-  g4: '#D1D1D6',
+  g4: '#949490',
   g5: '#E5E5EA',
   line: '#EDEDED',
 }
@@ -109,7 +109,7 @@ function StepCity({ first, q, setQ, region, setRegion, cities, cityId, setCityId
         {/* 검색 h40 */}
         <label className="flex h-10 items-center gap-3 rounded-full bg-white px-4">
           <Search className="size-4 shrink-0" style={{ color: C.gray }} strokeWidth={2.2} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="여행지를 검색해보세요" className="t-label min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#8E8E93]" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="여행지를 검색해보세요" className="t-label min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#737370]" />
         </label>
       </div>
       {/* 지역 칩: 오른쪽으로 흘러넘침 */}
@@ -198,7 +198,7 @@ function StepInfo({
 
       {/* 여행 이름 h52 */}
       <label className="mt-4 flex h-[52px] items-center rounded-xl bg-white px-5">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`예: ${city.name} 쇼핑 왕창 하는 여행`} aria-label="여행 이름" className="t-body-l min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#92928C]" />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={`예: ${city.name} 쇼핑 왕창 하는 여행`} aria-label="여행 이름" className="t-body-l min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#737370]" />
       </label>
 
       {/* 여행 일정 */}
@@ -343,8 +343,8 @@ function BudgetSlider({ value, onChange }: { value: number; onChange: (v: number
         }}
         className="relative h-5 cursor-pointer touch-none outline-none"
       >
-        <span className="absolute inset-x-0 top-[7px] h-1.5 rounded-full" style={{ background: C.g5 }} />
-        <span className="absolute top-[7px] left-0 h-1.5 rounded-full" style={{ width: `${t * 100}%`, background: C.gray }} />
+        <span className="absolute inset-x-0 top-[6px] h-2 rounded-full" style={{ background: C.g5 }} />
+        <span className="absolute top-[6px] left-0 h-2 rounded-full" style={{ width: `${t * 100}%`, background: C.gray }} />
         <span className="absolute top-0 -left-2.5 size-5 rounded-full" style={{ background: C.gray }} />
         <span className="absolute top-0 size-5 -translate-x-1/2 rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.16)]" style={{ left: `${t * 100}%`, background: C.gray }} />
       </div>

@@ -271,7 +271,7 @@ export function FindDetail2({ id, z }: { id: string; z: number }) {
       <div className="fixed inset-x-0 bottom-0 z-10 rounded-t-3xl border-t bg-white" style={{ borderColor: C.line }}>
         <div className="mx-auto flex h-[74px] max-w-[480px] items-center gap-4 px-10 pb-[env(safe-area-inset-bottom)]">
           <button onClick={() => toggleThank(f.id)} aria-pressed={liked} className="t-label flex items-center gap-1" style={{ color: C.sub }}>
-            <Heart className="size-5" strokeWidth={1.6} style={liked ? { fill: C.pink, color: C.pink } : undefined} />
+            <Heart className="size-5" strokeWidth={1.6} style={liked ? { fill: C.pink, color: C.pinkLine } : undefined} />
             {f.thanks}
           </button>
           <span className="t-label flex items-center gap-1" style={{ color: C.sub }}>
@@ -440,7 +440,7 @@ export function Write2() {
             </button>
           </div>
           <div className="px-5">
-            <textarea value={title} onChange={(e) => setTitle(e.target.value.slice(0, 40))} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} rows={1} placeholder="제목" aria-label="제목" className="t-h2 field-sizing-content mt-6 w-full resize-none bg-transparent px-2 outline-none placeholder:font-medium placeholder:text-[#8E8E93]" style={{ fontWeight: 600 }} />
+            <textarea value={title} onChange={(e) => setTitle(e.target.value.slice(0, 40))} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} rows={1} placeholder="제목" aria-label="제목" className="t-h2 field-sizing-content mt-6 w-full resize-none bg-transparent px-2 outline-none placeholder:font-medium placeholder:text-[#737370]" style={{ fontWeight: 600 }} />
             <div className="h-px" style={{ background: C.g3 }} />
             <ul className="mt-2">
               <WriteRow icon={<MapPin className="size-5" strokeWidth={1.6} />} label={place ? place.name : '위치 추가'} on={!!place} onClick={() => setSheet('place')} />

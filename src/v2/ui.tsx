@@ -10,22 +10,25 @@ import { cn } from '@/lib/utils'
  * Packit 디자인 시스템 v2 — 피그마 '시안2' 기준. 모든 치수 짝수.
  */
 export const C = {
-  bg: '#FAFAFA',
-  ink: '#111111',
-  btn: '#24222D',
-  sub: '#666661',
-  ter: '#92928C',
-  gray: '#8E8E93',
-  g3: '#C7C7CC',
-  g4: '#D1D1D6',
-  g5: '#E5E5EA',
-  line: '#EDEDED',
-  soft: '#EBEBEB',
-  fab: '#8E8AF6',
-  pink: '#F2B5CA',
+  // ART_DIRECTION.md 2판 §5 — 대비 계산으로 보정한 값
+  bg: '#FAFAFA', // Canvas
+  ink: '#111111', // Primary Text 18.1:1
+  btn: '#24222D', // Ink Button
+  sub: '#666661', // Secondary Text 5.5:1
+  ter: '#737370', // Tertiary Text 4.6:1 (피그마 #92928C)
+  gray: '#6B6B70', // Gray Button 5.3:1 (피그마 #8E8E93)
+  g3: '#C7C7CC', // Disabled
+  g4: '#949490', // Field Border 3.0:1 (피그마 #D1D1D6)
+  g5: '#E5E5EA', // 슬라이더 트랙 등 장식
+  line: '#EDEDED', // Divider (장식 전용)
+  soft: '#EBEBEB', // Soft Fill
+  fab: '#8682F2', // Brand 3.2:1 (피그마 #8E8AF6)
+  brandStrong: '#5B55D6', // Brand Strong 5.4:1
+  pink: '#F2B5CA', // 꼭 살래 채움
+  pinkLine: '#E05A8A', // 꼭 살래 테두리 3.4:1
   flag: '#91B8F0',
   me: '#4F88ED',
-  open: '#34C759',
+  open: '#1A7F37', // 영업중 4.9:1 (피그마 #34C759)
   best: '#34C759',
   good: '#00C0E8',
   bad: '#FF8D28',
@@ -146,7 +149,7 @@ export function BottomNav2() {
               발견 올리기
             </button>
           )}
-          <button aria-label={fab.label} onClick={fab.act} className="grid size-[52px] place-items-center rounded-full text-white shadow-[0_4px_12px_rgba(142,138,246,0.4)] transition active:scale-95" style={{ background: C.fab }}>
+          <button aria-label={fab.label} onClick={fab.act} className="grid size-[52px] place-items-center rounded-full text-white shadow-[0_4px_12px_rgba(134,130,242,0.4)] transition active:scale-95" style={{ background: C.fab }}>
             {fab.icon}
           </button>
         </div>
