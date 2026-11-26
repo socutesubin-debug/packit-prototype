@@ -47,9 +47,9 @@ export const PHRASES = [
 
 export const STORES: Store[] = [
   { id: 's1', name: '마츠모토키요시 시부야점', ja: '薬 マツモトキヨシ', kind: '드럭스토어', area: '시부야 · 우다가와초', address: '23-4 Udagawacho, Shibuya, Tokyo 150-0042 일본', hours: '10:00 - 22:30', open: true, distance: 350, x: 62, y: 48, color: '#E6E6E6', photo: phMatsukiyo },
-  { id: 's2', name: '마츠모토키요시 시부야 플래그십 스토어', ja: 'マツモトキヨシ 渋谷フラッグシップ', kind: '드럭스토어', area: '시부야 · 센터가이', address: '도쿄도 시부야구 우다가와초 일대', hours: '09:00 - 23:00', open: true, distance: 450, x: 36, y: 64, color: '#1E1E1E', thumb: phFlagship },
+  { id: 's2', name: '마츠모토키요시 시부야 플래그십 스토어', ja: 'マツモトキヨシ 渋谷フラッグシップ', kind: '드럭스토어', area: '시부야 · 센터가이', address: '도쿄도 시부야구 우다가와초 일대', hours: '09:00 - 23:00', open: true, distance: 450, x: 36, y: 64, color: '#1E1E1E', photo: phFlagship },
   { id: 's3', name: '로프트 시부야', ja: 'ロフト', kind: '생활 잡화', area: '시부야 · 진난', address: '도쿄도 시부야구 진난 일대', hours: '11:00 - 21:00', open: true, distance: 450, x: 46, y: 22, color: '#F4F4F4' },
-  { id: 's4', name: '스크램블 스퀘어 기념품관', ja: 'スクランブルスクエア', kind: '기념품', area: '시부야역', address: '도쿄도 시부야구 시부야역 직결', hours: '10:00 - 21:00', open: true, distance: 300, x: 64, y: 56, color: '#BDBDBD' },
+  { id: 's4', name: '스크램블 스퀘어 기념품관', ja: 'スクランブルスクエア', kind: '기념품', area: '시부야역', address: '도쿄도 시부야구 시부야역 직결', hours: '10:00 - 21:00', open: true, distance: 520, x: 64, y: 56, color: '#BDBDBD' },
   { id: 's5', name: '빅카메라 시부야 동구점', ja: 'ビックカメラ', kind: '전자 · 생활', area: '시부야 · 동쪽 출구', address: '도쿄도 시부야구 시부야 일대', hours: '10:00 - 21:00', open: false, distance: 520, x: 74, y: 34, color: '#4A4A4A' },
 ]
 
