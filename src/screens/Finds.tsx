@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeft, Bookmark, BookmarkCheck, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Flag, Heart, ImagePlus, Lightbulb, MoreHorizontal, Plus, LocateFixed, MapPin, MessageCircle, MessageCircleQuestion, Quote, Route, Search, ShoppingBag, Sparkles, Tag, Trophy, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { ArrowLeft, Bookmark, BookmarkCheck, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Flag, Heart, ImagePlus, Lightbulb, MoreHorizontal, Plus, Bold, Italic, Underline, Strikethrough, Highlighter, LocateFixed, MapPin, MessageCircle, MessageCircleQuestion, Quote, Route, Search, ShoppingBag, Sparkles, Tag, Trophy, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { HILITE, TEXT_COLORS, htmlToText, sanitize, textToHtml } from '@/lib/rich'
 import { ProductArt } from '@/components/art/ProductArt'
 import { tiltOf } from '@/components/ProductCard'
 import { Button } from '@/components/ui/button'
@@ -117,7 +118,8 @@ export function PinnedPhoto({ f, className }: { f: Find; className?: string }) {
 }
 
 /** post body: paragraphs, with "> " lines as pull quotes */
-function Body({ text }: { text: string }) {
+function Body({ text, html }: { text: string; html?: string }) {
+  if (html) return <div className="rich rich-read mt-4" dangerouslySetInnerHTML={{ __html: sanitize(html) }} />
   return (
     <div className="mt-4 space-y-3">
       {text.split('\n').filter((l) => l.trim()).map((l, i) =>
@@ -203,7 +205,7 @@ export function FindDetail({ id, z }: { id: string; z: number }) {
           )}
           <h1 className="text-[24px] leading-tight font-bold tracking-[-0.02em]">{f.title}</h1>
           {f.subtitle && <p className="mt-1.5 text-[15px] text-muted-foreground">{f.subtitle}</p>}
-          <Body text={f.story} />
+          <Body text={f.story} html={f.html} />
 
           <div className="mt-6 overflow-hidden rounded-xl border bg-card shadow-xs">
             {/* 납작한 지도 띠: 발견 장소가 가운데 오도록 지도를 잘라 보여줘요 */}
@@ -344,7 +346,9 @@ export function PostFind() {
   const mySeries = tSeries.filter((x) => x.author === '수빈')
   const [pinMode, setPinMode] = useState(false)
   const [newSeries, setNewSeries] = useState('')
-  const bodyRef = useRef<HTMLTextAreaElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const [fmt, setFmt] = useState(false)
+  const fs = useFormatState(bodyRef)
   const [d, setD] = useState<Draft>(() => ({ ...EMPTY, ...(SAVED_DRAFT ?? {}) }))
   const [focused, setFocused] = useState(false)
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }))
@@ -381,7 +385,8 @@ export function PostFind() {
     const f = addFind({
       kind: d.kind,
       title: d.title.trim(),
-      story: d.body.trim() || d.title.trim(),
+      story: htmlToText(d.body) || d.title.trim(),
+      html: htmlToText(d.body) ? sanitize(d.body) : undefined,
       place: d.place.name,
       area: d.place.area,
       x: d.place.x,
@@ -409,9 +414,22 @@ export function PostFind() {
   }
 
   const cover = d.photos[0]
-  const quoteOn = /(^|\n)>[^\n]*$/.test(d.body)
+  const focusBody = () => {
+    const el = bodyRef.current
+    if (!el || document.activeElement === el) return
+    el.focus()
+    const r = document.createRange()
+    r.selectNodeContents(el)
+    r.collapse(false)
+    const sel = window.getSelection()
+    sel?.removeAllRanges()
+    sel?.addRange(r)
+  }
   const tools = (
     <>
+      <ToolIcon label="서식" active={fmt} onMouseDown={(e) => e.preventDefault()} onClick={() => { focusBody(); setFmt((v) => !v) }}>
+        <span className="text-[16px] leading-none font-semibold tracking-[-0.03em]">Aa</span>
+      </ToolIcon>
       <ToolIcon label="사진" onClick={() => setSheet('photo')}>
         <ImagePlus className="size-[21px]" />
       </ToolIcon>
@@ -423,16 +441,12 @@ export function PostFind() {
       </ToolIcon>
       <ToolIcon
         label="인용"
-        active={focused && quoteOn}
+        active={fs.focused && fs.block === 'blockquote'}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => {
-          set({ body: `${d.body}${d.body && !d.body.endsWith('\n') ? '\n' : ''}> ` })
-          window.setTimeout(() => {
-            const el = bodyRef.current
-            if (!el) return
-            el.focus()
-            el.setSelectionRange(el.value.length, el.value.length)
-          }, 0)
+          focusBody()
+          applyBlock(fs.block === 'blockquote' ? 'p' : 'blockquote')
+          fs.refresh()
         }}
       >
         <Quote className="size-[19px]" />
@@ -603,15 +617,18 @@ export function PostFind() {
                 </button>
               </div>
             ))}
-            <textarea
+            <RichEditor
               ref={bodyRef}
-              value={d.body}
-              onChange={(e) => set({ body: e.target.value })}
+              initial={d.body}
+              onChange={(html) => set({ body: html })}
               onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              placeholder={!d.kind || d.kind === 'find' ? '어디서, 무엇을 발견했나요? 짧은 소개로 시작해 보세요.\n#면세 #한정판 처럼 태그도 달 수 있어요.' : kindMeta?.body}
-              aria-label="이야기"
-              className="field-sizing-content mt-4 min-h-[160px] w-full resize-none bg-transparent text-[16px] leading-[1.75] outline-none placeholder:text-[#B9B9B2]"
+              onBlur={() => {
+                setFocused(false)
+                window.setTimeout(() => {
+                  if (document.activeElement !== bodyRef.current) setFmt(false)
+                }, 0)
+              }}
+              placeholder={!d.kind || d.kind === 'find' ? '어디서, 무엇을 발견했나요? 짧은 소개로 시작해 보세요.\n#면세 #한정판 처럼 태그도 달 수 있어요.' : (kindMeta?.body ?? '')}
             />
           </div>
         </div>
@@ -619,7 +636,9 @@ export function PostFind() {
         {/* 하단 툴바: 평소엔 바, 입력 중엔 키보드 위에 뜨는 둥근 막대 (Apple 메모) */}
         <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">
           {tried && !valid && <p className="px-4 pb-1 text-[12.5px] font-medium">종류 · 제목 · 가게 위치를 채워 주세요</p>}
-          {focused ? (
+          {fmt ? (
+            <FormatPanel fs={fs} onClose={() => setFmt(false)} />
+          ) : focused ? (
             <div className="mx-3 mb-2 flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-[0_2px_14px_rgba(0,0,0,0.14)]">
               {tools}
               <span className="ml-auto pr-3 text-[12px] text-[#92928C] tabular">{d.title.length}/40</span>
@@ -836,6 +855,190 @@ function InfoRow({ icon, k, value, sub, onClick, req, missing, last }: { icon: R
       {req && !value && <span className="rounded bg-ink px-1.5 py-0.5 text-[10.5px] font-semibold text-white">필수</span>}
       <ChevronRight className="size-4 text-faint" />
     </button>
+  )
+}
+
+/* ───────── 서식 (아이폰 메모 방식) ───────── */
+
+type Block = 'h2' | 'h3' | 'p' | 'blockquote'
+
+function applyBlock(b: Block) {
+  document.execCommand('defaultParagraphSeparator', false, 'p')
+  document.execCommand('formatBlock', false, `<${b}>`)
+}
+
+/** 커서만 있을 때 서식을 끄면, 그 서식 span 밖으로 커서를 꺼내요 (Chrome은 빈 선택에 끄기가 안 먹어요) */
+function escapeStyle(prop: string) {
+  const sel = window.getSelection()
+  if (!sel || !sel.isCollapsed || !sel.anchorNode) return false
+  let n: Node | null = sel.anchorNode
+  let host: HTMLElement | null = null
+  while (n && !(n instanceof HTMLElement && n.isContentEditable && n.getAttribute('contenteditable') === 'true')) {
+    if (n instanceof HTMLElement && n.style.getPropertyValue(prop)) host = n
+    n = n.parentNode
+  }
+  if (!host) return false
+  const after = host.nextSibling
+  if (after?.nodeType === Node.TEXT_NODE && after.textContent?.startsWith('\u200b')) {
+    sel.collapse(after, 1)
+    return true
+  }
+  const t = document.createTextNode('\u200b')
+  host.after(t)
+  sel.collapse(t, 1)
+  return true
+}
+
+function useFormatState(ref: React.RefObject<HTMLDivElement | null>) {
+  const [st, setSt] = useState({ focused: false, block: 'p' as string, bold: false, italic: false, underline: false, strike: false, color: '', hilite: false })
+  const refresh = () => {
+    const el = ref.current
+    const sel = window.getSelection()
+    const inside = !!el && !!sel?.anchorNode && el.contains(sel.anchorNode)
+    if (!inside) return setSt((x) => ({ ...x, focused: false }))
+    let block = String(document.queryCommandValue('formatBlock') || 'p').toLowerCase()
+    if (block === 'div' || block === '') block = 'p'
+    const color = rgbToHex(String(document.queryCommandValue('foreColor')))
+    const bg = rgbToHex(String(document.queryCommandValue('hiliteColor') || document.queryCommandValue('backColor')))
+    setSt({
+      focused: true,
+      block,
+      bold: document.queryCommandState('bold'),
+      italic: document.queryCommandState('italic'),
+      underline: document.queryCommandState('underline'),
+      strike: document.queryCommandState('strikeThrough'),
+      color,
+      hilite: bg.toUpperCase() === HILITE,
+    })
+  }
+  useEffect(() => {
+    document.addEventListener('selectionchange', refresh)
+    return () => document.removeEventListener('selectionchange', refresh)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return { ...st, refresh }
+}
+type FormatState = ReturnType<typeof useFormatState>
+
+function rgbToHex(v: string) {
+  const m = v.match(/\d+/g)
+  if (!v.startsWith('rgb') || !m) return v
+  return '#' + m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase()
+}
+
+function RichEditor({ ref, initial, onChange, onFocus, onBlur, placeholder }: { ref: React.RefObject<HTMLDivElement | null>; initial: string; onChange: (html: string) => void; onFocus: () => void; onBlur: () => void; placeholder: string }) {
+  const [empty, setEmpty] = useState(!initial || !htmlToText(initial))
+  useEffect(() => {
+    if (ref.current && initial) ref.current.innerHTML = sanitize(textToHtml(initial))
+    document.execCommand('defaultParagraphSeparator', false, 'p')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <div
+      ref={ref}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-multiline
+      aria-label="이야기"
+      data-ph={placeholder}
+      data-empty={empty}
+      onFocus={() => {
+        document.execCommand('styleWithCSS', false, 'true')
+        onFocus()
+      }}
+      onBlur={onBlur}
+      onInput={(e) => {
+        const el = e.currentTarget
+        const isEmpty = !el.textContent?.trim()
+        setEmpty(isEmpty)
+        onChange(isEmpty ? '' : el.innerHTML)
+      }}
+      onPaste={(e) => {
+        e.preventDefault()
+        document.execCommand('insertText', false, e.clipboardData.getData('text/plain'))
+      }}
+      className="rich rich-edit relative mt-4 min-h-[160px] w-full outline-none"
+    />
+  )
+}
+
+const STYLES: { b: Block; label: string; cls: string }[] = [
+  { b: 'h2', label: '제목', cls: 'text-[19px] font-bold' },
+  { b: 'h3', label: '소제목', cls: 'text-[16px] font-bold' },
+  { b: 'p', label: '본문', cls: 'text-[14.5px]' },
+  { b: 'blockquote', label: '인용', cls: 'text-[14.5px] font-semibold' },
+]
+
+function FormatPanel({ fs, onClose }: { fs: FormatState; onClose: () => void }) {
+  // 누르는 동안 편집기 포커스(선택 영역)를 잃지 않게 해요
+  const keep = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault()
+  const run = (fn: () => void) => () => {
+    fn()
+    fs.refresh()
+  }
+  const inline: { k: 'bold' | 'italic' | 'underline' | 'strike'; cmd: string; label: string; icon: React.ReactNode }[] = [
+    { k: 'bold', cmd: 'bold', label: '굵게', icon: <Bold className="size-[19px]" strokeWidth={2.6} /> },
+    { k: 'italic', cmd: 'italic', label: '기울임', icon: <Italic className="size-[19px]" /> },
+    { k: 'underline', cmd: 'underline', label: '밑줄', icon: <Underline className="size-[19px]" /> },
+    { k: 'strike', cmd: 'strikeThrough', label: '취소선', icon: <Strikethrough className="size-[19px]" /> },
+  ]
+  return (
+    <motion.div
+      initial={{ y: 24, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      onPointerDown={keep}
+      onMouseDown={keep}
+      className="mx-2 mb-2 rounded-[22px] bg-white px-4 pt-3 pb-4 shadow-[0_4px_24px_rgba(0,0,0,0.16)]"
+      role="toolbar"
+      aria-label="서식"
+    >
+      <div className="flex items-center justify-between">
+        <p className="text-[15px] font-bold">서식</p>
+        <button aria-label="서식 닫기" onClick={onClose} className="grid size-7 place-items-center rounded-full bg-[#F0F0EC] text-[#666661]">
+          <X className="size-4" />
+        </button>
+      </div>
+
+      {/* 글자 크기 = 문단 스타일 */}
+      <div className="no-scrollbar -mx-4 mt-3 flex items-end gap-1.5 overflow-x-auto px-4">
+        {STYLES.map((x) => {
+          const on = fs.block === x.b
+          return (
+            <button key={x.b} aria-pressed={on} onClick={run(() => applyBlock(x.b))} className={cn('flex h-11 shrink-0 items-center rounded-xl px-3.5 whitespace-nowrap transition', on ? 'bg-[#DFFF3F]' : 'hover:bg-[#F7F7F3]', x.cls)}>
+              {x.b === 'blockquote' ? <span className="border-l-[2.5px] border-ink pl-1.5 leading-tight">{x.label}</span> : x.label}
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        {/* 굵기 · 기울기 · 밑줄 · 취소선 */}
+        <div className="flex flex-1 overflow-hidden rounded-xl bg-[#F7F7F3]">
+          {inline.map((x, i) => (
+            <button key={x.k} aria-label={x.label} title={x.label} aria-pressed={fs[x.k]} onClick={run(() => document.execCommand(x.cmd))} className={cn('grid h-11 flex-1 place-items-center transition', i > 0 && 'border-l border-white', fs[x.k] ? 'bg-ink text-white' : 'text-ink')}>
+              {x.icon}
+            </button>
+          ))}
+        </div>
+        {/* 형광펜 — 브랜드 라임 */}
+        <button aria-label="형광펜" title="형광펜" aria-pressed={fs.hilite} onClick={run(() => (fs.hilite && escapeStyle('background-color')) || document.execCommand('hiliteColor', false, fs.hilite ? 'transparent' : HILITE))} className={cn('grid h-11 w-12 place-items-center rounded-xl transition', fs.hilite ? 'bg-ink text-[#DFFF3F]' : 'bg-[#F7F7F3] text-ink')}>
+          <Highlighter className="size-[19px]" />
+        </button>
+      </div>
+
+      {/* 글자 색 */}
+      <div className="mt-3.5 flex items-center justify-between px-0.5">
+        {TEXT_COLORS.map((c, i) => {
+          const on = fs.color.toUpperCase() === c.v.toUpperCase() || (i === 0 && !TEXT_COLORS.some((x) => x.v.toUpperCase() === fs.color.toUpperCase()))
+          return (
+            <button key={c.v} aria-label={`글자색 ${c.name}`} title={c.name} aria-pressed={on} onClick={run(() => document.execCommand('foreColor', false, c.v))} className={cn('grid size-9 place-items-center rounded-full transition', on && 'ring-2 ring-ink ring-offset-2')}>
+              <span className="size-7 rounded-full" style={{ background: c.v }} />
+            </button>
+          )
+        })}
+      </div>
+    </motion.div>
   )
 }
 

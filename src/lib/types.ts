@@ -103,6 +103,8 @@ export interface Find {
   /** numbered pins on the cover photo */
   pins?: PhotoPin[]
   subtitle?: string
+  /** 서식 있는 본문 (sanitized HTML) */
+  html?: string
   /** traveler series (브런치북) this post belongs to */
   seriesId?: string
 }
