@@ -5,20 +5,23 @@ export const CATEGORIES: Category[] = ['뷰티', '식품', '옷', '잡화', '면
 export const CITIES = [
   { id: 'tokyo', name: '도쿄', sub: '도쿄, 하라주쿠, 오모테산도, 시부야', region: '일본', hue: '#E8453C', sky: '#FFE3DD' },
   { id: 'osaka', name: '오사카', sub: '오사카, 교토, 나라, 고베', region: '일본', hue: '#3E6FD8', sky: '#DDE7FF' },
-  { id: 'fukuoka', name: '후쿠오카', sub: '하카타, 텐진, 다자이후', region: '일본', hue: '#1F9C74', sky: '#D6F2E7' },
   { id: 'sapporo', name: '삿포로', sub: '삿포로, 오타루, 비에이', region: '일본', hue: '#6B6BD6', sky: '#E4E4FF' },
+  { id: 'okinawa', name: '오키나와', sub: '나하, 국제거리, 차탄', region: '일본', hue: '#1E9BB8', sky: '#D4F1F7' },
+  { id: 'fukuoka', name: '후쿠오카', sub: '하카타, 텐진, 다자이후', region: '일본', hue: '#1F9C74', sky: '#D6F2E7' },
   { id: 'bangkok', name: '방콕', sub: '시암, 수쿰빗, 짜뚜짝', region: '동남아시아', hue: '#E58A1F', sky: '#FFEBD2' },
   { id: 'shanghai', name: '상하이', sub: '와이탄, 신톈디, 난징루', region: '중국', hue: '#C2463E', sky: '#FBE0DE' },
+  { id: 'newyork', name: '뉴욕', sub: '맨해튼, 소호, 브루클린', region: '미국', hue: '#2B2B2B', sky: '#E6E6E6' },
   { id: 'paris', name: '파리', sub: '마레, 생제르맹, 몽마르트르', region: '유럽', hue: '#2F5DA8', sky: '#DCE6F7' },
 ]
-export const REGIONS = ['전체', '일본', '동남아시아', '중국', '유럽']
+export const REGIONS = ['전체', '일본', '중국', '동남아시아', '미국', '유럽']
 
+/** 피그마 시안2 · 캐리어 색상 (tint = 사진 위에 곱하는 색) */
 export const SUITCASE_COLORS = [
-  { id: 'silver', value: '#C9CBCF', name: '실버' },
-  { id: 'white', value: '#F4F4F4', name: '화이트' },
-  { id: 'gray', value: '#9A9A9A', name: '그레이' },
-  { id: 'charcoal', value: '#4A4A4A', name: '차콜' },
-  { id: 'black', value: '#1E1E1E', name: '블랙' },
+  { id: 'white', value: '#E5E5EA', tint: null, name: '화이트' },
+  { id: 'black', value: '#111111', tint: '#3A3A40', name: '블랙' },
+  { id: 'yellow', value: '#F3C768', tint: '#F6CF7A', name: '옐로' },
+  { id: 'blue', value: '#91B8F0', tint: '#9CC0F2', name: '블루' },
+  { id: 'pink', value: '#F2B5CA', tint: '#F4BDD0', name: '핑크' },
 ]
 
 export const PHRASES = [

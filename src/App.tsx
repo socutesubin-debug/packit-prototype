@@ -24,7 +24,7 @@ function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
     case 'carry':
       return <CarryDetail tripId={o.tripId} z={z} />
     case 'create':
-      return <CreateTrip />
+      return <CreateTrip first={o.first} />
     case 'save':
       return <SaveSheet />
     case 'analyze':

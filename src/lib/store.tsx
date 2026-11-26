@@ -9,7 +9,7 @@ export type Overlay =
   | { type: 'ask'; id: string }
   | { type: 'store'; id: string }
   | { type: 'carry'; tripId: string }
-  | { type: 'create' }
+  | { type: 'create'; first?: boolean }
   | { type: 'save' }
   | { type: 'analyze'; mode: 'shots' | 'link' | 'manual'; images: string[] }
   | { type: 'swipe'; ids?: string[]; fresh?: boolean }

@@ -13,6 +13,7 @@ export const toWon = (yenAmount: number, rate: number) => (yenAmount * rate) / 1
 export const TODAY = new Date(2026, 10, 24)
 
 export function dday(start: string) {
+  if (!start) return '일정 미정'
   const [y, m, d] = start.split('-').map(Number)
   const diff = Math.round((new Date(y, m - 1, d).getTime() - TODAY.getTime()) / 86400000)
   if (diff > 0) return `D-${diff}`
@@ -21,6 +22,7 @@ export function dday(start: string) {
 }
 
 export function shortRange(start: string, end: string) {
+  if (!start) return '일정 미정'
   const f = (s: string) => {
     const [y, m, d] = s.split('-')
     return { y: y.slice(2), md: `${m}.${d}` }
