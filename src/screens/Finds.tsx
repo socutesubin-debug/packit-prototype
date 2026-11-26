@@ -348,7 +348,7 @@ export function PostFind() {
   const [d, setD] = useState<Draft>(() => ({ ...EMPTY, ...(SAVED_DRAFT ?? {}) }))
   const [focused, setFocused] = useState(false)
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }))
-  const [sheet, setSheet] = useState<null | 'kind' | 'place' | 'price' | 'photo' | 'product' | 'series'>(SAVED_DRAFT ? null : 'kind')
+  const [sheet, setSheet] = useState<null | 'kind' | 'place' | 'price' | 'cat' | 'photo' | 'product' | 'series'>(SAVED_DRAFT ? null : 'kind')
   const [notice, setNotice] = useState(true)
   const [tried, setTried] = useState(false)
   const file = useRef<HTMLInputElement>(null)
@@ -559,14 +559,30 @@ export function PostFind() {
                   <MapPin className="size-4 fill-[#92928C] text-white" /> 가게 위치 추가
                 </button>
               )}
-              {d.price && (
-                <button onClick={() => setSheet('price')} className="inline-flex h-8 items-center rounded-full bg-[#F7F7F3] px-3 text-[13px] font-semibold tabular">
-                  {yen(Number(d.price))}
+              {d.price ? (
+                <span className="inline-flex h-8 items-center gap-0.5 rounded-full bg-[#F7F7F3] pr-1 pl-3 text-[13px]">
+                  <button onClick={() => setSheet('price')} className="font-semibold tabular">
+                    {yen(Number(d.price))}
+                  </button>
+                  <button aria-label="가격 빼기" onClick={() => set({ price: '' })} className="grid size-6 place-items-center text-[#92928C]">
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ) : (
+                <button onClick={() => setSheet('price')} className="flex h-8 items-center gap-1 px-1 text-[13.5px] text-[#92928C] hover:text-ink">
+                  <span className="text-[14px] font-bold">¥</span> 가격 추가
                 </button>
               )}
-              {cat && (d.price || d.place) && (
-                <button onClick={() => setSheet('price')} className="inline-flex h-8 items-center rounded-full bg-[#F7F7F3] px-3 text-[13px] text-[#666661]">
-                  {cat}
+              {d.cat ? (
+                <span className="inline-flex h-8 items-center gap-0.5 rounded-full bg-[#F7F7F3] pr-1 pl-3 text-[13px] text-[#666661]">
+                  <button onClick={() => setSheet('cat')}>{d.cat}</button>
+                  <button aria-label="카테고리 빼기" onClick={() => set({ cat: null })} className="grid size-6 place-items-center text-[#92928C]">
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ) : (
+                <button onClick={() => setSheet('cat')} className="flex h-8 items-center gap-1 px-1 text-[13.5px] text-[#92928C] hover:text-ink">
+                  <Tag className="size-3.5" /> {catAuto ? <>카테고리 · <span className="text-ink-2">{cat}</span>?</> : '카테고리 추가'}
                 </button>
               )}
               {d.series && <span className="inline-flex h-8 items-center rounded-full border border-[#DEDED8] px-3 text-[12.5px] text-[#666661]">연재 · {d.series.title}</span>}
@@ -680,11 +696,12 @@ export function PostFind() {
 
       <PlaceSheet open={sheet === 'place'} onClose={() => setSheet(null)} value={d.place} onDone={(place) => set({ place })} />
 
-      {/* 가격 · 카테고리 */}
-      <Sheet open={sheet === 'price'} onClose={() => setSheet(null)} title={d.kind === 'ask' ? '본 가격 · 카테고리' : '발견 당시 가격 · 카테고리'}>
+      {/* 가격 */}
+      <Sheet open={sheet === 'price'} onClose={() => setSheet(null)} title={d.kind === 'ask' ? '본 가격' : '발견 당시 가격'}>
         <label className="flex h-14 items-center rounded-xl border px-4 focus-within:border-ink">
           <span className="mr-1.5 text-[18px] font-semibold">¥</span>
           <input
+            autoFocus
             inputMode="numeric"
             value={d.price}
             onChange={(e) => set({ price: e.target.value.replace(/\D/g, '').slice(0, 7) })}
@@ -696,18 +713,22 @@ export function PostFind() {
         <p className="mt-2 flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
           <CalendarDays className="size-3.5" /> {TODAY} · 사진 찍은 날 기준으로 기록돼요
         </p>
-        <p className="mt-6 text-[14px] font-semibold">카테고리</p>
-        {catAuto && <p className="mt-0.5 text-[12.5px] text-muted-foreground">제목을 보고 골라 뒀어요. 틀리면 바꿔 주세요</p>}
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
+        <Button size="lg" className="mt-6 w-full" onClick={() => setSheet(null)}>
+          완료
+        </Button>
+      </Sheet>
+
+      {/* 카테고리 */}
+      <Sheet open={sheet === 'cat'} onClose={() => setSheet(null)} title="카테고리">
+        {catAuto && <p className="-mt-1 text-[12.5px] text-muted-foreground">제목을 보고 '{cat}'로 골라 뒀어요. 맞으면 눌러 주세요</p>}
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {CATEGORIES.map((c) => (
-            <Chip key={c} active={cat === c} onClick={() => set({ cat: c })} className="rounded-full">
+            <Chip key={c} active={cat === c} onClick={() => { set({ cat: c }); setSheet(null) }} className="rounded-full">
               {c}
             </Chip>
           ))}
         </div>
-        <Button size="lg" className="mt-6 w-full" onClick={() => setSheet(null)}>
-          완료
-        </Button>
+        <div className="h-4" />
       </Sheet>
 
       {/* 연재에 묶기 */}
