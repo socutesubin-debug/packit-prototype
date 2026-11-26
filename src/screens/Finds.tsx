@@ -862,7 +862,7 @@ function InfoRow({ icon, k, value, sub, onClick, req, missing, last }: { icon: R
 
 type Block = 'h2' | 'h3' | 'p' | 'blockquote'
 
-function applyBlock(b: Block) {
+export function applyBlock(b: Block) {
   document.execCommand('defaultParagraphSeparator', false, 'p')
   document.execCommand('formatBlock', false, `<${b}>`)
 }
@@ -889,7 +889,7 @@ function escapeStyle(prop: string) {
   return true
 }
 
-function useFormatState(ref: React.RefObject<HTMLDivElement | null>) {
+export function useFormatState(ref: React.RefObject<HTMLDivElement | null>) {
   const [st, setSt] = useState({ focused: false, block: 'p' as string, bold: false, italic: false, underline: false, strike: false, color: '', hilite: false })
   const refresh = () => {
     const el = ref.current
@@ -926,7 +926,7 @@ function rgbToHex(v: string) {
   return '#' + m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase()
 }
 
-function RichEditor({ ref, initial, onChange, onFocus, onBlur, placeholder }: { ref: React.RefObject<HTMLDivElement | null>; initial: string; onChange: (html: string) => void; onFocus: () => void; onBlur: () => void; placeholder: string }) {
+export function RichEditor({ ref, initial, onChange, onFocus, onBlur, placeholder }: { ref: React.RefObject<HTMLDivElement | null>; initial: string; onChange: (html: string) => void; onFocus: () => void; onBlur: () => void; placeholder: string }) {
   const [empty, setEmpty] = useState(!initial || !htmlToText(initial))
   useEffect(() => {
     if (ref.current && initial) ref.current.innerHTML = sanitize(textToHtml(initial))
@@ -970,7 +970,7 @@ const STYLES: { b: Block; label: string; cls: string }[] = [
   { b: 'blockquote', label: '인용', cls: 'text-[14.5px] font-semibold' },
 ]
 
-function FormatPanel({ fs, onClose }: { fs: FormatState; onClose: () => void }) {
+export function FormatPanel({ fs, onClose }: { fs: FormatState; onClose: () => void }) {
   // 누르는 동안 편집기 포커스(선택 영역)를 잃지 않게 해요
   const keep = (e: React.PointerEvent | React.MouseEvent) => e.preventDefault()
   const run = (fn: () => void) => () => {
@@ -1110,7 +1110,7 @@ function PhotoBlock({ photo, labels, onChange, onRemove, cover }: { photo: Photo
 }
 
 type Place = NonNullable<Draft['place']>
-function PlaceSheet({ open, onClose, value, onDone }: { open: boolean; onClose: () => void; value: Place | null; onDone: (p: Place) => void }) {
+export function PlaceSheet({ open, onClose, value, onDone }: { open: boolean; onClose: () => void; value: Place | null; onDone: (p: Place) => void }) {
   const [pin, setPin] = useState<{ x: number; y: number }>(value ?? ME)
   const [name, setName] = useState(value?.name ?? '')
   const [area, setArea] = useState(value?.area ?? '시부야 근처')

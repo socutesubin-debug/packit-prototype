@@ -20,9 +20,9 @@ const F = 'Pretendard Variable, -apple-system, sans-serif'
 const CUT = { stroke: '#fff', strokeWidth: 7, strokeLinejoin: 'round' as const, paintOrder: 'stroke' as const }
 
 /** Die-cut vinyl stickers: thick white border + soft shadow */
-export function Sticker({ kind, className }: { kind: StickerKind; className?: string }) {
+export function Sticker({ kind, className, color }: { kind: StickerKind; className?: string; color?: boolean }) {
   return (
-    <svg viewBox="0 0 120 120" className={cn('overflow-visible grayscale drop-shadow-[0_4px_6px_rgba(0,0,0,0.16)]', className)} aria-hidden>
+    <svg viewBox="0 0 120 120" className={cn('overflow-visible drop-shadow-[0_4px_6px_rgba(0,0,0,0.16)]', !color && 'grayscale', className)} aria-hidden>
       {render(kind)}
     </svg>
   )

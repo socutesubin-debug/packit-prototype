@@ -33,7 +33,7 @@ function useAppState() {
   const [trips, setTrips] = useState<Trip[]>(SEED_TRIPS)
   const [tripId, setTripId] = useState('t1')
   const [products, setProducts] = useState<Product[]>(seedProducts)
-  const [rate, setRate] = useState(844)
+  const [rate, setRate] = useState(850)
   /** 여행 전 / 여행 중 — prototype lets you flip it to preview in-trip UI */
   const [inTrip, setInTrip] = useState(false)
   const [tab, setTab] = useState<Tab>('home')
@@ -171,7 +171,7 @@ function useAppState() {
       }
       const p: Product = {
         id: `pf-${uid()}`, tripId: trip.id, name: f.title, ja: '', brand: f.place, category: f.category, price: f.price ?? 0,
-        desc: f.story, art: f.art, priority: 'must', favorite: false, memo: '', purchased: false, storeIds: [], pickRate: 0, reviews: [], findId: f.id,
+        desc: f.story, art: f.art, photo: f.photo, priority: 'must', favorite: false, memo: '', purchased: false, storeIds: [], pickRate: 0, reviews: [], findId: f.id,
       }
       setProducts((ps) => [p, ...ps])
       setFinds((fs) => fs.map((x) => (x.id === f.id ? { ...x, saves: x.saves + 1 } : x)))

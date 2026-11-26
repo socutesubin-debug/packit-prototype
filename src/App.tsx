@@ -10,31 +10,37 @@ import { PlanPanel, Swipe } from '@/screens/Priority'
 import { AuthorPanel, CollectionPanel, Magazine, SeriesPanel, StoryArticle, TravelerSeriesPanel } from '@/screens/Magazine'
 import { AskCard, ProductDetail } from '@/screens/ProductDetail'
 import { Analyze, SaveSheet } from '@/screens/Save'
-import { Benefits, FindDetail, PostFind } from '@/screens/Finds'
+import { Benefits } from '@/screens/Finds'
+import { Analyze2, Home2, SaveSheet2, Swipe2 } from '@/v2/Home2'
+import { Product2 } from '@/v2/Product2'
+import { FindDetail2, Magazine2, Profile2, Write2 } from '@/v2/Magazine2'
+import { Map2, Store2 } from '@/v2/Map2'
+import { Carry2, CarryDetail2 } from '@/v2/Carry2'
+import { BottomNav2 } from '@/v2/ui'
 
 function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
   const z = 50 + depth
   switch (o.type) {
     case 'product':
-      return <ProductDetail id={o.id} z={z} />
+      return <Product2 id={o.id} z={z} />
     case 'store':
-      return <StoreDetail id={o.id} z={z} />
+      return <Store2 id={o.id} z={z} />
     case 'ask':
       return <AskCard id={o.id} />
     case 'carry':
-      return <CarryDetail tripId={o.tripId} z={z} />
+      return <CarryDetail2 tripId={o.tripId} z={z} />
     case 'create':
       return <CreateTrip first={o.first} />
     case 'save':
-      return <SaveSheet />
+      return <SaveSheet2 />
     case 'analyze':
-      return <Analyze mode={o.mode} images={o.images} />
+      return <Analyze2 />
     case 'swipe':
-      return <Swipe ids={o.ids} fresh={o.fresh} />
+      return <Swipe2 ids={o.ids} fresh={o.fresh} />
     case 'find':
-      return <FindDetail id={o.id} z={z} />
+      return <FindDetail2 id={o.id} z={z} />
     case 'post':
-      return <PostFind />
+      return <Write2 />
     case 'benefits':
       return <Benefits z={z} />
     case 'plan':
@@ -48,7 +54,7 @@ function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
     case 'tseries':
       return <TravelerSeriesPanel id={o.id} z={z} />
     case 'author':
-      return <AuthorPanel name={o.name} z={z} />
+      return <Profile2 name={o.name} z={z} />
   }
 }
 
@@ -62,19 +68,18 @@ function Root() {
       </>
     )
   return (
-    <div className="flex min-h-dvh">
-      <Sidebar />
+    <div className="flex min-h-dvh" style={{ background: '#FAFAFA' }}>
       <main className="min-w-0 flex-1">
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
-            {tab === 'home' && <Home />}
-            {tab === 'magazine' && <Magazine />}
-            {tab === 'map' && <MapScreen />}
-            {tab === 'carry' && <Carry />}
+            {tab === 'home' && <Home2 />}
+            {tab === 'magazine' && <Magazine2 />}
+            {tab === 'map' && <Map2 />}
+            {tab === 'carry' && <Carry2 />}
           </motion.div>
         </AnimatePresence>
       </main>
-      <BottomNav />
+      <BottomNav2 />
       <AnimatePresence>
         {overlays.map((o, i) => (
           <OverlayView key={`${o.type}-${'id' in o ? o.id : 'tripId' in o ? o.tripId : ''}-${i}`} o={o} depth={i} />

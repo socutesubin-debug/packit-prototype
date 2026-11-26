@@ -1,5 +1,5 @@
 export type Priority = 'must' | 'maybe' | 'skip'
-export type Category = '뷰티' | '식품' | '옷' | '잡화' | '면세품'
+export type Category = '뷰티' | '식품' | '의약품' | '의류' | '잡화' | '옷' | '면세품'
 
 export type ArtShape = 'box' | 'tube' | 'bottle' | 'pouch' | 'jar' | 'towel' | 'can' | 'bar'
 export interface Art {
@@ -36,6 +36,8 @@ export interface Product {
   reviews: Review[]
   findId?: string
   qty?: number
+  /** 피그마 시안 상품 사진 */
+  photo?: string
 }
 
 export type SuitcaseModel = 'ribbed' | 'classic' | 'soft'
@@ -73,6 +75,9 @@ export interface Store {
   x: number
   y: number
   color: string
+  photo?: string
+  /** 작은 썸네일 전용 사진 */
+  thumb?: string
 }
 
 /** A "local find": an item you can only get in that place, posted by a traveler */
@@ -89,6 +94,10 @@ export interface Find {
   category: Category
   art: Art
   photo?: string
+  /** 여러 장 사진 (첫 장 = 표지) */
+  photos?: string[]
+  /** 역 · 동네 이름 (매거진 카드) */
+  station?: string
   author: string
   authorTrip: string
   daysAgo: number
