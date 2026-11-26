@@ -206,28 +206,35 @@ export function FindDetail({ id, z }: { id: string; z: number }) {
           <Body text={f.story} />
 
           <div className="mt-6 overflow-hidden rounded-xl border bg-card shadow-xs">
-            <p className="border-b bg-sunken/50 px-4 py-2.5 text-[12.5px] font-semibold text-muted-foreground">발견 정보</p>
-            <button onClick={toMap} className="flex w-full items-center gap-3 border-b px-4 py-3 text-left hover:bg-accent">
-              <MapPin className="size-4 text-muted-foreground" />
-              <span className="min-w-0 flex-1">
-                <b className="block truncate text-[14px] font-semibold">{f.place}</b>
-                <span className="text-[12.5px] text-muted-foreground">{f.area}</span>
+            {/* 납작한 지도 띠: 발견 장소가 가운데 오도록 지도를 잘라 보여줘요 */}
+            <button onClick={toMap} aria-label={`${f.place} 지도에서 보기`} className="relative block h-[96px] w-full overflow-hidden bg-[#EDEDED]">
+              <span className="pointer-events-none absolute block" style={{ width: 720, height: 600, left: `calc(50% - ${f.x * 7.2}px)`, top: `calc(50% - ${f.y * 6}px)` }}>
+                <ShibuyaMap />
               </span>
-              <span className="flex items-center text-[12.5px] font-medium">지도 <ChevronRight className="size-4" /></span>
+              <span className="absolute top-[58%] left-1/2">
+                <FlagMark className="absolute bottom-0 left-[-5px] h-[34px] w-[26px]" active />
+              </span>
+              <span className="absolute right-2 bottom-2 flex items-center rounded-md bg-white px-2 py-0.5 text-[12px] font-semibold shadow-xs">
+                지도 <ChevronRight className="size-3.5" />
+              </span>
+            </button>
+            <button onClick={toMap} className="block w-full border-t px-4 py-3 text-left hover:bg-accent">
+              <b className="block truncate text-[15px] font-semibold">{f.place}</b>
+              <span className="text-[12.5px] text-muted-foreground">{f.area}</span>
             </button>
             {f.price != null && (
-              <div className="flex items-center gap-3 border-b px-4 py-3 text-[14px]">
-                <span className="w-4 text-center text-[13px] font-semibold text-muted-foreground">¥</span>
-                <span className="flex-1">
-                  {k === 'ask' ? '본 가격' : '발견 당시'} <b className="font-semibold tabular">{yen(f.price)}</b>
+              <div className="flex items-center justify-between border-t px-4 py-2.5 text-[13.5px]">
+                <span className="text-muted-foreground">{k === 'ask' ? '본 가격' : '발견 당시'}</span>
+                <span className="font-semibold tabular">
+                  {yen(f.price)} · {dateOf(f)}
                 </span>
-                <span className="text-[12.5px] text-muted-foreground tabular">{dateOf(f)} 기준</span>
               </div>
             )}
-            <div className="flex items-center gap-3 px-4 py-3 text-[14px]">
-              <Tag className="size-4 text-muted-foreground" />
-              <span className="flex-1">{f.category}</span>
-              <span className="text-[12.5px] text-muted-foreground">{f.saves}명 저장</span>
+            <div className="flex items-center justify-between border-t px-4 py-2.5 text-[13.5px]">
+              <span className="text-muted-foreground">카테고리</span>
+              <span>
+                {f.category} <span className="text-muted-foreground">· {f.saves}명 저장</span>
+              </span>
             </div>
           </div>
           <p className="mt-2 px-1 text-[11.5px] text-faint">여행자가 직접 올린 정보예요. 재고와 가격은 현장에서 달라질 수 있어요.{f.sample ? ' (예시 데이터)' : ''}</p>
