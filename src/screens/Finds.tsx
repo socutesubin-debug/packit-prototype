@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeft, Bookmark, BookmarkCheck, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Flag, Heart, ImagePlus, Lightbulb, LocateFixed, MapPin, MessageCircle, MessageCircleQuestion, Quote, Route, Search, ShoppingBag, Sparkles, Tag, Trophy, X } from 'lucide-react'
+import { ArrowLeft, Bookmark, BookmarkCheck, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Flag, Heart, ImagePlus, Lightbulb, MoreHorizontal, Plus, LocateFixed, MapPin, MessageCircle, MessageCircleQuestion, Quote, Route, Search, ShoppingBag, Sparkles, Tag, Trophy, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
 import { tiltOf } from '@/components/ProductCard'
@@ -322,8 +322,11 @@ interface Draft {
   subtitle: string
   /** 연재에 묶기: existing series id, or a new series title */
   series: { id?: string; title: string } | null
+  visibility: Visibility
 }
-const EMPTY: Draft = { kind: null, title: '', body: '', photos: [], place: null, price: '', cat: null, catAuto: false, attached: [], subtitle: '', series: null }
+type Visibility = 'all' | 'subs' | 'me'
+const VIS_LABEL: Record<Visibility, string> = { all: '전체 공개', subs: '구독자만', me: '나만 보기' }
+const EMPTY: Draft = { kind: null, title: '', body: '', photos: [], place: null, price: '', cat: null, catAuto: false, attached: [], subtitle: '', series: null, visibility: 'all' }
 let SAVED_DRAFT: Draft | null = null
 
 const guessCat = (t: string): Category | null => {
@@ -342,7 +345,8 @@ export function PostFind() {
   const [pinMode, setPinMode] = useState(false)
   const [newSeries, setNewSeries] = useState('')
   const bodyRef = useRef<HTMLTextAreaElement>(null)
-  const [d, setD] = useState<Draft>(() => SAVED_DRAFT ?? EMPTY)
+  const [d, setD] = useState<Draft>(() => ({ ...EMPTY, ...(SAVED_DRAFT ?? {}) }))
+  const [focused, setFocused] = useState(false)
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }))
   const [sheet, setSheet] = useState<null | 'kind' | 'place' | 'price' | 'photo' | 'product' | 'series'>(SAVED_DRAFT ? null : 'kind')
   const [notice, setNotice] = useState(true)
@@ -404,195 +408,179 @@ export function PostFind() {
     window.setTimeout(() => notify(msg), 250)
   }
 
+  const cover = d.photos[0]
+  const quoteOn = /(^|\n)>[^\n]*$/.test(d.body)
+  const tools = (
+    <>
+      <ToolIcon label="사진" onClick={() => setSheet('photo')}>
+        <ImagePlus className="size-[21px]" />
+      </ToolIcon>
+      <ToolIcon label="담은 상품" onClick={() => setSheet('product')} badge={attached.length || undefined}>
+        <ShoppingBag className="size-[21px]" />
+      </ToolIcon>
+      <ToolIcon label="가격" onClick={() => setSheet('price')}>
+        <span className="text-[17px] leading-none font-semibold">¥</span>
+      </ToolIcon>
+      <ToolIcon
+        label="인용"
+        active={focused && quoteOn}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => {
+          set({ body: `${d.body}${d.body && !d.body.endsWith('\n') ? '\n' : ''}> ` })
+          window.setTimeout(() => {
+            const el = bodyRef.current
+            if (!el) return
+            el.focus()
+            el.setSelectionRange(el.value.length, el.value.length)
+          }, 0)
+        }}
+      >
+        <Quote className="size-[19px]" />
+      </ToolIcon>
+      <ToolIcon label="연재에 묶기 등 더 보기" onClick={() => setSheet('series')}>
+        <MoreHorizontal className="size-[21px]" />
+      </ToolIcon>
+    </>
+  )
+
   return (
     <motion.div className="fixed inset-0 z-[58] flex flex-col bg-background" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}>
       <div className="mx-auto flex min-h-0 w-full max-w-[640px] flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center justify-between px-3 pt-[env(safe-area-inset-top)]">
-          <button aria-label="닫기" onClick={close} className="grid size-11 place-items-center rounded-full hover:bg-accent">
-            <ChevronLeft className="size-6" />
+        {/* 글감식 상단: 취소 · 종류/공개 범위 · 올리기 */}
+        <header className="grid h-14 shrink-0 grid-cols-[72px_1fr_72px] items-center border-b px-4 pt-[env(safe-area-inset-top)]">
+          <button onClick={close} className="justify-self-start text-[15px] text-[#92928C] hover:text-ink">
+            취소
           </button>
-          <span className="text-[15.5px] font-semibold">발견 올리기</span>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                SAVED_DRAFT = d
-                notify('임시저장했어요')
-              }}
-              className="h-9 px-2.5 text-[13.5px] font-medium text-muted-foreground hover:text-ink"
-            >
-              임시저장
-            </button>
-            <button
-              onClick={submit}
-              aria-disabled={!valid}
-              className={cn('h-9 rounded-full px-4 text-[14px] font-semibold transition', valid ? 'bg-ink text-white' : 'bg-sunken text-faint')}
-            >
-              올리기
-            </button>
-          </div>
+          <button onClick={() => setSheet('kind')} className={cn('flex items-center justify-self-center gap-1.5 text-[15.5px] font-semibold', tried && !d.kind && 'underline decoration-2 underline-offset-4')}>
+            {kindMeta ? kindMeta.label : '종류 선택'}
+            <span className="size-1 rounded-full bg-[#B9B9B2]" />
+            {VIS_LABEL[d.visibility]}
+            <ChevronDown className="size-4" />
+          </button>
+          <button onClick={submit} aria-disabled={!valid} className={cn('justify-self-end text-[15px] font-bold transition', valid ? 'text-ink' : 'text-[#B9B9B2]')}>
+            올리기
+          </button>
         </header>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          {/* 표지 (브런치) — 첫 사진 위에 제목 */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden bg-sunken">
-            {d.photos[0] ? (
-              d.photos[0].src ? (
-                <img src={d.photos[0].src} alt="" className="size-full object-cover grayscale" />
-              ) : (
-                <ProductArt art={attached[0]?.art ?? SAMPLE_ART} tone="neutral" className="size-full" />
-              )
-            ) : (
-              <button onClick={() => setSheet('photo')} className="absolute inset-x-0 top-[22%] mx-auto flex w-fit flex-col items-center gap-2 text-[13px] font-medium text-muted-foreground">
-                <span className="grid size-12 place-items-center rounded-full border-2 border-dashed border-faint">
-                  <ImagePlus className="size-5" />
-                </span>
-                표지 사진 넣기
-              </button>
-            )}
-            {d.photos[0]?.pins.map((p, i) => (
-              <span key={i} className="absolute z-20 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ink text-[12px] font-semibold text-white ring-[3px] ring-white shadow tabular" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
-                {i + 1}
-              </span>
-            ))}
-            {!pinMode && (
-              <div className={cn('absolute inset-x-0 bottom-0 px-5 pt-16 pb-4', d.photos[0] && 'bg-gradient-to-t from-white via-white/80 to-transparent')}>
-                <textarea
-                  value={d.title}
-                  onChange={(e) => set({ title: e.target.value.slice(0, 40).replace(/\n/g, '') })}
-                  rows={1}
-                  placeholder="제목을 입력하세요"
-                  aria-label="제목"
-                  className={cn('field-sizing-content w-full resize-none bg-transparent text-[25px] leading-[1.25] font-bold tracking-[-0.03em] outline-none placeholder:text-faint', tried && !d.title.trim() && 'placeholder:text-ink-2')}
-                />
-                <input value={d.subtitle} onChange={(e) => set({ subtitle: e.target.value.slice(0, 60) })} placeholder="부제목을 입력하세요 (선택)" aria-label="부제목" className="mt-1 w-full bg-transparent text-[14.5px] text-ink-2 outline-none placeholder:text-faint" />
-              </div>
-            )}
-            {pinMode && d.photos[0] && (
-              <div
-                className="absolute inset-0 z-10 cursor-crosshair"
-                onClick={(e) => {
-                  const r = e.currentTarget.getBoundingClientRect()
-                  const ph = d.photos[0]
-                  const n = ph.pins.length
-                  const pin: PhotoPin = { x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100, label: attached[n]?.name ?? `물건 ${n + 1}` }
-                  set({ photos: [{ ...ph, pins: [...ph.pins, pin] }, ...d.photos.slice(1)] })
-                }}
-              >
-                <span className="absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-ink px-3 py-1.5 text-[12px] font-medium text-white">물건을 누르면 번호 핀이 생겨요</span>
-              </div>
-            )}
-            {d.photos[0] && (
-              <div className="absolute top-3 right-3 z-30 flex gap-1.5">
-                <button onClick={() => setPinMode(!pinMode)} className={cn('flex h-8 items-center gap-1 rounded-full px-3 text-[12px] font-semibold shadow-xs', pinMode ? 'bg-ink text-white' : 'bg-white/90')}>
-                  {pinMode ? '완료' : '핀 달기'}
-                </button>
-                {!pinMode && (
-                  <button
-                    aria-label="표지 사진 빼기"
-                    onClick={() => set({ photos: d.photos.slice(1) })}
-                    className="grid size-8 place-items-center rounded-full bg-white/90 shadow-xs"
+        <div className="min-h-0 flex-1 overflow-y-auto pb-6">
+          {/* 사진 먼저 (오늘의집) */}
+          <div className="px-4 pt-4">
+            {cover ? (
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-[#EFEFEB]">
+                {cover.src ? <img src={cover.src} alt="" className="size-full object-cover grayscale" /> : <ProductArt art={attached[0]?.art ?? SAMPLE_ART} tone="neutral" className="size-full" />}
+                {cover.pins.map((p, i) => (
+                  <span key={i} className="absolute z-20 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-ink text-[12px] font-semibold text-white shadow ring-[3px] ring-white tabular" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+                    {i + 1}
+                  </span>
+                ))}
+                {pinMode && (
+                  <div
+                    className="absolute inset-0 z-10 cursor-crosshair"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect()
+                      const n = cover.pins.length
+                      const pin: PhotoPin = { x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100, label: attached[n]?.name ?? `물건 ${n + 1}` }
+                      set({ photos: [{ ...cover, pins: [...cover.pins, pin] }, ...d.photos.slice(1)] })
+                    }}
                   >
-                    <X className="size-4" />
+                    <span className="absolute top-3 left-1/2 -translate-x-1/2 rounded-full bg-ink px-3 py-1.5 text-[12px] font-medium whitespace-nowrap text-white">물건을 누르면 번호 핀이 생겨요</span>
+                  </div>
+                )}
+                <span className="absolute top-2.5 left-2.5 z-30 rounded-md bg-white px-2 py-0.5 text-[11.5px] font-semibold">표지</span>
+                <div className="absolute top-2.5 right-2.5 z-30 flex gap-1.5">
+                  <button onClick={() => setPinMode(!pinMode)} className={cn('h-8 rounded-full px-3 text-[12px] font-semibold shadow-xs', pinMode ? 'bg-ink text-white' : 'bg-white/90')}>
+                    {pinMode ? '완료' : '핀 달기'}
+                  </button>
+                  {!pinMode && (
+                    <button aria-label="표지 사진 빼기" onClick={() => set({ photos: d.photos.slice(1) })} className="grid size-8 place-items-center rounded-full bg-white/90 shadow-xs">
+                      <X className="size-4" />
+                    </button>
+                  )}
+                </div>
+                {!pinMode && (
+                  <button onClick={() => setSheet('photo')} className="absolute right-2.5 bottom-2.5 z-30 flex h-8 items-center gap-1 rounded-full bg-black/65 px-3 text-[12.5px] font-semibold text-white">
+                    <Plus className="size-3.5" /> {d.photos.length}
                   </button>
                 )}
               </div>
+            ) : (
+              <button onClick={() => setSheet('photo')} className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-[#DEDED8] bg-[#FAFAF8] text-[#92928C] hover:bg-[#F7F7F3]">
+                <Plus className="size-6" />
+                <span className="text-[14px] font-medium">사진을 올려 주세요</span>
+                <span className="text-[12px] text-[#B9B9B2]">첫 장이 표지가 돼요</span>
+              </button>
+            )}
+            {!!cover?.pins.length && (
+              <div className="pt-1">
+                {cover.pins.map((p, i) => (
+                  <div key={i} className="mt-1.5 flex items-center gap-2">
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ink text-[11.5px] font-semibold text-white tabular">{i + 1}</span>
+                    <input
+                      value={p.label}
+                      onChange={(e) => set({ photos: [{ ...cover, pins: cover.pins.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) }, ...d.photos.slice(1)] })}
+                      className="h-9 min-w-0 flex-1 border-b bg-transparent text-[14px] outline-none focus:border-ink"
+                      aria-label={`핀 ${i + 1} 이름`}
+                    />
+                    <button aria-label="핀 지우기" onClick={() => set({ photos: [{ ...cover, pins: cover.pins.filter((_, j) => j !== i) }, ...d.photos.slice(1)] })} className="grid size-8 place-items-center text-muted-foreground">
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-          {!!d.photos[0]?.pins.length && (
-            <div className="px-5 pt-2">
-              {d.photos[0].pins.map((p, i) => (
-                <div key={i} className="mt-1.5 flex items-center gap-2">
-                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-ink text-[11.5px] font-semibold text-white tabular">{i + 1}</span>
-                  <input
-                    value={p.label}
-                    onChange={(e) => set({ photos: [{ ...d.photos[0], pins: d.photos[0].pins.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)) }, ...d.photos.slice(1)] })}
-                    className="h-9 min-w-0 flex-1 border-b bg-transparent text-[14px] outline-none focus:border-ink"
-                    aria-label={`핀 ${i + 1} 이름`}
-                  />
-                  <button aria-label="핀 지우기" onClick={() => set({ photos: [{ ...d.photos[0], pins: d.photos[0].pins.filter((_, j) => j !== i) }, ...d.photos.slice(1)] })} className="grid size-8 place-items-center text-muted-foreground">
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          <button onClick={() => setSheet('kind')} className={cn('mt-2 flex h-13 w-full items-center justify-between border-y px-5 text-left', tried && !d.kind && 'bg-sunken')}>
-            {kindMeta ? (
-              <span className="flex items-center gap-2 text-[15px] font-semibold">
-                {(() => {
-                  const I = KIND_ICONS[kindMeta.kind]
-                  return <I className="size-4" />
-                })()}
-                {kindMeta.label}
-              </span>
-            ) : (
-              <span className="text-[15px] font-medium">
-                어떤 글인가요?<span className="ml-0.5 text-ink">*</span>
-              </span>
-            )}
-            <ChevronDown className="size-5 text-muted-foreground" />
-          </button>
-          <button onClick={() => setSheet('series')} className="flex h-13 w-full items-center justify-between gap-3 border-b px-5 text-left">
-            <span className="shrink-0 text-[14px] text-muted-foreground">연재에 묶기</span>
-            <span className="flex min-w-0 items-center gap-1 text-[14px] font-semibold">
-              <span className="truncate">{d.series ? `${d.series.title} · ${d.series.id ? (mySeries.find((x) => x.id === d.series?.id)?.eps.length ?? 0) + 1 : 1}화` : '묶지 않음'}</span>
-              <ChevronDown className="size-5 shrink-0 text-muted-foreground" />
-            </span>
-          </button>
 
-          <AnimatePresence>
-            {notice && (
-              <motion.div exit={{ opacity: 0, height: 0 }} className="px-5 pt-3">
-                <div className="flex items-start gap-2 rounded-lg bg-sunken px-3.5 py-3 text-[12.5px] leading-relaxed text-ink-2">
-                  <span className="flex-1">직접 가 본 곳, 직접 산 물건만 올려 주세요. 가격은 발견한 날 기준으로 보여요.</span>
-                  <button aria-label="안내 닫기" onClick={() => setNotice(false)} className="-mr-1 grid size-6 place-items-center">
-                    <X className="size-4" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="px-4">
+            <textarea
+              value={d.title}
+              onChange={(e) => set({ title: e.target.value.slice(0, 40).replace(/\n/g, '') })}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              rows={1}
+              placeholder="제목"
+              aria-label="제목"
+              className={cn('field-sizing-content mt-5 w-full resize-none bg-transparent text-[24px] leading-snug font-bold tracking-[-0.02em] outline-none placeholder:font-medium placeholder:text-[#B9B9B2]', tried && !d.title.trim() && 'placeholder:text-ink-2')}
+            />
+            <div className="mt-2 h-px bg-[#EFEFEB]" />
 
-          <div className="px-5 pt-2">
-            {/* 발견 정보 카드 */}
-            <div className="mt-3 overflow-hidden rounded-xl border">
-              <InfoRow
-                icon={<MapPin className="size-4" />}
-                k="가게"
-                req
-                missing={tried && !d.place}
-                onClick={() => setSheet('place')}
-                value={d.place ? d.place.name : undefined}
-                sub={d.place ? `${d.place.area} · ${d.place.auto ? '사진에서 찾음' : '지도에 핀 찍음'}` : '지도에 핀을 찍고 가게 이름을 적어요'}
-              />
-              <InfoRow
-                icon={<span className="w-4 text-center text-[13px] font-semibold">¥</span>}
-                k={d.kind === 'ask' ? '본 가격' : '가격'}
-                onClick={() => setSheet('price')}
-                value={d.price ? yen(Number(d.price)) : undefined}
-                sub={d.price ? `${TODAY} 기준 · 약 ${Math.round((Number(d.price) * rate) / 100).toLocaleString()}원` : '발견 당시 가격 (선택)'}
-              />
-              <InfoRow icon={<Tag className="size-4" />} k="카테고리" onClick={() => setSheet('price')} value={cat ?? undefined} sub={cat ? (catAuto ? '제목으로 골라 뒀어요' : undefined) : '선택'} last />
+            {/* 위치 · 가격 · 카테고리 칩 */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              {d.place ? (
+                <span className="inline-flex h-8 items-center gap-1 rounded-full bg-[#F7F7F3] pr-1 pl-3 text-[13px]">
+                  <button onClick={() => setSheet('place')} className="flex items-center gap-1">
+                    <MapPin className="size-3.5 fill-ink text-white" /> {d.place.name}
+                  </button>
+                  <button aria-label="위치 빼기" onClick={() => set({ place: null })} className="grid size-6 place-items-center text-[#92928C]">
+                    <X className="size-3.5" />
+                  </button>
+                </span>
+              ) : (
+                <button onClick={() => setSheet('place')} className={cn('flex h-8 items-center gap-1 text-[13.5px] text-[#92928C] hover:text-ink', tried && 'text-ink underline underline-offset-4')}>
+                  <MapPin className="size-4 fill-[#92928C] text-white" /> 가게 위치 추가
+                </button>
+              )}
+              {d.price && (
+                <button onClick={() => setSheet('price')} className="inline-flex h-8 items-center rounded-full bg-[#F7F7F3] px-3 text-[13px] font-semibold tabular">
+                  {yen(Number(d.price))}
+                </button>
+              )}
+              {cat && (d.price || d.place) && (
+                <button onClick={() => setSheet('price')} className="inline-flex h-8 items-center rounded-full bg-[#F7F7F3] px-3 text-[13px] text-[#666661]">
+                  {cat}
+                </button>
+              )}
+              {d.series && <span className="inline-flex h-8 items-center rounded-full border border-[#DEDED8] px-3 text-[12.5px] text-[#666661]">연재 · {d.series.title}</span>}
             </div>
 
-            {/* 본문: 사진 · 담은 상품 · 이야기 */}
             {d.photos.slice(1).map((ph) => (
-              <PhotoBlock
-                key={ph.id}
-                photo={ph}
-                labels={attached.map((p) => p.name)}
-                onChange={(n) => set({ photos: d.photos.map((x) => (x.id === ph.id ? n : x)) })}
-                onRemove={() => set({ photos: d.photos.filter((x) => x.id !== ph.id) })}
-              />
+              <PhotoBlock key={ph.id} photo={ph} labels={attached.map((p) => p.name)} onChange={(n) => set({ photos: d.photos.map((x) => (x.id === ph.id ? n : x)) })} onRemove={() => set({ photos: d.photos.filter((x) => x.id !== ph.id) })} />
             ))}
             {attached.map((p) => (
               <div key={p.id} className="mt-3 flex items-center gap-3 rounded-xl border p-2">
                 <ProductArt art={p.art} tone="neutral" className="size-12 shrink-0 rounded-lg" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[14px] font-semibold">{p.name}</span>
-                  <span className="text-[12.5px] text-muted-foreground tabular">
-                    {yen(p.price)} · 내 리스트에서 가져옴
-                  </span>
+                  <span className="text-[12.5px] text-muted-foreground tabular">{yen(p.price)} · 내 리스트에서 가져옴</span>
                 </span>
                 <button aria-label="상품 빼기" onClick={() => attach(p)} className="grid size-8 place-items-center rounded-full hover:bg-accent">
                   <X className="size-4" />
@@ -603,33 +591,37 @@ export function PostFind() {
               ref={bodyRef}
               value={d.body}
               onChange={(e) => set({ body: e.target.value })}
-              placeholder={kindMeta ? kindMeta.body : '종류를 먼저 골라 주세요'}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder={!d.kind || d.kind === 'find' ? '어디서, 무엇을 발견했나요? 짧은 소개로 시작해 보세요.\n#면세 #한정판 처럼 태그도 달 수 있어요.' : kindMeta?.body}
               aria-label="이야기"
-              className="field-sizing-content mt-5 min-h-[140px] w-full resize-none bg-transparent text-[16px] leading-[1.75] outline-none placeholder:text-faint"
+              className="field-sizing-content mt-4 min-h-[160px] w-full resize-none bg-transparent text-[16px] leading-[1.75] outline-none placeholder:text-[#B9B9B2]"
             />
           </div>
         </div>
 
-        <div className="shrink-0 border-t bg-background pb-[env(safe-area-inset-bottom)]">
-          {tried && !valid && <p className="px-5 pt-2.5 text-[12.5px] font-medium">종류 · 제목 · 가게 위치를 채워 주세요</p>}
-          <div className="flex items-center gap-1 px-2 py-1.5">
-            <ToolBtn onClick={() => setSheet('photo')} icon={<ImagePlus className="size-5" />} label={`사진${d.photos.length ? ` ${d.photos.length}` : ''}`} />
-            <ToolBtn onClick={() => setSheet('product')} icon={<ShoppingBag className="size-5" />} label={`담은 상품${attached.length ? ` ${attached.length}` : ''}`} />
-            <ToolBtn
-              onClick={() => {
-                set({ body: `${d.body}${d.body && !d.body.endsWith('\n') ? '\n' : ''}> ` })
-                window.setTimeout(() => {
-                  const el = bodyRef.current
-                  if (!el) return
-                  el.focus()
-                  el.setSelectionRange(el.value.length, el.value.length)
-                }, 0)
-              }}
-              icon={<Quote className="size-5" />}
-              label="인용"
-            />
-            <span className="ml-auto pr-3 text-[12px] text-faint tabular">{d.title.length} / 40</span>
-          </div>
+        {/* 하단 툴바: 평소엔 바, 입력 중엔 키보드 위에 뜨는 둥근 막대 (Apple 메모) */}
+        <div className="shrink-0 pb-[env(safe-area-inset-bottom)]">
+          {tried && !valid && <p className="px-4 pb-1 text-[12.5px] font-medium">종류 · 제목 · 가게 위치를 채워 주세요</p>}
+          {focused ? (
+            <div className="mx-3 mb-2 flex items-center gap-1 rounded-full bg-white px-2 py-1 shadow-[0_2px_14px_rgba(0,0,0,0.14)]">
+              {tools}
+              <span className="ml-auto pr-3 text-[12px] text-[#92928C] tabular">{d.title.length}/40</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 border-t px-2 py-1.5">
+              {tools}
+              <button
+                onClick={() => {
+                  SAVED_DRAFT = d
+                  notify('임시저장했어요')
+                }}
+                className="ml-auto flex h-10 items-center gap-2 px-3 text-[14px] text-[#92928C] hover:text-ink"
+              >
+                임시저장 <span className="h-3.5 w-px bg-[#DEDED8]" /> <span className="tabular">{SAVED_DRAFT ? 1 : 0}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -649,18 +641,15 @@ export function PostFind() {
         }}
       />
 
-      {/* 종류 선택 */}
+      {/* 종류 · 공개 범위 */}
       <Sheet open={sheet === 'kind'} onClose={() => setSheet(null)} title="어떤 글인가요?">
-        <ul className="divide-y">
+        <ul className="-mt-1 divide-y">
           {POST_KINDS.map((k) => {
             const I = KIND_ICONS[k.kind]
             return (
               <li key={k.kind}>
                 <button
-                  onClick={() => {
-                    set({ kind: k.kind })
-                    setSheet(null)
-                  }}
+                  onClick={() => set({ kind: k.kind })}
                   className="flex w-full items-start gap-3 py-3.5 text-left"
                 >
                   <span className={cn('grid size-10 shrink-0 place-items-center rounded-full border', d.kind === k.kind && 'border-ink bg-ink text-white')}>
@@ -676,6 +665,17 @@ export function PostFind() {
             )
           })}
         </ul>
+        <p className="mt-5 text-[12.5px] font-semibold text-[#92928C]">누구에게 보일까요?</p>
+        <div className="mt-2 flex rounded-xl bg-[#F7F7F3] p-1">
+          {(Object.keys(VIS_LABEL) as Visibility[]).map((v) => (
+            <button key={v} onClick={() => set({ visibility: v })} className={cn('h-9 flex-1 rounded-lg text-[13.5px] transition', d.visibility === v ? 'bg-ink font-semibold text-white' : 'text-[#666661]')}>
+              {VIS_LABEL[v]}
+            </button>
+          ))}
+        </div>
+        <Button size="lg" className="mt-5 w-full" disabled={!d.kind} onClick={() => setSheet(null)}>
+          {d.kind ? '완료' : '종류를 골라 주세요'}
+        </Button>
       </Sheet>
 
       <PlaceSheet open={sheet === 'place'} onClose={() => setSheet(null)} value={d.place} onDone={(place) => set({ place })} />
@@ -711,7 +711,7 @@ export function PostFind() {
       </Sheet>
 
       {/* 연재에 묶기 */}
-      <Sheet open={sheet === 'series'} onClose={() => setSheet(null)} title="연재에 묶기">
+      <Sheet open={sheet === 'series'} onClose={() => setSheet(null)} title="더 보기 · 연재에 묶기">
         <p className="-mt-1 mb-2 text-[12.5px] text-muted-foreground">묶으면 내 연재의 다음 화로 올라가요</p>
         <ul className="divide-y">
           <li>
@@ -814,6 +814,15 @@ function InfoRow({ icon, k, value, sub, onClick, req, missing, last }: { icon: R
       </span>
       {req && !value && <span className="rounded bg-ink px-1.5 py-0.5 text-[10.5px] font-semibold text-white">필수</span>}
       <ChevronRight className="size-4 text-faint" />
+    </button>
+  )
+}
+
+function ToolIcon({ label, onClick, onMouseDown, children, active, badge }: { label: string; onClick: () => void; onMouseDown?: (e: React.MouseEvent) => void; children: React.ReactNode; active?: boolean; badge?: number }) {
+  return (
+    <button aria-label={label} title={label} onClick={onClick} onMouseDown={onMouseDown} className={cn('relative grid size-10 place-items-center rounded-lg text-ink transition hover:bg-accent', active && 'bg-[#DFFF3F] hover:bg-[#DFFF3F]')}>
+      {children}
+      {badge ? <span className="absolute top-1 right-0.5 grid size-4 place-items-center rounded-full bg-ink text-[10px] font-semibold text-white tabular">{badge}</span> : null}
     </button>
   )
 }
