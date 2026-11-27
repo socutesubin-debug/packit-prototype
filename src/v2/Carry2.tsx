@@ -131,7 +131,7 @@ function Outside({ tripId }: { tripId: string }) {
 
       {/* 스티커 시트: 위로 끌어올리면 전부 보여요 */}
       <motion.div
-        className="absolute inset-x-0 bottom-0 z-10 rounded-t-[40px] bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
+        className="absolute inset-x-0 bottom-0 z-10 rounded-t-[32px] bg-white shadow-[0_-4px_24px_rgba(0,0,0,0.06)]"
         animate={{ y: up ? 0 : 334 }}
         initial={false}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
@@ -144,7 +144,7 @@ function Outside({ tripId }: { tripId: string }) {
         style={{ height: 440 }}
       >
         <button onPointerDown={(e) => drag.start(e)} onClick={() => setUp((v) => !v)} aria-label={up ? '스티커 접기' : '스티커 펼치기'} className="flex h-8 w-full touch-none items-center justify-center">
-          <span className="h-1 w-16 rounded-full" style={{ background: C.g4 }} />
+          <span className="h-1 w-10 rounded-full bg-[#D9D9DC]" />
         </button>
         <ul className="grid grid-cols-3 gap-y-6 px-6 pt-4">
           {SHEET_STICKERS.map((k) => (
@@ -202,10 +202,10 @@ function Inside({ tripId }: { tripId: string }) {
             )
           })
         ) : (
-          <ul className="mt-6 px-5">
+          <ul className="mt-6 flex flex-col gap-2 px-5">
             {bought.map((p) => (
               <li key={p.id}>
-                <button onClick={() => setAsk(p)} className="flex h-[96px] w-full items-center gap-6 border-b px-6 text-left" style={{ borderColor: C.g4 }}>
+                <button onClick={() => setAsk(p)} className="flex h-[96px] w-full items-center gap-6 rounded-2xl bg-white pr-5 pl-4 text-left">
                   <span className="grid size-[72px] shrink-0 place-items-center">
                     <ProductImg p={p} className="max-h-[72px] max-w-[72px]" />
                   </span>
@@ -238,7 +238,7 @@ function Inside({ tripId }: { tripId: string }) {
           </p>
         </div>
         <IconBtn label={list ? '캐리어로 보기' : '구매 리스트'} onClick={() => setList((v) => !v)} className="bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-          <List className="size-5" strokeWidth={1.8} />
+          <List className="size-6" strokeWidth={1.6} />
         </IconBtn>
       </div>
       <AnimatePresence>{ask && <ReviewPop p={ask} onClose={() => setAsk(null)} />}</AnimatePresence>
