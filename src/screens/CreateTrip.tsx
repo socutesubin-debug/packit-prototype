@@ -70,7 +70,7 @@ export function CreateTrip({ first }: { first?: boolean }) {
             <h1 className="t-h2">어디로 떠나시나요?</h1>
           ) : (
             <button onClick={back} aria-label={step ? '이전' : '닫기'} className="-ml-3 grid size-11 place-items-center">
-              <ChevronLeft className="size-7" strokeWidth={1.6} />
+              <ChevronLeft className="size-6" strokeWidth={1.6} />
             </button>
           )}
           <span className="t-label px-3" style={{ color: C.sub }}>
@@ -108,7 +108,7 @@ function StepCity({ first, q, setQ, region, setRegion, cities, cityId, setCityId
       <div className="px-5">
         {/* 검색 h40 */}
         <label className="flex h-10 items-center gap-3 rounded-full bg-white px-4">
-          <Search className="size-4 shrink-0" style={{ color: C.gray }} strokeWidth={2.2} />
+          <Search className="size-5 shrink-0" style={{ color: C.gray }} strokeWidth={1.6} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="여행지를 검색해보세요" className="t-label min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#737370]" />
         </label>
       </div>
@@ -128,7 +128,7 @@ function StepCity({ first, q, setQ, region, setRegion, cities, cityId, setCityId
           const on = c.id === cityId
           return (
             <li key={c.id}>
-              <button onClick={() => setCityId(c.id)} aria-pressed={on} className={cn('flex w-full items-center justify-between rounded-2xl border-b p-3 text-left transition', on && 'bg-white')} style={{ borderColor: C.line }}>
+              <button onClick={() => setCityId(c.id)} aria-pressed={on} className={cn('flex w-full items-center justify-between rounded-2xl p-3 text-left transition', on && 'bg-white')}>
                 <span className="flex items-center gap-4">
                   {c.id === 'tokyo' ? (
                     <img src={tokyoImg} alt="" className="h-[76px] w-[92px] shrink-0 rounded-lg object-cover" />
@@ -188,7 +188,7 @@ function StepInfo({
       {/* 여행지 h52 */}
       <div className="mt-4 flex h-[52px] items-center justify-between rounded-xl bg-white px-5">
         <span className="flex items-center gap-2">
-          <MapPin className="size-5" strokeWidth={1.8} />
+          <MapPin className="size-5" strokeWidth={1.6} />
           <span className="t-body-l">{city.name}</span>
         </span>
         <button onClick={onChangeCity} className="t-label -mr-2 h-10 px-2">
@@ -247,13 +247,13 @@ function RangeCalendar({ value, onChange }: { value: { start?: string; end?: str
     <div className="flex flex-col items-center gap-2 rounded-xl bg-white py-2 shadow-[0_4px_16px_rgba(0,0,0,0.07)]">
       <div className="flex w-full max-w-[354px] items-center justify-between px-2">
         <button aria-label="이전 달" disabled={!canPrev} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} className="grid size-8 place-items-center disabled:opacity-30">
-          <ChevronLeft className="size-6" strokeWidth={1.8} />
+          <ChevronLeft className="size-6" strokeWidth={1.6} />
         </button>
         <p className="t-body-l" style={{ color: '#131A29' }}>
           {month.getFullYear()}년 {month.getMonth() + 1}월
         </p>
         <button aria-label="다음 달" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))} className="grid size-8 place-items-center">
-          <ChevronRight className="size-6" strokeWidth={1.8} />
+          <ChevronRight className="size-6" strokeWidth={1.6} />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-x-2">

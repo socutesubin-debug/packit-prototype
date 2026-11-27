@@ -79,7 +79,7 @@ export function IconBtn({ label, onClick, children, className, style }: { label:
 export function BackButton({ onClick, circle, label = '뒤로' }: { onClick: () => void; circle?: boolean; label?: string }) {
   return (
     <IconBtn label={label} onClick={onClick} className={circle ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]' : '-ml-2'}>
-      <ChevronLeft className="size-7" strokeWidth={1.6} />
+      <ChevronLeft className="size-6" strokeWidth={1.6} />
     </IconBtn>
   )
 }
@@ -126,10 +126,10 @@ export function BottomNav2() {
   if (overlays.some((o) => o.type !== 'benefits')) return null
   const fab =
     tab === 'magazine'
-      ? { label: '발견 올리기', icon: <Plus className="size-7" strokeWidth={1.8} />, act: () => open({ type: 'post' }) }
+      ? { label: '발견 올리기', icon: <Plus className="size-6" strokeWidth={1.6} />, act: () => open({ type: 'post' }) }
       : tab === 'carry'
-        ? { label: '캐리어 꾸미기', icon: <StickyNote className="size-6" strokeWidth={1.8} />, act: () => open({ type: 'carry', tripId: trip.id }) }
-        : { label: '상품 담기', icon: <Plus className="size-7" strokeWidth={1.8} />, act: () => open({ type: 'save' }) }
+        ? { label: '캐리어 꾸미기', icon: <StickyNote className="size-6" strokeWidth={1.6} />, act: () => open({ type: 'carry', tripId: trip.id }) }
+        : { label: '상품 담기', icon: <Plus className="size-6" strokeWidth={1.6} />, act: () => open({ type: 'save' }) }
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40">
       <div className="pk mx-auto flex w-full max-w-[480px] items-end justify-between px-5 pb-[max(34px,env(safe-area-inset-bottom))]">
@@ -182,7 +182,7 @@ export function Sheet2({ open, onClose, title, children }: { open: boolean; onCl
 export function SearchCircle({ onClick }: { onClick?: () => void }) {
   return (
     <button aria-label="검색" onClick={onClick} className="grid size-10 shrink-0 place-items-center rounded-full bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-      <Search className="size-5" strokeWidth={1.8} />
+      <Search className="size-5" strokeWidth={1.6} />
     </button>
   )
 }

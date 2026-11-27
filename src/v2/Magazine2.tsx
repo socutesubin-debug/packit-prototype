@@ -219,7 +219,7 @@ export function FindDetail2({ id, z }: { id: string; z: number }) {
               <img src={mapImg} alt="" className="absolute inset-0 size-full object-cover object-[50%_40%]" />
               <FlagIcon className="absolute top-[42%] left-[48%] h-6 w-6" />
               <span className="t-label absolute right-2 bottom-2 flex h-9 items-center gap-1 rounded-full bg-white px-4">
-                지도보기 <ChevronRight className="size-4" />
+                지도보기 <ChevronRight className="size-5" strokeWidth={1.6} />
               </span>
             </button>
             <dl className="t-label mt-3 flex flex-col gap-3 px-3">

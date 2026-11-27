@@ -40,7 +40,7 @@ const storeIcon = (on: boolean) => {
     className: '',
     iconSize: [d, d],
     iconAnchor: [d / 2, d / 2],
-    html: `<span class="grid size-full place-items-center rounded-full border-2 transition" style="background:${on ? C.btn : '#D9D9D9'};border-color:${on ? '#fff' : '#3A3A40'};color:${on ? '#fff' : '#3A3A40'}">${renderToStaticMarkup(<StoreIcon className={on ? 'size-5' : 'size-4'} strokeWidth={1.8} />)}</span>`,
+    html: `<span class="grid size-full place-items-center rounded-full border-2 transition" style="background:${on ? C.btn : '#D9D9D9'};border-color:${on ? '#fff' : '#3A3A40'};color:${on ? '#fff' : '#3A3A40'}">${renderToStaticMarkup(<StoreIcon className="size-5" strokeWidth={1.6} />)}</span>`,
   })
 }
 const flagIcon = (hot: boolean) =>
@@ -119,14 +119,14 @@ export function Map2() {
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[10] px-4 pt-[env(safe-area-inset-top)] [&>*]:pointer-events-auto">
         <div className="flex h-[60px] items-center justify-between">
           <button className="t-body-m flex h-10 items-center gap-2 rounded-full bg-white px-4 font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-            <MapPin className="size-5" strokeWidth={1.8} />
+            <MapPin className="size-5" strokeWidth={1.6} />
             도쿄 • 시부야
           </button>
           <SearchCircle onClick={() => notify('검색은 곧 열려요')} />
         </div>
         <div className="flex w-max gap-2">
           <MapChip on={showFinds} onClick={() => setShowFinds((v) => !v)}>
-            <Flag className="size-4" strokeWidth={1.8} />
+            <Flag className="size-5" strokeWidth={1.6} />
             여행자 발견
           </MapChip>
           <MapChip on={near} onClick={() => setNear((v) => !v)}>
@@ -206,7 +206,7 @@ function StoreCard({ s }: { s: Store }) {
           상세보기
         </button>
         <button onClick={() => notify(`${s.name}까지 도보 ${Math.max(1, Math.round(s.distance / 80))}분이에요`)} className="t-body-m flex h-9 flex-1 items-center justify-center gap-2 rounded-full font-semibold text-white" style={{ background: C.gray }}>
-          <Route className="size-4" strokeWidth={1.8} /> 길찾기
+          <Route className="size-5" strokeWidth={1.6} /> 길찾기
         </button>
       </div>
     </div>
@@ -261,16 +261,15 @@ export function Store2({ id, z }: { id: string; z: number }) {
               <span style={{ color: C.sub }}>{hoursLabel(s.hours)}</span>
             </p>
           </div>
-          <div className="mt-6 h-px" style={{ background: C.g4 }} />
 
           <StoreSection title="이 곳에서 찾을 상품" list={must} empty="이 매장에서 살 수 있는 '꼭 살래' 상품이 없어요" onToggle={(p) => buy(p)} onOpen={(p) => open({ type: 'product', id: p.id })} />
           {!!maybe.length && <StoreSection title="고민 중인 상품" list={maybe} onToggle={(p) => buy(p)} onOpen={(p) => open({ type: 'product', id: p.id })} />}
 
           <h2 className="t-body-m mt-8 px-2 font-semibold">같이 들리기 좋은 근처 가게</h2>
-          <ul className="mt-2">
+          <ul className="mt-3 flex flex-col gap-2">
             {nearby.map((n) => (
               <li key={n.id}>
-                <button onClick={() => open({ type: 'store', id: n.id })} className="flex h-[86px] w-full items-center gap-4 border-b px-2 text-left" style={{ borderColor: C.g4 }}>
+                <button onClick={() => open({ type: 'store', id: n.id })} className="flex h-[92px] w-full items-center gap-4 rounded-2xl bg-white pr-3 pl-3 text-left">
                   <StoreThumb s={n} className="h-[68px] w-[72px] shrink-0 rounded-md" />
                   <span className="min-w-0 flex-1">
                     <span className="t-label line-clamp-2 font-semibold">{n.name}</span>
@@ -298,7 +297,7 @@ export function Store2({ id, z }: { id: string; z: number }) {
 
 function StoreSection({ title, list, empty, onToggle, onOpen }: { title: string; list: Product[]; empty?: string; onToggle: (p: Product) => void; onOpen: (p: Product) => void }) {
   return (
-    <section className="mt-6">
+    <section className="mt-8">
       <h2 className="t-body-m px-2 font-semibold">{title}</h2>
       <ul className="mt-3 flex flex-col gap-2">
         {list.map((p) => (

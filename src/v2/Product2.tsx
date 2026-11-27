@@ -65,7 +65,7 @@ export function Product2({ id, z }: { id: string; z: number }) {
           <div className="t-cap mt-3 flex items-center justify-between" style={{ color: C.ter }}>
             <span>환율 기준 100엔 = {rate}원</span>
             <button onClick={() => notify('환율은 매일 아침 자동으로 바뀌어요')} className="flex items-center gap-1" style={{ color: C.sub }}>
-              <Pencil className="size-3.5" /> 환율 수정
+              <Pencil className="size-4" strokeWidth={1.6} /> 환율 수정
             </button>
           </div>
 
@@ -88,7 +88,7 @@ export function Product2({ id, z }: { id: string; z: number }) {
           />
 
           <button className="t-body-m mt-8 flex items-center gap-1 font-semibold">
-            구매 후기 <ChevronRight className="size-5" />
+            구매 후기 <ChevronRight className="size-5" strokeWidth={1.6} />
           </button>
           {p.reviews.length ? (
             <div className="no-scrollbar -mx-5 mt-3 flex gap-2 overflow-x-auto px-5">
@@ -147,7 +147,7 @@ export function Product2({ id, z }: { id: string; z: number }) {
               className="t-body-l flex h-12 flex-1 items-center justify-center gap-2 rounded-lg text-white transition"
               style={{ background: p.purchased ? '#B9B9BB' : C.btn }}
             >
-              <Luggage className="size-5" strokeWidth={1.8} />
+              <Luggage className="size-5" strokeWidth={1.6} />
               샀어요
             </button>
           </div>

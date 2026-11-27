@@ -21,7 +21,7 @@ export function TripHeader() {
         <button onClick={() => setPick(true)} className="min-w-0 text-left">
           <span className="t-title flex items-center gap-1 truncate">
             {trip.name}
-            <ChevronDown className="size-4 shrink-0" style={{ color: C.ter }} />
+            <ChevronDown className="size-5 shrink-0" style={{ color: C.ter }} strokeWidth={1.6} />
           </span>
           <span className="t-label mt-0.5 flex gap-3" style={{ color: C.ter }}>
             <span>{trip.city}</span>
@@ -126,7 +126,7 @@ export function Home2() {
             <div className="no-scrollbar flex gap-2 overflow-x-auto px-5">
               <Chip2 onClick={() => setSortOpen((v) => !v)} className="text-[#111]">
                 {sort === '우선순위 순' ? '꼭 살래' : sort}
-                <ChevronDown className={cn('size-4 transition', sortOpen && 'rotate-180')} />
+                <ChevronDown className={cn('size-5 transition', sortOpen && 'rotate-180')} strokeWidth={1.6} />
               </Chip2>
               {CATS.map((c) => (
                 <Chip2 key={c} active={cats.includes(c)} onClick={() => setCats((s) => (s.includes(c) ? s.filter((x) => x !== c) : [...s, c]))}>
@@ -169,7 +169,7 @@ export function Home2() {
             <div className="flex h-10 w-20 items-center gap-1 rounded-full p-1" style={{ background: C.g3 }} role="radiogroup" aria-label="보기 방식">
               {(['grid', 'list'] as const).map((v) => (
                 <button key={v} role="radio" aria-checked={view === v} aria-label={v === 'grid' ? '그리드' : '리스트'} onClick={() => setView(v)} className="grid h-8 flex-1 place-items-center rounded-full transition" style={{ background: view === v ? '#fff' : 'transparent', color: view === v ? C.ink : '#fff' }}>
-                  {v === 'grid' ? <LayoutGrid className="size-4" strokeWidth={1.8} /> : <List className="size-4" strokeWidth={1.8} />}
+                  {v === 'grid' ? <LayoutGrid className="size-5" strokeWidth={1.6} /> : <List className="size-5" strokeWidth={1.6} />}
                 </button>
               ))}
             </div>
@@ -235,7 +235,7 @@ function GridCard({ p }: { p: Product }) {
         <Price yen={p.price} size="s" className="mt-1" />
       </button>
       <button aria-label={p.favorite ? '찜 해제' : '찜하기'} aria-pressed={p.favorite} onClick={() => update(p.id, { favorite: !p.favorite })} className="absolute top-0 right-2 grid size-8 place-items-center">
-        <Heart className="size-[18px]" style={{ color: C.pinkLine, fill: p.favorite ? C.pink : 'transparent' }} strokeWidth={2} />
+        <Heart className="size-5" style={{ color: C.pinkLine, fill: p.favorite ? C.pink : 'transparent' }} strokeWidth={1.6} />
       </button>
     </li>
   )
@@ -245,7 +245,7 @@ export function PriorityPill({ p, onClick }: { p: Product; onClick?: () => void 
   const must = p.priority === 'must'
   return (
     <button onClick={onClick} className="t-label flex h-8 shrink-0 items-center gap-1 rounded-full border bg-white px-3" style={{ borderColor: C.g4 }}>
-      {must ? <Heart className="size-4" style={{ color: C.pinkLine, fill: C.pink }} /> : <Bookmark className="size-4" style={{ color: C.gray, fill: C.gray }} />}
+      {must ? <Heart className="size-5" style={{ color: C.pinkLine, fill: C.pink }} /> : <Bookmark className="size-5" style={{ color: C.gray, fill: C.gray }} />}
       {must ? '꼭 살래' : '고민'}
     </button>
   )
@@ -355,9 +355,9 @@ export function Analyze2() {
             </>
           )}
         </h1>
-        <ul className="mt-4 px-5">
+        <ul className="mt-4 flex flex-col gap-2 px-5">
           {results.slice(0, shown).map((p) => (
-            <motion.li key={p.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex h-[96px] items-center gap-6 border-b px-6" style={{ borderColor: C.g4 }}>
+            <motion.li key={p.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex h-[96px] items-center gap-6 rounded-2xl bg-white pr-5 pl-4">
               <span className="grid size-[72px] shrink-0 place-items-center">
                 <ProductImg p={p} className="max-h-[72px] max-w-[72px]" />
               </span>
@@ -442,7 +442,7 @@ export function Swipe2({ ids, fresh }: { ids?: string[]; fresh?: boolean }) {
             <X className="size-6" strokeWidth={1.6} />
           </IconBtn>
           <IconBtn label="되돌리기" onClick={undo} className={cn(!hist.length && 'opacity-30')}>
-            <RotateCcw className="size-5" strokeWidth={1.8} />
+            <RotateCcw className="size-5" strokeWidth={1.6} />
           </IconBtn>
         </header>
         <div className="flex h-[42px] items-center justify-between px-6">
