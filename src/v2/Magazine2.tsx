@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 import { FormatPanel, PlaceSheet, RichEditor, useFormatState } from '@/screens/Finds'
 import { htmlToText, sanitize } from '@/lib/rich'
 import { celebrateReward } from './celebrate'
-import { Avatar, BackButton, C, IconBtn, Screen, SectionHead, Sheet2, wonStr, yenStr } from './ui'
+import { Avatar, BackButton, C, IconBtn, ME_NAME, Screen, SectionHead, Sheet2, wonStr, yenStr } from './ui'
 
 const TABS = [
   { id: 'all', label: 'ALL' },
@@ -328,7 +328,8 @@ export function FlagIcon({ className, color = C.flag }: { className?: string; co
 
 /* ───────── 사용자(여행자) 프로필 ───────── */
 export function Profile2({ name, z }: { name: string; z: number }) {
-  const { finds, close, following, toggleFollow } = useApp()
+  const { finds, close, following, toggleFollow, open, points } = useApp()
+  const me = name === ME_NAME
   const a = AUTHORS[name] ?? { name, bio: '', subs: 0, cities: [] }
   const posts = finds.filter((f) => f.author === name && (f.photo || f.mine))
   const sub = following.has(name)
@@ -358,9 +359,16 @@ export function Profile2({ name, z }: { name: string; z: number }) {
               </div>
             ))}
           </dl>
-          <button onClick={() => toggleFollow(name)} className="t-body-m mt-6 h-12 rounded-full px-5 text-white" style={{ background: sub ? C.gray : C.ink }}>
-            {sub ? '구독 중' : '구독하기'}
-          </button>
+          {me ? (
+            <button onClick={() => open({ type: 'benefits' })} className="t-body-m mt-6 flex h-12 items-center gap-2 rounded-full bg-white px-5 font-semibold">
+              내 포인트 <span className="tabular">{points.toLocaleString()}P</span>
+              <ChevronRight className="size-5" strokeWidth={1.6} />
+            </button>
+          ) : (
+            <button onClick={() => toggleFollow(name)} className="t-body-m mt-6 h-12 rounded-full px-5 text-white" style={{ background: sub ? C.gray : C.ink }}>
+              {sub ? '구독 중' : '구독하기'}
+            </button>
+          )}
         </div>
         <section className="mt-9 px-5">
           <SectionHead>포스트 내역</SectionHead>

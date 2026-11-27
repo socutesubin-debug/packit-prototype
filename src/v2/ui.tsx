@@ -87,18 +87,21 @@ export function BackButton({ onClick, circle, label = '뒤로' }: { onClick: () 
 /** 프로필 동그라미 (이니셜) */
 export function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   return (
-    <span className="grid shrink-0 place-items-center rounded-full font-medium" style={{ width: size, height: size, background: C.line, color: C.ter, fontSize: size * 0.4 }}>
+    <span className="grid shrink-0 place-items-center rounded-full font-medium" style={{ width: size, height: size, background: C.line, color: C.ter, fontSize: Math.round((size * 0.4) / 2) * 2 }}>
       {name.slice(0, 1)}
     </span>
   )
 }
 
 /** 상단 오른쪽: 프로필 + 포인트 */
+/** 프로토타입 사용자 닉네임 */
+export const ME_NAME = '수빈'
+
 export function PointBadge() {
   const { points, open } = useApp()
   return (
-    <button onClick={() => open({ type: 'benefits' })} className="flex items-center gap-2" aria-label={`포인트 ${points}P`}>
-      <span className="size-[26px] rounded-full" style={{ background: C.g5 }} />
+    <button onClick={() => open({ type: 'author', name: ME_NAME })} className="flex items-center gap-2" aria-label={`내 프로필 · 포인트 ${points}P`}>
+      <Avatar name={ME_NAME} size={26} />
       <span className="t-cap2 font-semibold tabular">{points.toLocaleString()}P</span>
     </button>
   )
