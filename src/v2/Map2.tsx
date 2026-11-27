@@ -1,15 +1,25 @@
 import { motion } from 'motion/react'
 import { ChevronRight, Clock, Crosshair, Flag, MapPin, Route, Share2, Store as StoreIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import mapImg from '@/assets/photos/map-shibuya.png'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet'
 import { STORES } from '@/lib/data'
 import { useApp } from '@/lib/store'
-import type { Product, Store } from '@/lib/types'
+import type { Find, Product, Store } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { FlagIcon } from './Magazine2'
+import { celebrateCarry } from './celebrate'
 import { BackButton, C, IconBtn, PillButton, Price, ProductImg, SearchCircle } from './ui'
 
-const ME = { x: 29, y: 30 }
+const ME: [number, number] = [35.659, 139.7006]
+/** 미리 그려 담은 OpenFreeMap Positron 타일 범위 (넓은 범위 z12–14, 시부야 z15–17) */
+const BOUNDS = L.latLngBounds([35.64, 139.685], [35.705, 139.825])
+const TILE_URL = `${import.meta.env.BASE_URL}tiles/{z}/{x}/{y}.png`
+/** 좌표가 없는 발견(내가 올린 글)은 x/y를 시부야 화면 범위에 맞춰 둔다 */
+const findLatLng = (f: Find): [number, number] => (f.lat != null && f.lng != null ? [f.lat, f.lng] : [35.665 - (f.y / 100) * 0.012, 139.692 + (f.x / 100) * 0.016])
+
 const hoursLabel = (h: string) => {
   const m = h.match(/(\d+):(\d+) - (\d+):(\d+)/)
   if (!m) return h
@@ -18,67 +28,95 @@ const hoursLabel = (h: string) => {
 }
 const pad = (n: number) => String(n).padStart(2, '0')
 
+const meIcon = L.divIcon({
+  className: '',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  html: `<span class="relative block size-6"><span class="absolute inset-0 animate-ping rounded-full opacity-40" style="background:${C.me}"></span><span class="absolute inset-0 rounded-full border-2 border-white shadow-[0_0_16px_rgba(79,136,237,0.8)]" style="background:${C.me}"></span></span>`,
+})
+const storeIcon = (on: boolean) => {
+  const d = on ? 40 : 32
+  return L.divIcon({
+    className: '',
+    iconSize: [d, d],
+    iconAnchor: [d / 2, d / 2],
+    html: `<span class="grid size-full place-items-center rounded-full border-2 transition" style="background:${on ? C.btn : '#D9D9D9'};border-color:${on ? '#fff' : '#3A3A40'};color:${on ? '#fff' : '#3A3A40'}">${renderToStaticMarkup(<StoreIcon className={on ? 'size-5' : 'size-4'} strokeWidth={1.8} />)}</span>`,
+  })
+}
+const flagIcon = (hot: boolean) =>
+  L.divIcon({
+    className: '',
+    iconSize: [24, 28],
+    iconAnchor: [4, 28],
+    html: `<span class="block${hot ? ' animate-bounce' : ''}">${renderToStaticMarkup(<FlagIcon className="h-7 w-6" />)}</span>`,
+  })
+
+/** 지도 이동 제어: 선택 매장·포커스한 발견으로 부드럽게 옮긴다 */
+function Fly({ to, zoom }: { to: [number, number] | null; zoom?: number }) {
+  const map = useMap()
+  useEffect(() => {
+    if (to) map.flyTo(to, zoom ?? Math.max(map.getZoom(), 16), { duration: 0.6 })
+  }, [to?.[0], to?.[1]]) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
+function Locate({ tick }: { tick: number }) {
+  const map = useMap()
+  useEffect(() => {
+    if (tick) map.flyTo(ME, 16, { duration: 0.6 })
+  }, [tick]) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
+
 export function Map2() {
   const { finds, open, mapFocus, setMapFocus, notify } = useApp()
   const [showFinds, setShowFinds] = useState(true)
   const [near, setNear] = useState(true)
   const [openOnly, setOpenOnly] = useState(false)
   const [sel, setSel] = useState<string>(STORES[0].id)
+  const [flyTo, setFlyTo] = useState<[number, number] | null>(null)
+  const [locate, setLocate] = useState(0)
   const rail = useRef<HTMLDivElement>(null)
   const stores = STORES.filter((s) => !openOnly || s.open).sort((a, b) => (near ? a.distance - b.distance : 0))
   const flags = finds.filter((f) => f.city === '도쿄' && (f.photo || f.mine))
 
-  const go = (id: string) => {
+  const go = (id: string, scroll = true) => {
     setSel(id)
-    const i = stores.findIndex((s) => s.id === id)
+    const s = STORES.find((x) => x.id === id)
+    if (s) setFlyTo([s.lat, s.lng])
+    if (!scroll) return
+    const i = stores.findIndex((x) => x.id === id)
     const el = rail.current?.children[i] as HTMLElement | undefined
     el?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
   }
   useEffect(() => {
     if (!mapFocus) return
-    if (mapFocus.startsWith('f:')) setShowFinds(true)
-    else if (STORES.some((s) => s.id === mapFocus)) window.setTimeout(() => go(mapFocus), 200)
+    if (mapFocus.startsWith('f:')) {
+      setShowFinds(true)
+      const f = finds.find((x) => `f:${x.id}` === mapFocus)
+      if (f) setFlyTo(findLatLng(f))
+    } else if (STORES.some((s) => s.id === mapFocus)) window.setTimeout(() => go(mapFocus), 200)
     const t = window.setTimeout(() => setMapFocus(null), 1600)
     return () => window.clearTimeout(t)
   }, [mapFocus]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="pk relative mx-auto h-dvh w-full max-w-[480px] overflow-hidden" style={{ background: '#F4F4F4' }}>
-      <img src={mapImg} alt="시부야 지도" className="absolute inset-0 size-full object-cover" />
-
-      {/* 내 위치 */}
-      <span className="absolute size-6 -translate-x-1/2 -translate-y-1/2" style={{ left: `${ME.x}%`, top: `${ME.y}%` }} aria-label="내 위치">
-        <span className="absolute inset-0 animate-ping rounded-full opacity-40" style={{ background: C.me }} />
-        <span className="absolute inset-0 rounded-full shadow-[0_0_16px_rgba(79,136,237,0.8)]" style={{ background: C.me }} />
-      </span>
-
-      {/* 여행자 발견 깃발 */}
-      {showFinds &&
-        flags.map((f) => {
-          const hot = mapFocus === `f:${f.id}`
-          return (
-            <button key={f.id} onClick={() => open({ type: 'find', id: f.id })} aria-label={`발견: ${f.title}`} className="absolute -translate-x-1 -translate-y-full" style={{ left: `${f.x}%`, top: `${f.y}%` }}>
-              <motion.span animate={hot ? { scale: [1, 1.4, 1] } : {}} transition={{ repeat: hot ? 2 : 0, duration: 0.6 }} className="block">
-                <FlagIcon className="h-7 w-6" />
-              </motion.span>
-            </button>
-          )
-        })}
-
-      {/* 매장 핀 */}
-      {stores.map((s) => {
-        const on = s.id === sel
-        return (
-          <button key={s.id} onClick={() => go(s.id)} aria-label={s.name} aria-pressed={on} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${s.x}%`, top: `${s.y}%` }}>
-            <span className={cn('grid place-items-center rounded-full border-2 transition', on ? 'size-10' : 'size-8')} style={{ background: on ? C.btn : '#D9D9D9', borderColor: on ? '#fff' : '#3A3A40', color: on ? '#fff' : '#3A3A40' }}>
-              <StoreIcon className={on ? 'size-5' : 'size-4'} strokeWidth={1.8} />
-            </span>
-          </button>
-        )
-      })}
+    <div className="pk relative mx-auto h-dvh w-full max-w-[480px] overflow-hidden" style={{ background: '#F4F4F2' }}>
+      <MapContainer center={ME} zoom={16} minZoom={12} maxZoom={17} maxBounds={BOUNDS} maxBoundsViscosity={1} zoomControl={false} attributionControl={false} className="absolute inset-0 z-0 size-full" style={{ background: '#F4F4F2' }}>
+        <TileLayer url={TILE_URL} bounds={BOUNDS} maxNativeZoom={17} />
+        <Fly to={flyTo} />
+        <Locate tick={locate} />
+        <Marker position={ME} icon={meIcon} interactive={false} keyboard={false} />
+        {showFinds &&
+          flags.map((f) => (
+            <Marker key={f.id} position={findLatLng(f)} icon={flagIcon(mapFocus === `f:${f.id}`)} title={`발견: ${f.title}`} eventHandlers={{ click: () => open({ type: 'find', id: f.id }) }} />
+          ))}
+        {stores.map((s) => (
+          <Marker key={s.id + (s.id === sel)} position={[s.lat, s.lng]} icon={storeIcon(s.id === sel)} title={s.name} zIndexOffset={s.id === sel ? 1000 : 0} eventHandlers={{ click: () => go(s.id) }} />
+        ))}
+      </MapContainer>
 
       {/* 상단: 위치 · 검색 · 필터 */}
-      <div className="absolute inset-x-0 top-0 px-4 pt-[env(safe-area-inset-top)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[10] px-4 pt-[env(safe-area-inset-top)] [&>*]:pointer-events-auto">
         <div className="flex h-[60px] items-center justify-between">
           <button className="t-body-m flex h-10 items-center gap-2 rounded-full bg-white px-4 font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
             <MapPin className="size-5" strokeWidth={1.8} />
@@ -86,7 +124,7 @@ export function Map2() {
           </button>
           <SearchCircle onClick={() => notify('검색은 곧 열려요')} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-max gap-2">
           <MapChip on={showFinds} onClick={() => setShowFinds((v) => !v)}>
             <Flag className="size-4" strokeWidth={1.8} />
             여행자 발견
@@ -100,18 +138,24 @@ export function Map2() {
         </div>
       </div>
 
+      {/* 지도 출처 표기 */}
+      <p className="t-cap2 absolute left-5 z-[10] bottom-[calc(262px+env(safe-area-inset-bottom))] rounded-full bg-white/80 px-2" style={{ color: C.sub }}>
+        <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> © <a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a>
+      </p>
+
       {/* 내 위치로 */}
-      <IconBtn label="내 위치로" onClick={() => notify('지금 위치를 다시 찾았어요')} className="absolute right-6 bottom-[calc(246px+env(safe-area-inset-bottom))] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <IconBtn label="내 위치로" onClick={() => setLocate((n) => n + 1)} className="absolute right-6 z-[10] bottom-[calc(262px+env(safe-area-inset-bottom))] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
         <Crosshair className="size-6" strokeWidth={1.6} />
       </IconBtn>
 
       {/* 매장 카드 레일 */}
       <div
         ref={rail}
-        className="no-scrollbar absolute inset-x-0 bottom-[calc(112px+env(safe-area-inset-bottom))] flex snap-x snap-mandatory scroll-px-5 gap-2 overflow-x-auto px-5"
+        className="no-scrollbar absolute inset-x-0 z-[10] bottom-[calc(112px+env(safe-area-inset-bottom))] flex snap-x snap-mandatory scroll-px-5 gap-2 overflow-x-auto px-5"
         onScroll={(e) => {
-          const i = Math.round(e.currentTarget.scrollLeft / 350)
-          if (stores[i] && stores[i].id !== sel) setSel(stores[i].id)
+          const w = (e.currentTarget.firstElementChild as HTMLElement | null)?.offsetWidth ?? 342
+          const i = Math.round(e.currentTarget.scrollLeft / (w + 8))
+          if (stores[i] && stores[i].id !== sel) go(stores[i].id, false)
         }}
       >
         {stores.map((s) => (
@@ -178,6 +222,13 @@ export function Store2({ id, z }: { id: string; z: number }) {
   const must = here.filter((p) => p.priority === 'must')
   const maybe = here.filter((p) => p.priority === 'maybe')
   const nearby = STORES.filter((x) => x.id !== s.id).slice(0, 2)
+  const buy = (p: Product) => {
+    update(p.id, { purchased: !p.purchased })
+    if (!p.purchased) {
+      celebrateCarry()
+      notify('캐리어에 담았어요')
+    }
+  }
   return (
     <motion.div className="pk fixed inset-0 overflow-y-auto" style={{ zIndex: z, background: C.bg }} initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 32, stiffness: 320 }}>
       <div className="relative mx-auto w-full max-w-[480px]">
@@ -212,8 +263,8 @@ export function Store2({ id, z }: { id: string; z: number }) {
           </div>
           <div className="mt-6 h-px" style={{ background: C.g4 }} />
 
-          <StoreSection title="이 곳에서 찾을 상품" list={must} empty="이 매장에서 살 수 있는 '꼭 살래' 상품이 없어요" onToggle={(p) => update(p.id, { purchased: !p.purchased })} onOpen={(p) => open({ type: 'product', id: p.id })} />
-          {!!maybe.length && <StoreSection title="고민 중인 상품" list={maybe} onToggle={(p) => update(p.id, { purchased: !p.purchased })} onOpen={(p) => open({ type: 'product', id: p.id })} />}
+          <StoreSection title="이 곳에서 찾을 상품" list={must} empty="이 매장에서 살 수 있는 '꼭 살래' 상품이 없어요" onToggle={(p) => buy(p)} onOpen={(p) => open({ type: 'product', id: p.id })} />
+          {!!maybe.length && <StoreSection title="고민 중인 상품" list={maybe} onToggle={(p) => buy(p)} onOpen={(p) => open({ type: 'product', id: p.id })} />}
 
           <h2 className="t-body-m mt-8 px-2 font-semibold">같이 들리기 좋은 근처 가게</h2>
           <ul className="mt-2">

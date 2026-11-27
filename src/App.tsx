@@ -17,6 +17,7 @@ import { FindDetail2, Magazine2, Profile2, Write2 } from '@/v2/Magazine2'
 import { Map2, Store2 } from '@/v2/Map2'
 import { Carry2, CarryDetail2 } from '@/v2/Carry2'
 import { BottomNav2 } from '@/v2/ui'
+import { CelebrationLayer } from '@/v2/celebrate'
 
 function OverlayView({ o, depth }: { o: Overlay; depth: number }) {
   const z = 50 + depth
@@ -80,6 +81,7 @@ function Root() {
         </AnimatePresence>
       </main>
       <BottomNav2 />
+      <CelebrationLayer />
       <AnimatePresence>
         {overlays.map((o, i) => (
           <OverlayView key={`${o.type}-${'id' in o ? o.id : 'tripId' in o ? o.tripId : ''}-${i}`} o={o} depth={i} />

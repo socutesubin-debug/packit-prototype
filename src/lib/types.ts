@@ -74,6 +74,9 @@ export interface Store {
   distance: number
   x: number
   y: number
+  /** 실제 좌표 (지도 탭) */
+  lat: number
+  lng: number
   color: string
   photo?: string
   /** 작은 썸네일 전용 사진 */
@@ -90,6 +93,9 @@ export interface Find {
   area: string
   x: number
   y: number
+  /** 실제 좌표. 없으면 x/y를 시부야 범위에 맞춰 씀 */
+  lat?: number
+  lng?: number
   price?: number
   category: Category
   art: Art

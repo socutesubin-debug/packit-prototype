@@ -6,6 +6,7 @@ import { PHRASES } from '@/lib/data'
 import { useApp } from '@/lib/store'
 import type { Product, Review } from '@/lib/types'
 import { cn } from '@/lib/utils'
+import { celebrateCarry } from './celebrate'
 import { BackButton, C, IconBtn, ProductImg, wonStr, yenStr } from './ui'
 
 const HERO: Record<string, string> = { p1: tokyoHero }
@@ -139,6 +140,7 @@ export function Product2({ id, z }: { id: string; z: number }) {
             <button
               onClick={() => {
                 update(p.id, { purchased: !p.purchased })
+                if (!p.purchased) celebrateCarry()
                 notify(p.purchased ? '구매를 취소했어요' : '캐리어에 담았어요')
               }}
               aria-pressed={p.purchased}

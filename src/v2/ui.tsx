@@ -1,7 +1,7 @@
-import { AnimatePresence, motion } from 'motion/react'
 import { ChevronLeft, Compass, House, Luggage, Map as MapIcon, Plus, Search, StickyNote, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ProductArt } from '@/components/art/ProductArt'
+import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from '@/components/ui/drawer'
 import { useApp, type Tab } from '@/lib/store'
 import type { Product } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -158,35 +158,23 @@ export function BottomNav2() {
   )
 }
 
-/** 아래에서 올라오는 시트 (흰 · 위 모서리 24) */
-export function Sheet2({ open, onClose, title, children, z = 70 }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; z?: number }) {
+/** 아래에서 올라오는 시트 — shadcn Drawer(내부 Vaul). 끌어내려 닫기 지원 */
+export function Sheet2({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; z?: number }) {
   return (
-    <AnimatePresence>
-      {open && (
-        <div className="pk fixed inset-0" style={{ zIndex: z }}>
-          <motion.button aria-label="닫기" className="absolute inset-0 bg-black/20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
-          <motion.div
-            role="dialog"
-            aria-label={title}
-            className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[480px] rounded-t-3xl bg-white px-6 pt-6 pb-[max(34px,env(safe-area-inset-bottom))]"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-          >
-            {title && (
-              <div className="mb-5 flex items-center justify-between">
-                <h2 className="t-h3">{title}</h2>
-                <IconBtn label="닫기" onClick={onClose} className="-mr-3">
-                  <X className="size-6" strokeWidth={1.6} style={{ color: C.sub }} />
-                </IconBtn>
-              </div>
-            )}
-            {children}
-          </motion.div>
+    <Drawer open={open} onOpenChange={(o) => !o && onClose()}>
+      <DrawerContent className="pk mx-auto max-w-[480px] rounded-t-[32px] border-0 bg-white px-6 pb-[max(34px,env(safe-area-inset-bottom))] data-[vaul-drawer-direction=bottom]:rounded-t-[32px] data-[vaul-drawer-direction=bottom]:border-t-0 [&>div:first-child]:mt-3 [&>div:first-child]:h-1 [&>div:first-child]:w-10 [&>div:first-child]:bg-[#D9D9DC]">
+        <div className="mt-6 mb-6 flex items-center justify-between">
+          <DrawerTitle className="t-h3" style={{ fontWeight: 700 }}>
+            {title}
+          </DrawerTitle>
+          <IconBtn label="닫기" onClick={onClose} className="-mr-3">
+            <X className="size-6" strokeWidth={1.6} style={{ color: C.sub }} />
+          </IconBtn>
         </div>
-      )}
-    </AnimatePresence>
+        <DrawerDescription className="sr-only">{title}</DrawerDescription>
+        {children}
+      </DrawerContent>
+    </Drawer>
   )
 }
 

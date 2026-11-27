@@ -12,6 +12,7 @@ import type { Category, Find } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { FormatPanel, PlaceSheet, RichEditor, useFormatState } from '@/screens/Finds'
 import { htmlToText, sanitize } from '@/lib/rich'
+import { celebrateReward } from './celebrate'
 import { Avatar, BackButton, C, IconBtn, Screen, SectionHead, Sheet2, wonStr, yenStr } from './ui'
 
 const TABS = [
@@ -418,7 +419,7 @@ export function Write2() {
     setJustPosted(f.id)
     close()
     if (tab !== 'magazine') setTab('magazine')
-    window.setTimeout(() => notify('발견을 올렸어요 · +50P'), 250)
+    window.setTimeout(() => celebrateReward(50), 250)
   }
   return (
     <motion.div className="pk fixed inset-0 z-[58] flex flex-col" style={{ background: C.bg }} initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}>
